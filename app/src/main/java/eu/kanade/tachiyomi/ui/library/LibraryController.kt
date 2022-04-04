@@ -32,7 +32,6 @@ import androidx.core.view.WindowInsetsAnimationCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.ime
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
-import androidx.core.view.doOnLayout
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
@@ -1037,12 +1036,10 @@ class LibraryController(
             binding.recyclerLayout.animate().alpha(1f).setDuration(500).start()
         }
         if (justStarted && freshStart) {
-            binding.libraryGridRecycler.recycler.doOnLayout {
-                scrollToHeader(activeCategory)
-                binding.libraryGridRecycler.recycler.post {
-                    activityBinding?.appBar?.y = 0f
-                    activityBinding?.appBar?.updateViewsAfterY(binding.libraryGridRecycler.recycler)
-                }
+            scrollToHeader(activeCategory)
+            binding.libraryGridRecycler.recycler.post {
+                activityBinding?.appBar?.y = 0f
+                activityBinding?.appBar?.updateViewsAfterY(binding.libraryGridRecycler.recycler)
             }
         }
         binding.libraryGridRecycler.recycler.post {
