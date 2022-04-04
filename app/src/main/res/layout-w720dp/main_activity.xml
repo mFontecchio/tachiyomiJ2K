@@ -20,7 +20,7 @@
 
     </com.bluelinelabs.conductor.ChangeHandlerFrameLayout>
 
-    <com.google.android.material.appbar.AppBarLayout
+    <eu.kanade.tachiyomi.ui.base.BigAppBarLayout
         android:id="@+id/app_bar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -54,7 +54,12 @@
                 tools:drawableStart="@drawable/ic_blank_24dp"
                 tools:text="Title Text" />
         </eu.kanade.tachiyomi.ui.base.CenteredToolbar>
-
+        <FrameLayout
+            android:id="@+id/big_toolbar"
+            android:layout_width="match_parent"
+            android:layout_marginTop="52dp"
+            android:layout_height="wrap_content">
+        </FrameLayout>
         <FrameLayout
             android:id="@+id/card_frame"
             android:layout_width="match_parent"
@@ -162,7 +167,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:tabGravity="fill"/>
         </FrameLayout>
-    </com.google.android.material.appbar.AppBarLayout>
+    </eu.kanade.tachiyomi.ui.base.BigAppBarLayout>
 
 
     <com.google.android.material.navigationrail.NavigationRailView

@@ -13,6 +13,8 @@ import eu.kanade.tachiyomi.ui.main.SearchActivity
 open class BaseToolbar @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) :
     MaterialToolbar(context, attrs) {
 
+    var bigToolbar: TextView? = null
+
     var router: Router? = null
     val onRoot: Boolean
         get() = router?.backstackSize ?: 1 <= 1 && context !is SearchActivity
@@ -37,10 +39,12 @@ open class BaseToolbar @JvmOverloads constructor(context: Context, attrs: Attrib
 
     override fun setTitle(resId: Int) {
         setCustomTitle(context.getString(resId))
+        bigToolbar?.text = context.getString(resId)
     }
 
     override fun setTitle(title: CharSequence?) {
         setCustomTitle(title)
+        bigToolbar?.text = title
     }
 
     override fun setTitleTextColor(color: Int) {

@@ -56,8 +56,8 @@ class SearchActivity : MainActivity() {
         }
     }
 
-    override fun setFloatingToolbar(show: Boolean, solidBG: Boolean, changeBG: Boolean) {
-        super.setFloatingToolbar(show, solidBG, changeBG)
+    override fun setFloatingToolbar(show: Boolean, solidBG: Boolean, changeBG: Boolean, showSearchAnyway: Boolean) {
+        super.setFloatingToolbar(show, solidBG, changeBG, showSearchAnyway)
         currentToolbar?.setNavigationOnClickListener { popToRoot() }
     }
 

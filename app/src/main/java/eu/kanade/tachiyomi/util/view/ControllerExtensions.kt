@@ -26,6 +26,7 @@ import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.ime
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
+import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.core.view.updatePaddingRelative
 import androidx.recyclerview.widget.RecyclerView
@@ -108,13 +109,13 @@ fun Controller.liftAppbarWith(recycler: RecyclerView, padView: Boolean = false) 
         val attrsArray = intArrayOf(R.attr.mainActionBarSize)
         val array = recycler.context.obtainStyledAttributes(attrsArray)
         var appBarHeight = (
-            if (toolbarHeight ?: 0 > 0) toolbarHeight!!
+            if (bigToolbarHeight ?: 0 > 0) bigToolbarHeight!!
             else array.getDimensionPixelSize(0, 0)
             )
         array.recycle()
         activityBinding!!.toolbar.post {
-            if (toolbarHeight!! > 0) {
-                appBarHeight = toolbarHeight!!
+            if (bigToolbarHeight!! > 0) {
+                appBarHeight = bigToolbarHeight!!
                 recycler.requestApplyInsets()
             }
         }
@@ -199,18 +200,23 @@ fun Controller.scrollViewWith(
     var statusBarHeight = -1
     val tabBarHeight = 48.dpToPx
     activityBinding?.appBar?.y = 0f
+    activityBinding?.appBar?.smallToolbarMode = this@scrollViewWith is MangaDetailsController
     val attrsArray = intArrayOf(R.attr.mainActionBarSize)
     val array = recycler.context.obtainStyledAttributes(attrsArray)
     var appBarHeight = (
-        if (toolbarHeight ?: 0 > 0) toolbarHeight!!
-        else array.getDimensionPixelSize(0, 0)
-        ) + if (includeTabView) tabBarHeight else 0
+        if (bigToolbarHeight ?: 0 > 0) bigToolbarHeight!!
+        else activityBinding?.appBar?.preLayoutHeight ?: array.getDimensionPixelSize(0, 0)
+        ) + (if (includeTabView) tabBarHeight else 0)
     array.recycle()
     swipeRefreshLayout?.setDistanceToTriggerSync(150.dpToPx)
-    activityBinding!!.toolbar.post {
-        if (toolbarHeight!! > 0) {
-            appBarHeight = toolbarHeight!! + if (includeTabView) tabBarHeight else 0
+    activityBinding!!.appBar.doOnLayout {
+        if (bigToolbarHeight!! > 0) {
+            val oldH = appBarHeight
+            appBarHeight = bigToolbarHeight!! + if (includeTabView) tabBarHeight else 0
             recycler.requestApplyInsets()
+            if (appBarHeight > oldH) {
+                recycler.scrollToPosition(0)
+            }
         }
     }
     val updateViewsNearBottom = {
@@ -245,6 +251,9 @@ fun Controller.scrollViewWith(
         )
         statusBarHeight = insets.getInsets(systemBars()).top
         afterInsets?.invoke(insets)
+//        recycler.doOnNextLayout {
+//            activityBinding!!.appBar.updateViewsAfterY(recycler)
+//        }
     }
 
     var toolbarColorAnim: ValueAnimator? = null
@@ -288,6 +297,8 @@ fun Controller.scrollViewWith(
                 super.onChangeStart(controller, changeHandler, changeType)
                 isInView = changeType.isEnter
                 if (changeType.isEnter) {
+                    activityBinding?.appBar?.hideBigView(this@scrollViewWith is MangaDetailsController)
+                    activityBinding?.appBar?.smallToolbarMode = this@scrollViewWith is MangaDetailsController
                     colorToolbar(isToolbarColor)
                     if (fakeToolbarView?.parent != null) {
                         val parent = fakeToolbarView?.parent as? ViewGroup ?: return
@@ -300,6 +311,9 @@ fun Controller.scrollViewWith(
                         fakeBottomNavView = null
                     }
                     lastY = 0f
+//                    recycler.doOnLayout {
+                    activityBinding!!.appBar.updateViewsAfterY(recycler)
+//                    }
                     activityBinding!!.toolbar.tag = randomTag
                     activityBinding!!.toolbar.setOnClickListener {
                         if ((this@scrollViewWith as? BottomSheetController)?.sheetIsFullscreen() != true) {
@@ -352,6 +366,7 @@ fun Controller.scrollViewWith(
     colorToolbar(recycler.canScrollVertically(-1))
 
     recycler.post {
+        activityBinding!!.appBar.updateViewsAfterY(recycler)
         colorToolbar(recycler.canScrollVertically(-1))
     }
     val isTablet = recycler.context.isTablet() && recycler.context.resources.configuration?.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -369,9 +384,8 @@ fun Controller.scrollViewWith(
                         val shortAnimationDuration = resources?.getInteger(
                             android.R.integer.config_shortAnimTime
                         ) ?: 0
-                        activityBinding!!.appBar.animate().y(0f)
-                            .setDuration(shortAnimationDuration.toLong())
-                            .start()
+                        activityBinding!!.appBar.y = 0f
+                        activityBinding!!.appBar.updateViewsAfterY(recycler)
                         if (router.backstackSize == 1 && isInView) {
                             activityBinding!!.bottomNav?.let {
                                 val animator = it.animate()?.translationY(0f)
@@ -387,11 +401,7 @@ fun Controller.scrollViewWith(
                     } else {
                         if (!isTablet) {
                             activityBinding!!.appBar.y -= dy
-                            activityBinding!!.appBar.y = MathUtils.clamp(
-                                activityBinding!!.appBar.y,
-                                -activityBinding!!.appBar.height.toFloat(),
-                                0f
-                            )
+                            activityBinding!!.appBar.updateViewsAfterY(recycler)
                             activityBinding!!.bottomNav?.let { bottomNav ->
                                 if (bottomNav.isVisible && isInView) {
                                     if (preferences.hideBottomNavOnScroll().get()) {
@@ -455,8 +465,13 @@ fun Controller.scrollViewWith(
                             ) closerToBottom else closerToTop
                         lastY =
                             if (closerToEdge && !atTop) (-activityBinding!!.appBar.height.toFloat()) else 0f
-                        activityBinding!!.appBar.animate().y(lastY)
-                            .setDuration(shortAnimationDuration.toLong()).start()
+                        activityBinding!!.appBar.snapY(recycler)
+//                        val yAnimator = activityBinding!!.appBar.animate().y(lastY)
+//                            .setDuration(shortAnimationDuration.toLong())
+//                        yAnimator.setUpdateListener {
+//                            activityBinding!!.appBar.updateViewsAfterY(recycler)
+//                        }
+//                        yAnimator.start()
                         if (activityBinding!!.bottomNav?.isVisible == true &&
                             isInView && preferences.hideBottomNavOnScroll().get()
                         ) {
@@ -590,3 +605,6 @@ val Controller.activityBinding: MainActivityBinding?
 
 val Controller.toolbarHeight: Int?
     get() = (activity as? MainActivity)?.toolbarHeight
+
+val Controller.bigToolbarHeight: Int?
+    get() = (activity as? MainActivity)?.bigToolbarHeight(this is FloatingSearchInterface)

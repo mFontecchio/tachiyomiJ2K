@@ -1,0 +1,186 @@
+package eu.kanade.tachiyomi.ui.base
+
+import android.content.Context
+import android.util.AttributeSet
+import android.view.ViewPropertyAnimator
+import android.widget.FrameLayout
+import android.widget.TextView
+import androidx.core.graphics.ColorUtils
+import androidx.core.math.MathUtils
+import androidx.core.view.isGone
+import androidx.core.view.isInvisible
+import androidx.core.view.isVisible
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.appbar.AppBarLayout
+import eu.kanade.tachiyomi.R
+import eu.kanade.tachiyomi.ui.main.MainActivity
+import eu.kanade.tachiyomi.util.system.dpToPx
+import eu.kanade.tachiyomi.util.system.getResourceColor
+import eu.kanade.tachiyomi.util.view.backgroundColor
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
+
+class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) :
+    AppBarLayout(context, attrs) {
+
+    var cardToolbar: FloatingToolbar? = null
+    var cardFrame: FrameLayout? = null
+    var mainToolbar: CenteredToolbar? = null
+    var bigTitleView: TextView? = null
+    var bigView: FrameLayout? = null
+    var smallToolbarMode = false
+    var yAnimator: ViewPropertyAnimator? = null
+
+    fun hideBigView(useSmall: Boolean) {
+        bigView?.isGone = useSmall
+    }
+
+    override fun onFinishInflate() {
+        super.onFinishInflate()
+        bigTitleView = findViewById(R.id.big_title)
+        cardToolbar = findViewById(R.id.card_toolbar)
+        mainToolbar = findViewById(R.id.toolbar)
+        bigView = findViewById(R.id.big_toolbar)
+        cardFrame = findViewById(R.id.card_frame)
+    }
+
+    fun setTitle(title: CharSequence?) {
+        bigTitleView?.text = title
+        mainToolbar?.title = title
+    }
+
+    override fun setTranslationY(translationY: Float) {
+        yAnimator?.cancel()
+        val realHeight = max(preLayoutHeight + paddingTop, height).toFloat()
+        val newY = MathUtils.clamp(translationY, -realHeight, 0f)
+        super.setTranslationY(newY)
+    }
+
+    private val toolbarHeight: Float
+        get() {
+            val attrsArray = intArrayOf(R.attr.mainActionBarSize)
+            val array = context.obtainStyledAttributes(attrsArray)
+            val appBarHeight = (
+                array.getDimensionPixelSize(0, 0)
+                )
+            array.recycle()
+            return (appBarHeight + paddingTop).toFloat()
+        }
+
+    val preLayoutHeight: Int
+        get() {
+            val attrsArray = intArrayOf(R.attr.mainActionBarSize)
+            val array = context.obtainStyledAttributes(attrsArray)
+            val appBarHeight = (
+                array.getDimensionPixelSize(0, 0) *
+                    (if (cardFrame?.isVisible == true && !smallToolbarMode) 2 else 1)
+                )
+            val widthMeasureSpec = MeasureSpec.makeMeasureSpec(resources.displayMetrics.widthPixels, MeasureSpec.AT_MOST)
+            val heightMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+            bigTitleView?.measure(widthMeasureSpec, heightMeasureSpec)
+            val textHeight = (bigTitleView?.measuredHeight ?: 0) + 64.dpToPx
+            array.recycle()
+            return appBarHeight + if (smallToolbarMode) 0 else textHeight
+        }
+
+    fun updateViewsAfterY(recyclerView: RecyclerView) {
+        yAnimator?.cancel()
+        val offset = recyclerView.computeVerticalScrollOffset()
+        val bigHeight = bigView?.height ?: 0
+        val realHeight = max(preLayoutHeight + paddingTop, height)
+        val smallHeight = -realHeight + toolbarHeight
+        val newY = if (offset < realHeight - toolbarHeight) {
+            -offset.toFloat()
+        } else {
+            MathUtils.clamp(
+                translationY,
+                -realHeight.toFloat() + top,
+                max(
+                    smallHeight,
+                    if (offset > realHeight - toolbarHeight) smallHeight else min(-offset.toFloat(), 0f)
+                ) + top.toFloat()
+            )
+        }
+        setToolbar(offset > height - toolbarHeight)
+
+        translationY = newY
+        mainToolbar?.let { mainToolbar ->
+            mainToolbar.translationY = when {
+                smallToolbarMode -> 0f
+                -newY <= bigHeight -> max(-newY, 0f)
+                else -> bigHeight.toFloat()
+            }
+        }
+        if (smallToolbarMode) return
+        val alpha = MathUtils.clamp((realHeight.toFloat() + newY * 5) / realHeight.toFloat() + .33f, 0.0f, 1.0f)
+        bigView?.alpha = if (alpha.isNaN()) 1f else alpha
+        val alpha2 = MathUtils.clamp(-newY * 3 / realHeight.toFloat() - 0.33f, 0.0f, 1.0f)
+        val toolbarTextView = mainToolbar?.toolbarTitle ?: return
+        toolbarTextView.setTextColor(
+            ColorUtils.setAlphaComponent(
+                toolbarTextView.currentTextColor,
+                ((if (alpha2.isNaN()) 0f else alpha2) * 255).roundToInt()
+            )
+        )
+    }
+
+    fun snapY(recyclerView: RecyclerView): Float {
+        yAnimator?.cancel()
+        val halfWay = toolbarHeight / 2
+        val shortAnimationDuration = resources?.getInteger(
+            android.R.integer.config_longAnimTime
+        ) ?: 0
+        val closerToTop = abs(y) > height - halfWay
+        val atTop = !recyclerView.canScrollVertically(-1)
+        val bigHeight = bigView?.height
+        val lastY = if (closerToTop && !atTop) {
+            -height.toFloat()
+        } else {
+            toolbarHeight
+        }
+
+        val onFirstItem = recyclerView.computeVerticalScrollOffset() < height - toolbarHeight
+
+        if (!onFirstItem) {
+            yAnimator = animate().y(lastY)
+                .setDuration(shortAnimationDuration.toLong())
+            yAnimator?.setUpdateListener {
+                updateViewsAfterY(recyclerView)
+            }
+//            yAnimator.setListener(
+//                EndAnimatorListener {
+//                    mainToolbar?.alpha = (if (lastY == height.toFloat()) 0f else 1f)
+//                }
+//            )
+            yAnimator?.start()
+            setToolbar(true)
+            return lastY
+        } else {
+            setToolbar(false)
+            return y
+        }
+    }
+
+    private fun setToolbar(showCardTB: Boolean) {
+        val mainActivity = (context as? MainActivity) ?: return
+        if (showCardTB) {
+            if (mainActivity.currentToolbar != cardToolbar) {
+                mainActivity.setFloatingToolbar(true, showSearchAnyway = true)
+            }
+            if (mainActivity.currentToolbar == cardToolbar) {
+                mainToolbar?.isInvisible = true
+                mainToolbar?.backgroundColor = null
+                cardFrame?.backgroundColor = null
+            }
+        } else {
+            if (mainActivity.currentToolbar != mainToolbar) {
+                mainActivity.setFloatingToolbar(false, showSearchAnyway = true)
+            }
+            mainToolbar?.isInvisible = false
+            mainToolbar?.backgroundColor = mainActivity.getResourceColor(R.attr.colorSurface)
+            cardFrame?.backgroundColor = mainActivity.getResourceColor(R.attr.colorSurface)
+        }
+    }
+}

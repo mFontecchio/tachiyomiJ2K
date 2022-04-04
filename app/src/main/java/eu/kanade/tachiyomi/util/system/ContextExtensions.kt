@@ -147,6 +147,9 @@ val Int.dpToPx: Int
 val Int.spToPx: Int
     get() = (this * Resources.getSystem().displayMetrics.scaledDensity).toInt()
 
+val Float.spToPx: Float
+    get() = (this * Resources.getSystem().displayMetrics.scaledDensity)
+
 val Float.dpToPx: Float
     get() = (this * Resources.getSystem().displayMetrics.density)
 

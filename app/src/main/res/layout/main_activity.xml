@@ -13,14 +13,14 @@
         android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0">
+        app:layout_constraintVertical_bias="0.0">
 
     </com.bluelinelabs.conductor.ChangeHandlerFrameLayout>
 
-    <com.google.android.material.appbar.AppBarLayout
+    <eu.kanade.tachiyomi.ui.base.BigAppBarLayout
         android:id="@+id/app_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -35,6 +35,8 @@
             android:layout_width="match_parent"
             app:titleTextColor="?actionBarTintColor"
             android:layout_height="?mainActionBarSize"
+            android:translationZ="5dp"
+            android:outlineProvider="none"
             app:collapseIcon="@drawable/ic_arrow_back_24dp"
             android:background="@android:color/transparent">
 
@@ -53,6 +55,28 @@
                 tools:drawableStart="@drawable/ic_blank_24dp"
                 tools:text="Title Text" />
         </eu.kanade.tachiyomi.ui.base.CenteredToolbar>
+
+        <FrameLayout
+            android:id="@+id/big_toolbar"
+            android:layout_width="match_parent"
+            android:paddingTop="52dp"
+            android:paddingBottom="12dp"
+            android:background="?attr/colorSurface"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/big_title"
+                android:paddingStart="12dp"
+                android:paddingEnd="0dp"
+                style="?textAppearanceHeadlineLarge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableTint="?actionBarTintColor"
+                android:ellipsize="end"
+                android:layout_gravity="start"
+                android:textColor="?actionBarTintColor"
+                tools:text="Title Text" />
+        </FrameLayout>
 
         <FrameLayout
             android:id="@+id/card_frame"
@@ -161,7 +185,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:tabGravity="fill"/>
         </FrameLayout>
-    </com.google.android.material.appbar.AppBarLayout>
+    </eu.kanade.tachiyomi.ui.base.BigAppBarLayout>
 
     <View
         android:id="@+id/bottom_view"

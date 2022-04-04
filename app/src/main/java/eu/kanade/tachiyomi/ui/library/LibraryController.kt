@@ -32,6 +32,7 @@ import androidx.core.view.WindowInsetsAnimationCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.ime
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
+import androidx.core.view.doOnLayout
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
@@ -116,7 +117,6 @@ import java.util.ArrayList
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.max
-import kotlin.math.roundToInt
 import kotlin.random.Random
 import kotlin.random.nextInt
 
@@ -224,6 +224,11 @@ class LibraryController(
         }
 
     override fun getTitle(): String? {
+        setSubtitle()
+        return view?.context?.getString(R.string.library)
+    }
+
+    override fun getSearchTitle(): String? {
         setSubtitle()
         return searchTitle(
             if (preferences.showLibrarySearchSuggestions().get() &&
@@ -391,7 +396,7 @@ class LibraryController(
     }
 
     private fun setSubtitle() {
-        if (!singleCategory && presenter.showAllCategories &&
+        if (isBindingInitialized && !singleCategory && presenter.showAllCategories &&
             !binding.headerTitle.text.isNullOrBlank() && !binding.recyclerCover.isClickable
         ) {
             activityBinding?.cardToolbar?.subtitle = binding.headerTitle.text.toString()
@@ -796,8 +801,8 @@ class LibraryController(
         if (presenter.showAllCategories) {
             if (!next) {
                 val fPosition =
-                    (binding.libraryGridRecycler.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-                if (fPosition != adapter.currentItems.indexOf(category)) {
+                    (binding.libraryGridRecycler.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition() - 1
+                if (fPosition > adapter.currentItems.indexOf(category)) {
                     scrollToHeader(category.category.order)
                     return
                 }
@@ -1032,7 +1037,11 @@ class LibraryController(
             binding.recyclerLayout.animate().alpha(1f).setDuration(500).start()
         }
         if (justStarted && freshStart) {
-            scrollToHeader(activeCategory)
+            binding.libraryGridRecycler.recycler.doOnLayout {
+                scrollToHeader(activeCategory)
+                activityBinding?.appBar?.y = 0f
+                activityBinding?.appBar?.updateViewsAfterY(binding.libraryGridRecycler.recycler)
+            }
         }
         binding.libraryGridRecycler.recycler.post {
             elevateAppBar(binding.libraryGridRecycler.recycler.canScrollVertically(-1))
@@ -1147,13 +1156,15 @@ class LibraryController(
         }
         val headerPosition = adapter.indexOf(pos)
         if (headerPosition > -1) {
-            val appbar = activityBinding?.appBar
+            val activityBinding = activityBinding ?: return
             binding.libraryGridRecycler.recycler.suppressLayout(true)
-            val appbarOffset = if (appbar?.y ?: 0f > -20) 0 else (
-                appbar?.y?.plus(
-                    view?.rootWindowInsetsCompat?.getInsets(systemBars())?.top ?: 0
-                ) ?: 0f
-                ).roundToInt() + 30.dpToPx
+            val appbarOffset = -activityBinding.appBar.preLayoutHeight +
+                activityBinding.toolbar.height
+            //                if (appbar?.y ?: 0f > -20) 0 else (
+//                appbar?.y?.plus(
+//                    view?.rootWindowInsetsCompat?.getInsets(systemBars())?.top ?: 0
+//                ) ?: 0f
+//                ).roundToInt() + 30.dpToPx
             val previousHeader = adapter.getItem(adapter.indexOf(pos - 1)) as? LibraryHeaderItem
             (binding.libraryGridRecycler.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
                 headerPosition,

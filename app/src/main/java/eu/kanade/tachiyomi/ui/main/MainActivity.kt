@@ -29,6 +29,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
+import androidx.core.view.children
+import androidx.core.view.forEach
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
@@ -148,6 +150,14 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
 
     val toolbarHeight: Int
         get() = max(binding.toolbar.height, binding.cardFrame.height)
+
+    fun bigToolbarHeight(includeSearch: Boolean): Int {
+        return if (binding.appBar.smallToolbarMode) {
+            toolbarHeight
+        } else {
+            binding.bigToolbar.height + (toolbarHeight * if (includeSearch) 2 else 1)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -330,7 +340,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                     handler: ControllerChangeHandler
                 ) {
                     syncActivityViewWithController(to, from, isPush)
-                    binding.appBar.y = 0f
+//                    binding.appBar.y = 0f
                     if (!isPush || router.backstackSize == 1) {
                         nav.translationY = 0f
                     }
@@ -344,7 +354,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                     container: ViewGroup,
                     handler: ControllerChangeHandler
                 ) {
-                    binding.appBar.y = 0f
+//                    binding.appBar.y = 0f
                     nav.translationY = 0f
                     showDLQueueTutorial()
                     if (router.backstackSize == 1) {
@@ -361,7 +371,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
 
         syncActivityViewWithController(router.backstack.lastOrNull()?.controller)
 
-        val navIcon = if (router.backstackSize > 1) backDrawable else searchDrawable
+        val navIcon = if (router.backstackSize > 1) backDrawable else null
         binding.toolbar.navigationIcon = navIcon
         (router.backstack.lastOrNull()?.controller as? BaseController<*>)?.setTitle()
         (router.backstack.lastOrNull()?.controller as? SettingsController)?.setTitle()
@@ -401,18 +411,39 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         setFloatingToolbar(canShowFloatingToolbar(router.backstack.lastOrNull()?.controller), changeBG = false)
     }
 
-    open fun setFloatingToolbar(show: Boolean, solidBG: Boolean = false, changeBG: Boolean = true) {
+    override fun onTitleChanged(title: CharSequence?, color: Int) {
+        super.onTitleChanged(title, color)
+        binding.cardToolbar.title = searchTitle
+        binding.appBar.setTitle(title)
+    }
+
+    var searchTitle: String?
+        get() {
+            return try {
+                (router.backstack.lastOrNull()?.controller as? BaseController<*>)?.getSearchTitle()
+                    ?: (router.backstack.lastOrNull()?.controller as? SettingsController)?.getSearchTitle()
+            } catch (_: Exception) {
+                binding.cardToolbar.title?.toString()
+            }
+        }
+        set(title) {
+            binding.cardToolbar.title = title
+        }
+
+    open fun setFloatingToolbar(show: Boolean, solidBG: Boolean = false, changeBG: Boolean = true, showSearchAnyway: Boolean = false) {
         val oldTB = currentToolbar
-        currentToolbar = if (show) {
+        val onSearchController = !this::router.isInitialized ||
+            router.backstack.lastOrNull()?.controller is FloatingSearchInterface
+        currentToolbar = if (show && showSearchAnyway && onSearchController) {
             binding.cardToolbar
         } else {
             binding.toolbar
         }
         if (oldTB != currentToolbar) {
-            setSupportActionBar(currentToolbar)
+            setSupportActionBar(if (showSearchAnyway) currentToolbar else binding.toolbar)
         }
-        binding.toolbar.isVisible = !show
-        binding.cardFrame.isVisible = show
+        binding.toolbar.isVisible = true
+        binding.cardFrame.isVisible = (show || showSearchAnyway) && onSearchController
         val bgColor = binding.appBar.backgroundColor ?: Color.TRANSPARENT
         if (changeBG && (if (solidBG) bgColor == Color.TRANSPARENT else false)) {
             binding.appBar.setBackgroundColor(
@@ -421,18 +452,30 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         }
         currentToolbar?.setNavigationOnClickListener {
             val rootSearchController = router.backstack.lastOrNull()?.controller
-            if (rootSearchController is RootSearchInterface) {
-                rootSearchController.expandSearch()
+            if (rootSearchController is RootSearchInterface || currentToolbar != it) {
+                binding.cardToolbar.menu.findItem(R.id.action_search)?.expandActionView()
             } else onBackPressed()
         }
         if (oldTB != currentToolbar) {
             invalidateOptionsMenu()
+            val menuItems = oldTB?.menu?.children
+            oldTB?.menu?.forEach {
+                it.isVisible = false
+//                if (it.itemId != R.id.action_search) {
+//                    oldTB.menu.removeItem(it.itemId)
+//                }
+            }
         }
+        if (showSearchAnyway) {
+            val onRoot = !this::router.isInitialized || router.backstackSize == 1
+            binding.cardToolbar.navigationIcon = if (!show || onRoot) searchDrawable else backDrawable
+        }
+        binding.cardToolbar.title = searchTitle
     }
 
     fun setDismissIcon(enabled: Boolean) {
         binding.cardToolbar.navigationIcon = if (enabled) dismissDrawable else searchDrawable
-        binding.toolbar.navigationIcon = if (enabled) dismissDrawable else searchDrawable
+        binding.toolbar.navigationIcon = if (enabled) dismissDrawable else null
     }
 
     private fun setNavBarColor(insets: WindowInsetsCompat?) {
@@ -761,7 +804,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         val searchItem = menu?.findItem(R.id.action_search)
-        if (currentToolbar == binding.cardToolbar) {
+        if (router.backstack.lastOrNull()?.controller is FloatingSearchInterface) {
             searchItem?.isVisible = false
         }
         return super.onPrepareOptionsMenu(menu)
@@ -836,8 +879,8 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         setFloatingToolbar(canShowFloatingToolbar(to))
         val onRoot = router.backstackSize == 1
         val navIcon = if (onRoot) searchDrawable else backDrawable
-        binding.toolbar.navigationIcon = navIcon
-        binding.cardToolbar.navigationIcon = navIcon
+        binding.toolbar.navigationIcon = if (onRoot) null else backDrawable
+        binding.cardToolbar.navigationIcon = searchDrawable
         binding.cardToolbar.subtitle = null
 
         nav.visibility = if (!hideBottomNav) View.VISIBLE else nav.visibility

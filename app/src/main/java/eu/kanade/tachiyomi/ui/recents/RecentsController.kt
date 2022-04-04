@@ -115,7 +115,13 @@ class RecentsController(bundle: Bundle? = null) :
     override fun getTitle(): String? {
         return if (showingDownloads) {
             resources?.getString(R.string.download_queue)
-        } else searchTitle(
+        } else {
+            view?.context?.getString(R.string.recents)
+        }
+    }
+
+    override fun getSearchTitle(): String? {
+        return searchTitle(
             view?.context?.getString(
                 when (presenter.viewType) {
                     RecentsPresenter.VIEW_TYPE_ONLY_HISTORY -> R.string.history

@@ -427,8 +427,11 @@ fun setCards(
     mainCard.strokeWidth = if (showOutline) 1.dpToPx else 0
 }
 
-val View.backgroundColor
+var View.backgroundColor: Int?
     get() = (background as? ColorDrawable)?.color
+    set(value) {
+        background = (if (value == null) null else ColorDrawable(value))
+    }
 
 /**
  * Returns this ViewGroup's first descendant of specified class

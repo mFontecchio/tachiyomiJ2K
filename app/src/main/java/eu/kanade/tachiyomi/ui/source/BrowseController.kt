@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.ui.source
 
 import android.app.Activity
+import android.content.Context
 import android.graphics.Color
 import android.os.Parcelable
 import android.view.LayoutInflater
@@ -14,6 +15,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePaddingRelative
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bluelinelabs.conductor.ControllerChangeHandler
 import com.bluelinelabs.conductor.ControllerChangeType
@@ -47,6 +49,7 @@ import eu.kanade.tachiyomi.util.system.openInBrowser
 import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
 import eu.kanade.tachiyomi.util.system.spToPx
 import eu.kanade.tachiyomi.util.view.activityBinding
+import eu.kanade.tachiyomi.util.view.checkHeightThen
 import eu.kanade.tachiyomi.util.view.collapse
 import eu.kanade.tachiyomi.util.view.expand
 import eu.kanade.tachiyomi.util.view.isCollapsed
@@ -91,6 +94,7 @@ class BrowseController :
         private set
 
     var headerHeight = 0
+    var smallHeaderHeight = 0
 
     var showingExtensions = false
 
@@ -111,7 +115,13 @@ class BrowseController :
                     else -> R.string.source_migration
                 }
             )
-        } else searchTitle(view?.context?.getString(R.string.sources)?.lowercase(Locale.ROOT))
+        } else {
+            view?.context?.getString(R.string.browse)
+        }
+    }
+
+    override fun getSearchTitle(): String? {
+        return searchTitle(view?.context?.getString(R.string.sources)?.lowercase(Locale.ROOT))
     }
 
     val presenter = SourcePresenter(this)
@@ -123,7 +133,7 @@ class BrowseController :
 
         adapter = SourceAdapter(this)
         // Create binding.sourceRecycler and set adapter.
-        binding.sourceRecycler.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(view.context)
+        binding.sourceRecycler.layoutManager = LinearLayoutManagerAccurateOffset(view.context)
 
         binding.sourceRecycler.adapter = adapter
         adapter?.isSwipeEnabled = true
@@ -134,11 +144,10 @@ class BrowseController :
         array.recycle()
         scrollViewWith(
             binding.sourceRecycler,
-            customPadding = true,
             afterInsets = {
-                headerHeight = it.getInsets(systemBars()).top + appBarHeight
+                smallHeaderHeight = it.getInsets(systemBars()).top + appBarHeight
+                headerHeight = binding.sourceRecycler.paddingTop
                 binding.sourceRecycler.updatePaddingRelative(
-                    top = headerHeight,
                     bottom = (activityBinding?.bottomNav?.height ?: it.getBottomGestureInsets()) + 58.spToPx
                 )
                 if (activityBinding?.bottomNav == null) {
@@ -216,6 +225,10 @@ class BrowseController :
         presenter.onCreate()
         if (presenter.sourceItems.isNotEmpty()) {
             setSources(presenter.sourceItems, presenter.lastUsedItem)
+        } else {
+            binding.sourceRecycler.checkHeightThen {
+                binding.sourceRecycler.scrollToPosition(0)
+            }
         }
     }
 
@@ -572,5 +585,35 @@ class BrowseController :
 
     companion object {
         const val HELP_URL = "https://tachiyomi.org/help/guides/source-migration/"
+    }
+}
+
+class LinearLayoutManagerAccurateOffset(context: Context?) : LinearLayoutManager(context) {
+
+    // map of child adapter position to its height.
+    private val childSizesMap = mutableMapOf<Int, Int>()
+
+    override fun onLayoutCompleted(state: RecyclerView.State) {
+        super.onLayoutCompleted(state)
+        for (i in 0 until childCount) {
+            val child = getChildAt(i) ?: return
+            childSizesMap[getPosition(child)] = child.height
+        }
+    }
+
+    override fun computeVerticalScrollOffset(state: RecyclerView.State): Int {
+        if (childCount == 0) {
+            return 0
+        }
+        val firstChild = getChildAt(0) ?: return 0
+        val firstChildPosition = (0 to childCount).toList()
+            .mapNotNull { getChildAt(it) }
+            .mapNotNull { pos -> getPosition(pos).takeIf { it != RecyclerView.NO_POSITION } }
+            .minOrNull() ?: 0
+        var scrolledY: Int = -firstChild.y.toInt()
+        for (i in 0 until firstChildPosition) {
+            scrolledY += childSizesMap[i] ?: 0
+        }
+        return scrolledY + paddingTop
     }
 }

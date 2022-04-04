@@ -20,6 +20,7 @@ import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.ui.base.controller.BaseController
 import eu.kanade.tachiyomi.ui.main.FloatingSearchInterface
+import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.util.system.getResourceColor
 import eu.kanade.tachiyomi.util.view.scrollViewWith
 import kotlinx.coroutines.MainScope
@@ -98,10 +99,16 @@ abstract class SettingsController : PreferenceController() {
     }
 
     open fun getTitle(): String? {
-        if (this is FloatingSearchInterface) {
-            return searchTitle(preferenceScreen?.title?.toString()?.lowercase(Locale.ROOT))
-        }
+//        if (this is FloatingSearchInterface) {
+//            return searchTitle(preferenceScreen?.title?.toString()?.lowercase(Locale.ROOT))
+//        }
         return preferenceScreen?.title?.toString()
+    }
+
+    fun getSearchTitle(): String? {
+        return if (this is FloatingSearchInterface) {
+            searchTitle(preferenceScreen?.title?.toString()?.lowercase(Locale.ROOT))
+        } else null
     }
 
     fun setTitle() {
@@ -113,7 +120,8 @@ abstract class SettingsController : PreferenceController() {
             parentController = parentController.parentController
         }
 
-        (activity as? AppCompatActivity)?.supportActionBar?.title = getTitle()
+        (activity as? AppCompatActivity)?.title = getTitle()
+        (activity as? MainActivity)?.searchTitle = getSearchTitle()
     }
 
     override fun onChangeStarted(handler: ControllerChangeHandler, type: ControllerChangeType) {

@@ -120,6 +120,10 @@ open class BrowseSourceController(bundle: Bundle) :
     }
 
     override fun getTitle(): String? {
+        return presenter.source.name
+    }
+
+    override fun getSearchTitle(): String? {
         return searchTitle(presenter.source.name)
     }
 
