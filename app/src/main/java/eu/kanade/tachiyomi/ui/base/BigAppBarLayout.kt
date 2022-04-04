@@ -57,7 +57,6 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
     }
 
     override fun setTranslationY(translationY: Float) {
-        yAnimator?.cancel()
         val realHeight = (preLayoutHeight + paddingTop).toFloat()
         val newY = MathUtils.clamp(translationY, -realHeight, 0f)
         super.setTranslationY(newY)
@@ -91,8 +90,10 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
                 if (tabsFrameLayout?.isVisible == true) 48.dpToPx else 0
         }
 
-    fun updateViewsAfterY(recyclerView: RecyclerView) {
-        yAnimator?.cancel()
+    fun updateViewsAfterY(recyclerView: RecyclerView, cancelAnim: Boolean = true) {
+        if (cancelAnim) {
+            yAnimator?.cancel()
+        }
         val offset = recyclerView.computeVerticalScrollOffset()
         val bigHeight = bigView?.height ?: 0
         val realHeight = preLayoutHeight + paddingTop
@@ -154,7 +155,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
             yAnimator = animate().y(lastY)
                 .setDuration(shortAnimationDuration.toLong())
             yAnimator?.setUpdateListener {
-                updateViewsAfterY(recyclerView)
+                updateViewsAfterY(recyclerView, false)
             }
 //            yAnimator.setListener(
 //                EndAnimatorListener {
