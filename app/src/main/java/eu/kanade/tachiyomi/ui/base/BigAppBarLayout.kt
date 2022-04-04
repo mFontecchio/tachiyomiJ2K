@@ -30,6 +30,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
     var mainToolbar: CenteredToolbar? = null
     var bigTitleView: TextView? = null
     var bigView: FrameLayout? = null
+    var tabsFrameLayout: FrameLayout? = null
     var smallToolbarMode = false
     var yAnimator: ViewPropertyAnimator? = null
 
@@ -47,6 +48,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         mainToolbar = findViewById(R.id.toolbar)
         bigView = findViewById(R.id.big_toolbar)
         cardFrame = findViewById(R.id.card_frame)
+        tabsFrameLayout = findViewById(R.id.tabs_frame_layout)
     }
 
     fun setTitle(title: CharSequence?) {
@@ -85,7 +87,8 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
             bigTitleView?.measure(widthMeasureSpec, heightMeasureSpec)
             val textHeight = (bigTitleView?.measuredHeight ?: 0) + 64.dpToPx
             array.recycle()
-            return appBarHeight + if (smallToolbarMode) 0 else textHeight
+            return appBarHeight + if (smallToolbarMode) 0 else textHeight +
+                if (tabsFrameLayout?.isVisible == true) 48.dpToPx else 0
         }
 
     fun updateViewsAfterY(recyclerView: RecyclerView) {
@@ -93,8 +96,9 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         val offset = recyclerView.computeVerticalScrollOffset()
         val bigHeight = bigView?.height ?: 0
         val realHeight = preLayoutHeight + paddingTop
-        val smallHeight = -realHeight + toolbarHeight
-        val newY = if (offset < realHeight - toolbarHeight) {
+        val tabHeight = if (tabsFrameLayout?.isVisible == true) 48.dpToPx else 0
+        val smallHeight = -realHeight + toolbarHeight + tabHeight
+        val newY = if (offset < realHeight - toolbarHeight - tabHeight) {
             -offset.toFloat()
         } else {
             MathUtils.clamp(
@@ -102,11 +106,11 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
                 -realHeight.toFloat() + top,
                 max(
                     smallHeight,
-                    if (offset > realHeight - toolbarHeight) smallHeight else min(-offset.toFloat(), 0f)
+                    if (offset > realHeight - toolbarHeight - tabHeight) smallHeight else min(-offset.toFloat(), 0f)
                 ) + top.toFloat()
             )
         }
-        setToolbar(offset > height - toolbarHeight)
+        setToolbar(offset > height - toolbarHeight - tabHeight)
 
         translationY = newY
         mainToolbar?.let { mainToolbar ->
@@ -183,7 +187,11 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
             }
             mainToolbar?.isInvisible = false
 
-            cardFrame?.backgroundColor = mainActivity.getResourceColor(R.attr.colorSurface)
+            if (tabsFrameLayout?.isVisible == false) {
+                cardFrame?.backgroundColor = mainActivity.getResourceColor(R.attr.colorSurface)
+            } else {
+                cardFrame?.backgroundColor = null
+            }
         }
 //        if (cardFrame?.isVisible == false) {
 //            bigView?.backgroundColor = null

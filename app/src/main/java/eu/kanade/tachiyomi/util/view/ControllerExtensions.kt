@@ -204,9 +204,9 @@ fun Controller.scrollViewWith(
     val attrsArray = intArrayOf(R.attr.mainActionBarSize)
     val array = recycler.context.obtainStyledAttributes(attrsArray)
     var appBarHeight = (
-        if (bigToolbarHeight ?: 0 > 0) bigToolbarHeight!!
+        if (bigToolbarHeight ?: 0 > 0) bigToolbarHeight!! + (if (includeTabView) tabBarHeight else 0)
         else activityBinding?.appBar?.preLayoutHeight ?: array.getDimensionPixelSize(0, 0)
-        ) + (if (includeTabView) tabBarHeight else 0)
+        )
     array.recycle()
     swipeRefreshLayout?.setDistanceToTriggerSync(150.dpToPx)
     activityBinding!!.appBar.doOnLayout {
@@ -242,7 +242,7 @@ fun Controller.scrollViewWith(
         val activityBinding = activityBinding ?: return@f true
         return@f recycler.computeVerticalScrollOffset() <=
             activityBinding.appBar.height - activityBinding.appBar.paddingTop -
-            activityBinding.toolbar.height
+            activityBinding.toolbar.height - if (includeTabView) tabBarHeight else 0
     }
     recycler.doOnApplyWindowInsetsCompat { view, insets, _ ->
         val headerHeight = insets.getInsets(systemBars()).top + appBarHeight
@@ -491,8 +491,8 @@ fun Controller.scrollViewWith(
                                 animator?.start()
                             }
                         }
-                        if (recycler.canScrollVertically(-1) && !isToolbarColor) colorToolbar(true)
-                        else if (!recycler.canScrollVertically(-1) && isToolbarColor) colorToolbar(false)
+                        val notAtTop = !atTopOfRecyclerView()
+                        if (notAtTop != isToolbarColor) colorToolbar(notAtTop)
                     }
                 } else if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
                     val view = activity?.window?.currentFocus ?: return
