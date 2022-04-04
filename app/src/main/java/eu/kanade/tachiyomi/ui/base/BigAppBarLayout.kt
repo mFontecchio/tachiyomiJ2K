@@ -35,6 +35,9 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
 
     fun hideBigView(useSmall: Boolean) {
         bigView?.isGone = useSmall
+        if (useSmall) {
+            mainToolbar?.backgroundColor = null
+        }
     }
 
     override fun onFinishInflate() {
@@ -53,7 +56,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
 
     override fun setTranslationY(translationY: Float) {
         yAnimator?.cancel()
-        val realHeight = max(preLayoutHeight + paddingTop, height).toFloat()
+        val realHeight = (preLayoutHeight + paddingTop).toFloat()
         val newY = MathUtils.clamp(translationY, -realHeight, 0f)
         super.setTranslationY(newY)
     }
@@ -89,7 +92,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         yAnimator?.cancel()
         val offset = recyclerView.computeVerticalScrollOffset()
         val bigHeight = bigView?.height ?: 0
-        val realHeight = max(preLayoutHeight + paddingTop, height)
+        val realHeight = preLayoutHeight + paddingTop
         val smallHeight = -realHeight + toolbarHeight
         val newY = if (offset < realHeight - toolbarHeight) {
             -offset.toFloat()
@@ -179,7 +182,9 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
                 mainActivity.setFloatingToolbar(false, showSearchAnyway = true)
             }
             mainToolbar?.isInvisible = false
-            mainToolbar?.backgroundColor = mainActivity.getResourceColor(R.attr.colorSurface)
+            if (!smallToolbarMode) {
+                mainToolbar?.backgroundColor = mainActivity.getResourceColor(R.attr.colorSurface)
+            }
             cardFrame?.backgroundColor = mainActivity.getResourceColor(R.attr.colorSurface)
         }
     }

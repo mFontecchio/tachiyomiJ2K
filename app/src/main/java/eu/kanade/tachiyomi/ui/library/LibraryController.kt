@@ -1039,8 +1039,10 @@ class LibraryController(
         if (justStarted && freshStart) {
             binding.libraryGridRecycler.recycler.doOnLayout {
                 scrollToHeader(activeCategory)
-                activityBinding?.appBar?.y = 0f
-                activityBinding?.appBar?.updateViewsAfterY(binding.libraryGridRecycler.recycler)
+                binding.libraryGridRecycler.recycler.post {
+                    activityBinding?.appBar?.y = 0f
+                    activityBinding?.appBar?.updateViewsAfterY(binding.libraryGridRecycler.recycler)
+                }
             }
         }
         binding.libraryGridRecycler.recycler.post {
@@ -1158,7 +1160,7 @@ class LibraryController(
         if (headerPosition > -1) {
             val activityBinding = activityBinding ?: return
             binding.libraryGridRecycler.recycler.suppressLayout(true)
-            val appbarOffset = -activityBinding.appBar.preLayoutHeight +
+            val appbarOffset = if (pos == 0) 0 else -activityBinding.appBar.preLayoutHeight +
                 activityBinding.toolbar.height
             //                if (appbar?.y ?: 0f > -20) 0 else (
 //                appbar?.y?.plus(
