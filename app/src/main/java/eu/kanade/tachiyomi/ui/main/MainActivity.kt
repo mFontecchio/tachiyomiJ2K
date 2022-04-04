@@ -310,10 +310,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         }
 
         binding.toolbar.setNavigationOnClickListener {
-            val rootSearchController = router.backstack.lastOrNull()?.controller
-            if (rootSearchController is RootSearchInterface) {
-                rootSearchController.expandSearch()
-            } else onBackPressed()
+            onBackPressed()
         }
 
         binding.cardToolbar.setNavigationOnClickListener {
