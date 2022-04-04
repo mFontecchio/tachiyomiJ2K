@@ -61,7 +61,6 @@
             android:layout_width="match_parent"
             android:paddingTop="52dp"
             android:paddingBottom="12dp"
-            android:background="?attr/colorSurface"
             android:layout_height="wrap_content">
 
             <com.google.android.material.textview.MaterialTextView

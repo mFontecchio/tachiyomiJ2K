@@ -182,10 +182,14 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
                 mainActivity.setFloatingToolbar(false, showSearchAnyway = true)
             }
             mainToolbar?.isInvisible = false
-            if (!smallToolbarMode) {
-                mainToolbar?.backgroundColor = mainActivity.getResourceColor(R.attr.colorSurface)
-            }
+
             cardFrame?.backgroundColor = mainActivity.getResourceColor(R.attr.colorSurface)
         }
+//        if (cardFrame?.isVisible == false) {
+//            bigView?.backgroundColor = null
+//        } else {
+//            bigView?.backgroundColor = mainActivity.getResourceColor(R.attr.colorSurface)
+//            //                mainToolbar?.backgroundColor = mainActivity.getResourceColor(R.attr.colorSurface)
+//        }
     }
 }

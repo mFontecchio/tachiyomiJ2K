@@ -238,6 +238,12 @@ fun Controller.scrollViewWith(
                 ) + appBarHeight
         )
     }
+    val atTopOfRecyclerView: () -> Boolean = f@{
+        val activityBinding = activityBinding ?: return@f true
+        return@f recycler.computeVerticalScrollOffset() <=
+            activityBinding.appBar.height - activityBinding.appBar.paddingTop -
+            activityBinding.toolbar.height
+    }
     recycler.doOnApplyWindowInsetsCompat { view, insets, _ ->
         val headerHeight = insets.getInsets(systemBars()).top + appBarHeight
         if (!customPadding) view.updatePaddingRelative(
@@ -363,11 +369,11 @@ fun Controller.scrollViewWith(
             }
         }
     )
-    colorToolbar(recycler.canScrollVertically(-1))
+    colorToolbar(!atTopOfRecyclerView())
 
     recycler.post {
         activityBinding!!.appBar.updateViewsAfterY(recycler)
-        colorToolbar(recycler.canScrollVertically(-1))
+        colorToolbar(!atTopOfRecyclerView())
     }
     val isTablet = recycler.context.isTablet() && recycler.context.resources.configuration?.orientation == Configuration.ORIENTATION_LANDSCAPE
     recycler.addOnScrollListener(
@@ -429,10 +435,9 @@ fun Controller.scrollViewWith(
                             ) {
                                 colorToolbar(true)
                             }
-                        } else {
-                            val notAtTop = recycler.canScrollVertically(-1)
-                            if (notAtTop != isToolbarColor) colorToolbar(notAtTop)
                         }
+                        val notAtTop = !atTopOfRecyclerView()
+                        if (notAtTop != isToolbarColor) colorToolbar(notAtTop)
                         lastY = activityBinding!!.appBar.y
                     }
                 }

@@ -450,7 +450,11 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 if (show && !solidBG) Color.TRANSPARENT else getResourceColor(R.attr.colorSurface)
             )
         }
-        currentToolbar?.setNavigationOnClickListener {
+        binding.toolbar.setNavigationOnClickListener {
+            onBackPressed()
+        }
+
+        binding.cardToolbar.setNavigationOnClickListener {
             val rootSearchController = router.backstack.lastOrNull()?.controller
             if (rootSearchController is RootSearchInterface || currentToolbar != it) {
                 binding.cardToolbar.menu.findItem(R.id.action_search)?.expandActionView()
