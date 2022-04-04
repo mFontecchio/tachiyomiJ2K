@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.ui.base
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.View
 import android.view.ViewPropertyAnimator
 import android.widget.FrameLayout
 import android.widget.TextView
@@ -29,7 +30,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
     var cardFrame: FrameLayout? = null
     var mainToolbar: CenteredToolbar? = null
     var bigTitleView: TextView? = null
-    var bigView: FrameLayout? = null
+    var bigView: View? = null
     var tabsFrameLayout: FrameLayout? = null
     var smallToolbarMode = false
     var yAnimator: ViewPropertyAnimator? = null

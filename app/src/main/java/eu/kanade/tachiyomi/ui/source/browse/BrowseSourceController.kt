@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.ui.source.browse
 
 import android.app.Activity
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -27,6 +28,7 @@ import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.databinding.BrowseSourceControllerBinding
 import eu.kanade.tachiyomi.source.CatalogueSource
 import eu.kanade.tachiyomi.source.LocalSource
+import eu.kanade.tachiyomi.source.icon
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.online.HttpSource
@@ -125,6 +127,10 @@ open class BrowseSourceController(bundle: Bundle) :
 
     override fun getSearchTitle(): String? {
         return searchTitle(presenter.source.name)
+    }
+
+    override fun getBigIcon(): Drawable? {
+        return presenter.source.icon()
     }
 
     override fun createPresenter(): BrowseSourcePresenter {

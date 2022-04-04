@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.ui.base.controller
 
 import android.app.Activity
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -9,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.forEach
+import androidx.core.view.isVisible
 import androidx.viewbinding.ViewBinding
 import com.bluelinelabs.conductor.Controller
 import com.bluelinelabs.conductor.ControllerChangeHandler
@@ -87,6 +89,10 @@ abstract class BaseController<VB : ViewBinding>(bundle: Bundle? = null) :
         return null
     }
 
+    open fun getBigIcon(): Drawable? {
+        return null
+    }
+
     override fun onActivityPaused(activity: Activity) {
         super.onActivityPaused(activity)
         removeQueryListener()
@@ -104,6 +110,13 @@ abstract class BaseController<VB : ViewBinding>(bundle: Bundle? = null) :
         if (router.backstack.lastOrNull()?.controller == this) {
             (activity as? AppCompatActivity)?.title = getTitle()
             (activity as? MainActivity)?.searchTitle = getSearchTitle()
+            val icon = getBigIcon()
+            activityBinding?.bigIcon?.isVisible = icon != null
+            if (icon != null) {
+                activityBinding?.bigIcon?.setImageDrawable(getBigIcon())
+            } else {
+                activityBinding?.bigIcon?.setImageDrawable(getBigIcon())
+            }
         }
     }
 
