@@ -18,7 +18,6 @@ import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePaddingRelative
 import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bluelinelabs.conductor.ControllerChangeHandler
 import com.bluelinelabs.conductor.ControllerChangeType
@@ -47,6 +46,7 @@ import eu.kanade.tachiyomi.ui.main.RootSearchInterface
 import eu.kanade.tachiyomi.ui.manga.MangaDetailsController
 import eu.kanade.tachiyomi.ui.reader.ReaderActivity
 import eu.kanade.tachiyomi.ui.recents.options.TabbedRecentsOptionsSheet
+import eu.kanade.tachiyomi.ui.source.LinearLayoutManagerAccurateOffset
 import eu.kanade.tachiyomi.ui.source.browse.ProgressItem
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.getBottomGestureInsets
@@ -146,7 +146,7 @@ class RecentsController(bundle: Bundle? = null) :
         adapter = RecentMangaAdapter(this)
         adapter.setPreferenceFlows()
         binding.recycler.adapter = adapter
-        binding.recycler.layoutManager = LinearLayoutManager(view.context)
+        binding.recycler.layoutManager = LinearLayoutManagerAccurateOffset(view.context)
         binding.recycler.setHasFixedSize(true)
         binding.recycler.recycledViewPool.setMaxRecycledViews(0, 0)
         binding.recycler.addItemDecoration(
@@ -174,7 +174,7 @@ class RecentsController(bundle: Bundle? = null) :
                     height = appBarHeight + it.getInsets(systemBars()).top
                 }
                 binding.recentsEmptyView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                    topMargin = headerHeight
+                    topMargin = (activityBinding?.appBar?.height ?: 0) + 48.dpToPx
                     bottomMargin =
                         activityBinding?.bottomNav?.height ?: it.getInsets(systemBars()).bottom
                 }
