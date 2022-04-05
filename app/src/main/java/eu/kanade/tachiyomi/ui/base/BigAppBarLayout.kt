@@ -39,6 +39,13 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         bigView?.isGone = useSmall
         if (useSmall) {
             mainToolbar?.backgroundColor = null
+            val toolbarTextView = mainToolbar?.toolbarTitle ?: return
+            toolbarTextView.setTextColor(
+                ColorUtils.setAlphaComponent(
+                    toolbarTextView.currentTextColor,
+                    255
+                )
+            )
         }
     }
 

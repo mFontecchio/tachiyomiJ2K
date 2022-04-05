@@ -2,17 +2,21 @@ package eu.kanade.tachiyomi.ui.source
 
 import android.app.Activity
 import android.content.Context
-import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
+import android.view.RoundedCorner
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
+import androidx.core.view.isInvisible
+import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePaddingRelative
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -58,6 +62,7 @@ import eu.kanade.tachiyomi.util.view.requestFilePermissionsSafe
 import eu.kanade.tachiyomi.util.view.scrollViewWith
 import eu.kanade.tachiyomi.util.view.setOnQueryTextChangeListener
 import eu.kanade.tachiyomi.util.view.snack
+import eu.kanade.tachiyomi.util.view.toolbarHeight
 import eu.kanade.tachiyomi.util.view.withFadeTransaction
 import kotlinx.parcelize.Parcelize
 import uy.kohesive.injekt.Injekt
@@ -65,7 +70,7 @@ import uy.kohesive.injekt.api.get
 import java.util.Date
 import java.util.Locale
 import kotlin.math.max
-import kotlin.math.roundToInt
+import kotlin.math.min
 
 /**
  * This controller shows and manages the different catalogues enabled by the user.
@@ -100,6 +105,9 @@ class BrowseController :
 
     var snackbar: Snackbar? = null
 
+    private var ogRadius = 0f
+    private var deviceRadius = 0f
+
     /**
      * Called when controller is initialized.
      */
@@ -108,16 +116,7 @@ class BrowseController :
     }
 
     override fun getTitle(): String? {
-        return if (showingExtensions) {
-            view?.context?.getString(
-                when (binding.bottomSheet.tabs.selectedTabPosition) {
-                    0 -> R.string.extensions
-                    else -> R.string.source_migration
-                }
-            )
-        } else {
-            view?.context?.getString(R.string.browse)
-        }
+        return view?.context?.getString(R.string.browse)
     }
 
     override fun getSearchTitle(): String? {
@@ -153,6 +152,11 @@ class BrowseController :
                 if (activityBinding?.bottomNav == null) {
                     setBottomPadding()
                 }
+                deviceRadius = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    it.toWindowInsets()?.getRoundedCorner(RoundedCorner.POSITION_TOP_LEFT)?.radius?.toFloat() ?: ogRadius
+                } else {
+                    ogRadius
+                }
             },
             onBottomNavUpdate = {
                 setBottomPadding()
@@ -176,12 +180,12 @@ class BrowseController :
             object : BottomSheetBehavior
             .BottomSheetCallback() {
                 override fun onSlide(bottomSheet: View, progress: Float) {
-                    activityBinding?.appBar?.y = max(activityBinding!!.appBar.y, -headerHeight * (1 - progress))
                     val oldShow = showingExtensions
                     showingExtensions = progress > 0.92f
                     if (oldShow != showingExtensions) {
                         updateTitleAndMenu()
                     }
+                    binding.bottomSheet.sheetToolbar.isVisible = true
                     setBottomSheetTabs(max(0f, progress))
                 }
 
@@ -193,14 +197,12 @@ class BrowseController :
                         binding.bottomSheet.root.isExpanding = false
                     }
                     val extBottomSheet = binding.bottomSheet.root
-                    if (state == BottomSheetBehavior.STATE_EXPANDED) {
-                        activityBinding?.appBar?.y = 0f
-                    }
                     if (state == BottomSheetBehavior.STATE_EXPANDED ||
                         state == BottomSheetBehavior.STATE_COLLAPSED
                     ) {
                         binding.bottomSheet.root.sheetBehavior?.isDraggable = true
                         showingExtensions = state == BottomSheetBehavior.STATE_EXPANDED
+                        binding.bottomSheet.sheetToolbar.isVisible = showingExtensions
                         updateTitleAndMenu()
                         if (state == BottomSheetBehavior.STATE_EXPANDED) {
                             extBottomSheet.fetchOnlineExtensionsIfNeeded()
@@ -222,6 +224,9 @@ class BrowseController :
         if (showingExtensions) {
             binding.bottomSheet.root.sheetBehavior?.expand()
         }
+        ogRadius = view.resources.getDimension(R.dimen.rounded_radius)
+
+        setSheetToolbar()
         presenter.onCreate()
         if (presenter.sourceItems.isNotEmpty()) {
             setSources(presenter.sourceItems, presenter.lastUsedItem)
@@ -232,23 +237,72 @@ class BrowseController :
         }
     }
 
+    private fun updateSheetMenu() {
+        binding.bottomSheet.sheetToolbar.title =
+            view?.context?.getString(
+                if (binding.bottomSheet.tabs.selectedTabPosition == 0) R.string.extensions
+                else R.string.source_migration
+            )
+        binding.bottomSheet.sheetToolbar.menu.clear()
+        binding.bottomSheet.sheetToolbar.inflateMenu(
+            if (binding.bottomSheet.tabs.selectedTabPosition == 0) R.menu.extension_main
+            else R.menu.migration_main
+        )
+
+        // Initialize search option.
+        binding.bottomSheet.sheetToolbar.menu.findItem(R.id.action_search)?.let { searchItem ->
+            val searchView = searchItem.actionView as SearchView
+
+            // Change hint to show global search.
+            searchView.queryHint = view?.context?.getString(R.string.search_extensions)
+            searchItem.collapseActionView()
+            if (extQuery.isNotEmpty()) {
+                searchItem.expandActionView()
+                searchView.setQuery(extQuery, true)
+                searchView.clearFocus()
+            }
+            // Create query listener which opens the global search view.
+            setOnQueryTextChangeListener(searchView) {
+                extQuery = it ?: ""
+                binding.bottomSheet.root.drawExtensions()
+                true
+            }
+        }
+    }
+
+    private fun setSheetToolbar() {
+        binding.bottomSheet.sheetToolbar.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                // Initialize option to open catalogue settings.
+                R.id.action_filter -> {
+                    val controller = ExtensionFilterController()
+                    router.pushController(
+                        RouterTransaction.with(controller)
+                            .popChangeHandler(SettingsSourcesFadeChangeHandler())
+                            .pushChangeHandler(FadeChangeHandler())
+                    )
+                }
+                R.id.action_migration_guide -> {
+                    activity?.openInBrowser(HELP_URL)
+                }
+                R.id.action_sources_settings -> {
+                    router.pushController(SettingsBrowseController().withFadeTransaction())
+                }
+            }
+            return@setOnMenuItemClickListener true
+        }
+        binding.bottomSheet.sheetToolbar.setNavigationOnClickListener {
+            binding.bottomSheet.root.sheetBehavior?.collapse()
+        }
+        updateSheetMenu()
+    }
+
     fun updateTitleAndMenu() {
         if (router.backstack.lastOrNull()?.controller == this) {
             val activity = (activity as? MainActivity) ?: return
-            (activity as? MainActivity)?.setFloatingToolbar(!showingExtensions)
-            if (showingExtensions) {
-                val color = activity.getResourceColor(R.attr.colorPrimaryVariant)
-                activityBinding?.appBar?.setBackgroundColor(color)
-                activity.window?.statusBarColor =
-                    ColorUtils.setAlphaComponent(color, (0.87f * 255).roundToInt())
-            } else {
-                activityBinding?.appBar?.setBackgroundColor(Color.TRANSPARENT)
-                activity.window?.statusBarColor = activity.getResourceColor(
-                    android.R.attr.statusBarColor
-                )
-            }
-            activity.invalidateOptionsMenu()
-            setTitle()
+            (activity as? MainActivity)?.setStatusBarColorTransparent(showingExtensions)
+            updateSheetMenu()
+            activityBinding?.appBar?.isInvisible = showingExtensions
         }
     }
 
@@ -256,9 +310,29 @@ class BrowseController :
         val bottomSheet = binding.bottomSheet.root
         val halfStepProgress = (max(0.5f, progress) - 0.5f) * 2
         binding.bottomSheet.tabs.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-            topMargin = ((activityBinding?.appBar?.height?.minus(9f.dpToPx) ?: 0f) * halfStepProgress).toInt()
+            topMargin = (
+                (
+                    activityBinding?.appBar?.paddingTop
+                        ?.minus(9f.dpToPx)
+                        ?.plus(toolbarHeight ?: 0) ?: 0f
+                    ) * halfStepProgress
+                ).toInt()
         }
         binding.bottomSheet.pill.alpha = (1 - progress) * 0.25f
+        binding.bottomSheet.sheetToolbar.alpha = progress
+        if (router.backstack.lastOrNull()?.controller == this) {
+            activityBinding?.appBar?.alpha = (1 - progress * 3) + 0.5f
+        }
+
+        (binding.bottomSheet.root.background as? GradientDrawable)?.let { drawable ->
+            val lerp = min(ogRadius, deviceRadius) * (1 - progress) +
+                max(ogRadius, deviceRadius) * progress
+            drawable.shape = GradientDrawable.RECTANGLE
+            drawable.cornerRadii = floatArrayOf(lerp, lerp, lerp, lerp, 0f, 0f, 0f, 0f)
+            binding.bottomSheet.root.background = drawable
+            binding.bottomSheet.sheetLayout.background = drawable
+        }
+
         val selectedColor = ColorUtils.setAlphaComponent(
             bottomSheet.context.getResourceColor(R.attr.tabBarIconColor),
             (progress * 255).toInt()
@@ -362,6 +436,8 @@ class BrowseController :
         }
         if (!type.isEnter) {
             binding.bottomSheet.root.canExpand = false
+            activityBinding?.appBar?.alpha = 1f
+            activityBinding?.appBar?.isInvisible = false
         } else {
             binding.bottomSheet.root.presenter.refreshMigrations()
             updateTitleAndMenu()
@@ -385,7 +461,7 @@ class BrowseController :
         binding.bottomSheet.root.presenter.refreshMigrations()
         setBottomPadding()
         if (showingExtensions) {
-            activity.invalidateOptionsMenu()
+            updateSheetMenu()
         }
     }
 
@@ -475,53 +551,23 @@ class BrowseController :
      * @param inflater used to load the menu xml.
      */
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        if (onRoot) (activity as? MainActivity)?.setDismissIcon(showingExtensions)
-        if (showingExtensions) {
-            if (binding.bottomSheet.tabs.selectedTabPosition == 0) {
-                // Inflate menu
-                inflater.inflate(R.menu.extension_main, menu)
+        // Inflate menu
+        inflater.inflate(R.menu.catalogue_main, menu)
 
-                // Initialize search option.
-                val searchItem = menu.findItem(R.id.action_search)
-                val searchView = searchItem.actionView as SearchView
+        // Initialize search option.
+        val searchItem = menu.findItem(R.id.action_search)
+        val searchView = searchItem.actionView as SearchView
 
-                // Change hint to show global search.
-                searchView.queryHint = view?.context?.getString(R.string.search_extensions)
-                searchItem.collapseActionView()
-                if (extQuery.isNotEmpty()) {
-                    searchItem.expandActionView()
-                    searchView.setQuery(extQuery, true)
-                    searchView.clearFocus()
-                }
-                // Create query listener which opens the global search view.
-                setOnQueryTextChangeListener(searchView) {
-                    extQuery = it ?: ""
-                    binding.bottomSheet.root.drawExtensions()
-                    true
-                }
-                searchItem.fixExpandInvalidate()
-            } else {
-                inflater.inflate(R.menu.migration_main, menu)
-            }
-        } else {
-            // Inflate menu
-            inflater.inflate(R.menu.catalogue_main, menu)
+        // Change hint to show global search.
+        searchView.queryHint = view?.context?.getString(R.string.global_search)
 
-            // Initialize search option.
-            val searchItem = menu.findItem(R.id.action_search)
-            val searchView = searchItem.actionView as SearchView
-
-            // Change hint to show global search.
-            searchView.queryHint = view?.context?.getString(R.string.global_search)
-
-            searchItem.fixExpandInvalidate()
-            // Create query listener which opens the global search view.
-            setOnQueryTextChangeListener(searchView, true) {
-                if (!it.isNullOrBlank()) performGlobalSearch(it)
-                true
-            }
-            hideItemsIfExpanded(searchItem, menu)
+        searchItem.fixExpandInvalidate()
+        // Create query listener which opens the global search view.
+        setOnQueryTextChangeListener(searchView, true) {
+            if (!it.isNullOrBlank()) performGlobalSearch(it)
+            true
         }
+        hideItemsIfExpanded(searchItem, menu)
     }
 
     private fun performGlobalSearch(query: String) {
@@ -538,10 +584,7 @@ class BrowseController :
         when (item.itemId) {
             // Initialize option to open catalogue settings.
             R.id.action_filter -> {
-                val controller =
-                    if (showingExtensions) {
-                        ExtensionFilterController()
-                    } else SettingsSourcesController()
+                val controller = SettingsSourcesController()
                 router.pushController(
                     RouterTransaction.with(controller)
                         .popChangeHandler(SettingsSourcesFadeChangeHandler())

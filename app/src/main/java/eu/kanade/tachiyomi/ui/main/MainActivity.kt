@@ -320,6 +320,8 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
             } else onBackPressed()
         }
 
+        binding.appBar.alpha = 1f
+
         binding.cardToolbar.setOnClickListener {
             binding.cardToolbar.menu.findItem(R.id.action_search)?.expandActionView()
         }
@@ -475,8 +477,8 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
     }
 
     fun setDismissIcon(enabled: Boolean) {
-        binding.cardToolbar.navigationIcon = if (enabled) dismissDrawable else searchDrawable
-        binding.toolbar.navigationIcon = if (enabled) dismissDrawable else null
+//        binding.cardToolbar.navigationIcon = if (enabled) dismissDrawable else searchDrawable
+//        binding.toolbar.navigationIcon = if (enabled) dismissDrawable else null
     }
 
     private fun setNavBarColor(insets: WindowInsetsCompat?) {
@@ -534,6 +536,16 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 )
         }
         super.onSupportActionModeFinished(mode)
+    }
+
+    fun setStatusBarColorTransparent(show: Boolean) {
+        window?.statusBarColor = if (show) {
+            Color.TRANSPARENT
+        } else {
+            getResourceColor(
+                android.R.attr.statusBarColor
+            )
+        }
     }
 
     private fun setExtensionsBadge() {
