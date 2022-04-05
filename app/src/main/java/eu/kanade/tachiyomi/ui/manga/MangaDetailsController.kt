@@ -353,7 +353,6 @@ class MangaDetailsController :
         presenter.onDestroy()
         adapter = null
         trackingBottomSheet = null
-        updateToolbarTitleAlpha(1f)
         super.onDestroyView(view)
     }
 
