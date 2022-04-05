@@ -214,12 +214,8 @@ fun Controller.scrollViewWith(
     swipeRefreshLayout?.setDistanceToTriggerSync(150.dpToPx)
     activityBinding!!.appBar.doOnLayout {
         if (bigToolbarHeight!! > 0) {
-            val oldH = appBarHeight
             appBarHeight = bigToolbarHeight!! + if (includeTabView) tabBarHeight else 0
             recycler.requestApplyInsets()
-            if (appBarHeight > oldH) {
-                recycler.scrollToPosition(0)
-            }
         }
     }
     val updateViewsNearBottom = {
