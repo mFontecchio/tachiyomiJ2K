@@ -60,7 +60,9 @@ import eu.kanade.tachiyomi.databinding.MainActivityBinding
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.extension.api.ExtensionGithubApi
 import eu.kanade.tachiyomi.source.online.HttpSource
+import eu.kanade.tachiyomi.ui.base.BigAppBarLayout
 import eu.kanade.tachiyomi.ui.base.MaterialMenuSheet
+import eu.kanade.tachiyomi.ui.base.SmallToolbarInterface
 import eu.kanade.tachiyomi.ui.base.activity.BaseActivity
 import eu.kanade.tachiyomi.ui.base.controller.BaseController
 import eu.kanade.tachiyomi.ui.base.controller.DialogController
@@ -161,7 +163,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         }
 
     fun bigToolbarHeight(includeSearch: Boolean): Int {
-        return if (binding.appBar.smallToolbarMode) {
+        return if (binding.appBar.toolbarMode != BigAppBarLayout.ToolbarState.BIG) {
             toolbarHeight
         } else {
             binding.bigToolbar.height + (toolbarHeight * if (includeSearch) 2 else 1)
@@ -335,15 +337,16 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 val controller = router.backstack.lastOrNull()?.controller
                 controller?.moveRecyclerViewUp()
                 (controller as? BaseController<*>)?.onActionViewExpand(item)
-                (controller as? SettingsMainController)?.onActionViewExpand()
+                (controller as? SettingsController)?.onActionViewExpand(item)
                 binding.cardToolbar.menu.forEach { it.isVisible = false }
                 return true
             }
 
             override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
+                val controller = router.backstack.lastOrNull()?.controller
                 setupCardMenu(binding.toolbar.menu, true)
-                (router.backstack.lastOrNull()?.controller as? BaseController<*>)
-                    ?.onActionViewCollapse(item)
+                (controller as? BaseController<*>)?.onActionViewCollapse(item)
+                (controller as? SettingsController)?.onActionViewCollapse(item)
                 return true
             }
         })
@@ -473,9 +476,11 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
             binding.toolbar
         }
         if (oldTB != currentToolbar) {
-//            setSupportActionBar(if (showSearchAnyway) currentToolbar else binding.toolbar)
+//            setSupportActionBar(currentToolbar)
         }
-        binding.toolbar.isVisible = true
+        val onSmallerController = !this::router.isInitialized ||
+            router.backstack.lastOrNull()?.controller is SmallToolbarInterface
+        binding.toolbar.isVisible = !(onSmallerController && onSearchController)
         binding.cardFrame.isVisible = (show || showSearchAnyway) && onSearchController
         val bgColor = binding.appBar.backgroundColor ?: Color.TRANSPARENT
         if (changeBG && (if (solidBG) bgColor == Color.TRANSPARENT else false)) {

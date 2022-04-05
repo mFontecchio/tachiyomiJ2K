@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.util.TypedValue
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
@@ -80,6 +81,9 @@ abstract class SettingsController : PreferenceController() {
     }
 
     abstract fun setupPreferenceScreen(screen: PreferenceScreen): PreferenceScreen
+
+    open fun onActionViewExpand(item: MenuItem?) { }
+    open fun onActionViewCollapse(item: MenuItem?) { }
 
     private fun getThemedContext(): Context {
         val tv = TypedValue()

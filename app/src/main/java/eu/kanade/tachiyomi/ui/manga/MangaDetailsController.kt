@@ -58,6 +58,7 @@ import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.ui.base.MaterialMenuSheet
+import eu.kanade.tachiyomi.ui.base.SmallToolbarInterface
 import eu.kanade.tachiyomi.ui.base.controller.BaseController
 import eu.kanade.tachiyomi.ui.base.controller.DialogController
 import eu.kanade.tachiyomi.ui.base.holder.BaseFlexibleViewHolder
@@ -121,6 +122,7 @@ class MangaDetailsController :
     FlexibleAdapter.OnItemLongClickListener,
     ActionMode.Callback,
     MangaDetailsAdapter.MangaDetailsInterface,
+    SmallToolbarInterface,
     FlexibleAdapter.OnItemMoveListener {
 
     constructor(

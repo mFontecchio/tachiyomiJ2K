@@ -12,8 +12,10 @@ import androidx.core.view.isGone
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
+import com.bluelinelabs.conductor.Controller
 import com.google.android.material.appbar.AppBarLayout
 import eu.kanade.tachiyomi.R
+import eu.kanade.tachiyomi.ui.main.FloatingSearchInterface
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.getResourceColor
@@ -32,9 +34,34 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
     var bigTitleView: TextView? = null
     var bigView: View? = null
     var tabsFrameLayout: FrameLayout? = null
-    var smallToolbarMode = false
+    var toolbarMode = ToolbarState.BIG
+        set(value) {
+            field = value
+            if (value == ToolbarState.SEARCH) {
+                mainToolbar?.isGone = true
+            }
+        }
     var useTabsInPreLayout = false
     var yAnimator: ViewPropertyAnimator? = null
+
+    enum class ToolbarState {
+        BIG,
+        MAIN,
+        SEARCH,
+    }
+
+    fun setToolbarModeBy(controller: Controller) {
+        toolbarMode = when (controller) {
+            is SmallToolbarInterface -> {
+                if (controller is FloatingSearchInterface) {
+                    ToolbarState.SEARCH
+                } else {
+                    ToolbarState.MAIN
+                }
+            }
+            else -> ToolbarState.BIG
+        }
+    }
 
     fun hideBigView(useSmall: Boolean) {
         bigView?.isGone = useSmall
@@ -100,14 +127,14 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
             val array = context.obtainStyledAttributes(attrsArray)
             val appBarHeight = (
                 array.getDimensionPixelSize(0, 0) *
-                    (if (cardFrame?.isVisible == true && !smallToolbarMode) 2 else 1)
+                    (if (cardFrame?.isVisible == true && toolbarMode == ToolbarState.BIG) 2 else 1)
                 )
             val widthMeasureSpec = MeasureSpec.makeMeasureSpec(resources.displayMetrics.widthPixels, MeasureSpec.AT_MOST)
             val heightMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
             bigTitleView?.measure(widthMeasureSpec, heightMeasureSpec)
             val textHeight = max(bigTitleView?.height ?: 0, bigTitleView?.measuredHeight ?: 0) + 64.dpToPx
             array.recycle()
-            return appBarHeight + if (smallToolbarMode) 0 else textHeight +
+            return appBarHeight + if (toolbarMode != ToolbarState.BIG) 0 else textHeight +
                 if (useTabsInPreLayout) 48.dpToPx else 0
         }
 
@@ -137,12 +164,12 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         translationY = newY
         mainToolbar?.let { mainToolbar ->
             mainToolbar.translationY = when {
-                smallToolbarMode -> 0f
+                toolbarMode != ToolbarState.BIG -> 0f
                 -newY <= bigHeight -> max(-newY, 0f)
                 else -> bigHeight.toFloat()
             }
         }
-        if (smallToolbarMode) return
+        if (toolbarMode != ToolbarState.BIG) return
         val alpha = MathUtils.clamp((realHeight.toFloat() + newY * 5) / realHeight.toFloat() + .33f, 0.0f, 1.0f)
         bigView?.alpha = if (alpha.isNaN()) 1f else alpha
         val alpha2 = MathUtils.clamp(-newY * 3 / realHeight.toFloat() - 0.33f, 0.0f, 1.0f)
@@ -193,7 +220,9 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
                 mainActivity.setFloatingToolbar(true, showSearchAnyway = true)
             }
             if (mainActivity.currentToolbar == cardToolbar) {
-                mainToolbar?.isInvisible = true
+                if (toolbarMode != ToolbarState.SEARCH) {
+                    mainToolbar?.isInvisible = true
+                }
                 mainToolbar?.backgroundColor = null
                 cardFrame?.backgroundColor = null
             }
@@ -201,8 +230,9 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
             if (mainActivity.currentToolbar != mainToolbar) {
                 mainActivity.setFloatingToolbar(false, showSearchAnyway = true)
             }
-            mainToolbar?.isInvisible = false
-
+            if (toolbarMode != ToolbarState.SEARCH) {
+                mainToolbar?.isInvisible = false
+            }
             if (tabsFrameLayout?.isVisible == false) {
                 cardFrame?.backgroundColor = mainActivity.getResourceColor(R.attr.colorSurface)
             } else {
@@ -211,3 +241,5 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         }
     }
 }
+
+interface SmallToolbarInterface

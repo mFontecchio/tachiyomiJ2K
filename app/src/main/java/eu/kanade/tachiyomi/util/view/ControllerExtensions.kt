@@ -39,6 +39,7 @@ import com.bluelinelabs.conductor.RouterTransaction
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.databinding.MainActivityBinding
+import eu.kanade.tachiyomi.ui.base.SmallToolbarInterface
 import eu.kanade.tachiyomi.ui.base.controller.BaseController
 import eu.kanade.tachiyomi.ui.base.controller.DialogController
 import eu.kanade.tachiyomi.ui.base.controller.OneWayFadeChangeHandler
@@ -172,6 +173,10 @@ fun Controller.liftAppbarWith(recycler: RecyclerView, padView: Boolean = false) 
     if (floatingBar) {
         setAppBarBG(0f)
     }
+
+    activityBinding?.appBar?.setToolbarModeBy(this)
+    activityBinding?.appBar?.hideBigView(true)
+
     colorToolbar(recycler.canScrollVertically(-1))
     recycler.addOnScrollListener(
         object : RecyclerView.OnScrollListener() {
@@ -203,7 +208,7 @@ fun Controller.scrollViewWith(
     val tabBarHeight = 48.dpToPx
     activityBinding?.appBar?.y = 0f
     activityBinding?.appBar?.useTabsInPreLayout = includeTabView
-    activityBinding?.appBar?.smallToolbarMode = this@scrollViewWith is MangaDetailsController
+    activityBinding?.appBar?.setToolbarModeBy(this@scrollViewWith)
     val attrsArray = intArrayOf(R.attr.mainActionBarSize)
     val array = recycler.context.obtainStyledAttributes(attrsArray)
     var appBarHeight = (
@@ -302,8 +307,8 @@ fun Controller.scrollViewWith(
                 super.onChangeStart(controller, changeHandler, changeType)
                 isInView = changeType.isEnter
                 if (changeType.isEnter) {
-                    activityBinding?.appBar?.hideBigView(this@scrollViewWith is MangaDetailsController)
-                    activityBinding?.appBar?.smallToolbarMode = this@scrollViewWith is MangaDetailsController
+                    activityBinding?.appBar?.hideBigView(this@scrollViewWith is SmallToolbarInterface)
+                    activityBinding?.appBar?.setToolbarModeBy(this@scrollViewWith)
                     activityBinding?.appBar?.useTabsInPreLayout = includeTabView
                     colorToolbar(isToolbarColor)
                     if (fakeToolbarView?.parent != null) {

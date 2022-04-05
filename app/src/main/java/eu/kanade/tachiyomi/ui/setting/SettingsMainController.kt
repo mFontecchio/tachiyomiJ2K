@@ -114,7 +114,7 @@ class SettingsMainController : SettingsController(), FloatingSearchInterface {
         )
     }
 
-    fun onActionViewExpand() {
+    override fun onActionViewExpand(item: MenuItem?) {
         SettingsSearchController.lastSearch = "" // reset saved search query
         router.pushController(
             RouterTransaction.with(SettingsSearchController())
