@@ -240,8 +240,8 @@ fun Controller.scrollViewWith(
     }
     val atTopOfRecyclerView: () -> Boolean = f@{
         val activityBinding = activityBinding ?: return@f true
-        return@f recycler.computeVerticalScrollOffset() <=
-            activityBinding.appBar.height - activityBinding.appBar.paddingTop -
+        return@f recycler.computeVerticalScrollOffset() - recycler.paddingTop <=
+            0 - activityBinding.appBar.paddingTop -
             activityBinding.toolbar.height - if (includeTabView) tabBarHeight else 0
     }
     recycler.doOnApplyWindowInsetsCompat { view, insets, _ ->
