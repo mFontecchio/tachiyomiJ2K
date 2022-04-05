@@ -105,7 +105,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
             val widthMeasureSpec = MeasureSpec.makeMeasureSpec(resources.displayMetrics.widthPixels, MeasureSpec.AT_MOST)
             val heightMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
             bigTitleView?.measure(widthMeasureSpec, heightMeasureSpec)
-            val textHeight = (bigTitleView?.measuredHeight ?: 0) + 64.dpToPx
+            val textHeight = max(bigTitleView?.height ?: 0, bigTitleView?.measuredHeight ?: 0) + 64.dpToPx
             array.recycle()
             return appBarHeight + if (smallToolbarMode) 0 else textHeight +
                 if (useTabsInPreLayout) 48.dpToPx else 0
