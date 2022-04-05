@@ -150,7 +150,6 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         ) ?: 0
         val closerToTop = abs(y) > height - halfWay
         val atTop = !recyclerView.canScrollVertically(-1)
-        val bigHeight = bigView?.height
         val lastY = if (closerToTop && !atTop) {
             -height.toFloat()
         } else {
@@ -159,23 +158,18 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
 
         val onFirstItem = recyclerView.computeVerticalScrollOffset() < height - toolbarHeight
 
-        if (!onFirstItem) {
+        return if (!onFirstItem) {
             yAnimator = animate().y(lastY)
                 .setDuration(shortAnimationDuration.toLong())
             yAnimator?.setUpdateListener {
                 updateViewsAfterY(recyclerView, false)
             }
-//            yAnimator.setListener(
-//                EndAnimatorListener {
-//                    mainToolbar?.alpha = (if (lastY == height.toFloat()) 0f else 1f)
-//                }
-//            )
             yAnimator?.start()
             setToolbar(true)
-            return lastY
+            lastY
         } else {
             setToolbar(false)
-            return y
+            y
         }
     }
 
@@ -202,11 +196,5 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
                 cardFrame?.backgroundColor = null
             }
         }
-//        if (cardFrame?.isVisible == false) {
-//            bigView?.backgroundColor = null
-//        } else {
-//            bigView?.backgroundColor = mainActivity.getResourceColor(R.attr.colorSurface)
-//            //                mainToolbar?.backgroundColor = mainActivity.getResourceColor(R.attr.colorSurface)
-//        }
     }
 }
