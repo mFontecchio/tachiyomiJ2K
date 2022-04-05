@@ -33,6 +33,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
     var bigView: View? = null
     var tabsFrameLayout: FrameLayout? = null
     var smallToolbarMode = false
+    var useTabsInPreLayout = false
     var yAnimator: ViewPropertyAnimator? = null
 
     fun hideBigView(useSmall: Boolean) {
@@ -95,7 +96,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
             val textHeight = (bigTitleView?.measuredHeight ?: 0) + 64.dpToPx
             array.recycle()
             return appBarHeight + if (smallToolbarMode) 0 else textHeight +
-                if (tabsFrameLayout?.isVisible == true) 48.dpToPx else 0
+                if (useTabsInPreLayout) 48.dpToPx else 0
         }
 
     fun updateViewsAfterY(recyclerView: RecyclerView, cancelAnim: Boolean = true) {

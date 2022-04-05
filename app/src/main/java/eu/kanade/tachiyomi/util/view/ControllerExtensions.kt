@@ -200,6 +200,7 @@ fun Controller.scrollViewWith(
     var statusBarHeight = -1
     val tabBarHeight = 48.dpToPx
     activityBinding?.appBar?.y = 0f
+    activityBinding?.appBar?.useTabsInPreLayout = includeTabView
     activityBinding?.appBar?.smallToolbarMode = this@scrollViewWith is MangaDetailsController
     val attrsArray = intArrayOf(R.attr.mainActionBarSize)
     val array = recycler.context.obtainStyledAttributes(attrsArray)
@@ -305,6 +306,7 @@ fun Controller.scrollViewWith(
                 if (changeType.isEnter) {
                     activityBinding?.appBar?.hideBigView(this@scrollViewWith is MangaDetailsController)
                     activityBinding?.appBar?.smallToolbarMode = this@scrollViewWith is MangaDetailsController
+                    activityBinding?.appBar?.useTabsInPreLayout = includeTabView
                     colorToolbar(isToolbarColor)
                     if (fakeToolbarView?.parent != null) {
                         val parent = fakeToolbarView?.parent as? ViewGroup ?: return
