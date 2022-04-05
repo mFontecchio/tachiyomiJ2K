@@ -222,6 +222,9 @@ class LibraryController(
                 ) + 55f.dpToPx
         }
 
+    override val mainRecycler: RecyclerView
+        get() = binding.libraryGridRecycler.recycler
+
     override fun getTitle(): String? {
         setSubtitle()
         return view?.context?.getString(R.string.library)
@@ -556,7 +559,7 @@ class LibraryController(
                 swipeRefreshLayout = binding.swipeRefresh,
                 afterInsets = { insets ->
                     binding.categoryRecycler.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                        topMargin = binding.libraryGridRecycler.recycler.paddingTop
+                        topMargin = insets.getInsets(systemBars()).top + (activityBinding?.cardToolbar?.height ?: 0)
                     }
                     binding.fastScroller.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                         topMargin = binding.libraryGridRecycler.recycler.paddingTop

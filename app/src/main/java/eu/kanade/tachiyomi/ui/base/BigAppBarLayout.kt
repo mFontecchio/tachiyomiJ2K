@@ -174,7 +174,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         }
     }
 
-    private fun setToolbar(showCardTB: Boolean) {
+    fun setToolbar(showCardTB: Boolean) {
         val mainActivity = (context as? MainActivity) ?: return
         if (showCardTB) {
             if (mainActivity.currentToolbar != cardToolbar) {

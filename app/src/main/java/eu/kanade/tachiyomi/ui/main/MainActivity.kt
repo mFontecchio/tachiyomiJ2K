@@ -88,6 +88,7 @@ import eu.kanade.tachiyomi.util.view.backgroundColor
 import eu.kanade.tachiyomi.util.view.blurBehindWindow
 import eu.kanade.tachiyomi.util.view.doOnApplyWindowInsetsCompat
 import eu.kanade.tachiyomi.util.view.getItemView
+import eu.kanade.tachiyomi.util.view.moveRecyclerViewUp
 import eu.kanade.tachiyomi.util.view.snack
 import eu.kanade.tachiyomi.util.view.withFadeInTransaction
 import eu.kanade.tachiyomi.util.view.withFadeTransaction
@@ -829,6 +830,11 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         return super.onPrepareOptionsMenu(menu)
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        setupCardMenu(menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
     private fun setupCardMenu(menu: Menu?, showAnyway: Boolean = false) {
         val toolbar = binding.cardToolbar
         menu?.children?.let { menuItems ->
@@ -857,6 +863,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 if (oldMenuItem.itemId == R.id.action_search) {
                     menuItem.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
                         override fun onMenuItemActionExpand(item: MenuItem?): Boolean {
+                            router.backstack.lastOrNull()?.controller?.moveRecyclerViewUp()
                             toolbar.menu.forEach { it.isVisible = false }
                             return true
                         }

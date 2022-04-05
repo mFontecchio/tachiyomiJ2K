@@ -29,6 +29,7 @@ import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.core.view.updatePaddingRelative
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.bluelinelabs.conductor.Controller
@@ -45,6 +46,7 @@ import eu.kanade.tachiyomi.ui.main.BottomSheetController
 import eu.kanade.tachiyomi.ui.main.FloatingSearchInterface
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.manga.MangaDetailsController
+import eu.kanade.tachiyomi.ui.setting.SettingsController
 import eu.kanade.tachiyomi.util.system.ImageUtil
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.getResourceColor
@@ -507,6 +509,29 @@ fun Controller.scrollViewWith(
         }
     )
     return colorToolbar
+}
+
+val Controller.mainRecyclerView: RecyclerView?
+    get() = (this as? SettingsController)?.listView ?: (this as? BaseController<*>)?.mainRecycler
+
+fun Controller.moveRecyclerViewUp() {
+    val recycler = mainRecyclerView ?: return
+    val activityBinding = activityBinding ?: return
+    val tabHeight = if (activityBinding.tabsFrameLayout.isVisible) 48.dpToPx else 0
+    val appBarHeight = activityBinding.appBar.paddingTop -
+        activityBinding.toolbar.height - tabHeight
+    if (recycler.computeVerticalScrollOffset() - recycler.paddingTop <= 0 - appBarHeight) {
+        (recycler.layoutManager as? LinearLayoutManager)
+            ?.scrollToPositionWithOffset(
+                0,
+                -activityBinding.appBar.preLayoutHeight +
+                    activityBinding.toolbar.height + tabHeight
+            )
+        recycler.post {
+            activityBinding.appBar.updateViewsAfterY(recycler)
+            activityBinding.appBar.setToolbar(true)
+        }
+    }
 }
 
 fun Controller.setAppBarBG(value: Float, includeTabView: Boolean = false) {

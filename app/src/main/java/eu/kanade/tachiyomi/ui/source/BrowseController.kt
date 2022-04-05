@@ -108,6 +108,9 @@ class BrowseController :
     private var ogRadius = 0f
     private var deviceRadius = 0f
 
+    override val mainRecycler: RecyclerView
+        get() = binding.sourceRecycler
+
     /**
      * Called when controller is initialized.
      */

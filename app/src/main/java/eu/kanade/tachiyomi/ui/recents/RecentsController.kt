@@ -116,6 +116,9 @@ class RecentsController(bundle: Bundle? = null) :
             presenter.query = value
         }
 
+    override val mainRecycler: RecyclerView
+        get() = binding.recycler
+
     override fun getTitle(): String? {
         return view?.context?.getString(R.string.recents)
     }

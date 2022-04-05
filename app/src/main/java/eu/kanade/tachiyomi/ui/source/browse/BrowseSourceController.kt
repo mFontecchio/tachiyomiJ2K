@@ -121,6 +121,9 @@ open class BrowseSourceController(bundle: Bundle) :
         setHasOptionsMenu(true)
     }
 
+    override val mainRecycler: RecyclerView?
+        get() = recycler
+
     override fun getTitle(): String? {
         return presenter.source.name
     }

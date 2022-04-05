@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.forEach
 import androidx.core.view.isVisible
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 import com.bluelinelabs.conductor.Controller
 import com.bluelinelabs.conductor.ControllerChangeHandler
@@ -92,6 +93,9 @@ abstract class BaseController<VB : ViewBinding>(bundle: Bundle? = null) :
     open fun getBigIcon(): Drawable? {
         return null
     }
+
+    open val mainRecycler: RecyclerView?
+        get() = null
 
     override fun onActivityPaused(activity: Activity) {
         super.onActivityPaused(activity)
