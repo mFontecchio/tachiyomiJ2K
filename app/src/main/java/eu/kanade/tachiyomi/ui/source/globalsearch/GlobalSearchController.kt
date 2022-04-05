@@ -166,13 +166,19 @@ open class GlobalSearchController(
             }
         )
 
-        searchView.queryTextChangeEvents()
-            .filter { it.isSubmitted }
-            .subscribeUntilDestroy {
+        activityBinding?.cardToolbar?.searchView?.queryTextChangeEvents()
+            ?.filter { it.isSubmitted }
+            ?.subscribeUntilDestroy {
                 presenter.search(it.queryText().toString())
                 searchItem.collapseActionView()
                 setTitle() // Update toolbar title
             }
+    }
+
+    override fun onActionViewExpand(item: MenuItem?) {
+        val searchView = activityBinding?.cardToolbar?.searchView ?: return
+        searchView.onActionViewExpanded() // Required to show the query in the view
+        searchView.setQuery(presenter.query, false)
     }
 
     /**

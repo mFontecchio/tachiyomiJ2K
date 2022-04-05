@@ -13,11 +13,13 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
+import androidx.core.view.doOnNextLayout
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePaddingRelative
 import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bluelinelabs.conductor.ControllerChangeHandler
 import com.bluelinelabs.conductor.ControllerChangeType
@@ -524,12 +526,22 @@ class RecentsController(bundle: Bundle? = null) :
         } else {
             binding.recentsEmptyView.hide()
         }
+        val isSearchExpanded = activityBinding?.cardToolbar?.isSearchExpanded == true
         if (shouldMoveToTop) {
-            binding.recycler.scrollToPosition(0)
+            (binding.recycler.layoutManager as? LinearLayoutManager)
+                ?.scrollToPositionWithOffset(
+                    0,
+                    if (!isSearchExpanded) 0 else (activityBinding?.appBar?.recyclerOffset ?: 0)
+                )
         }
         if (lastChapterId != null) {
             refreshItem(lastChapterId ?: 0L)
             lastChapterId = null
+        }
+        if (shouldMoveToTop && isSearchExpanded) {
+            binding.recycler.doOnNextLayout {
+                activityBinding?.appBar?.setToolbar(true)
+            }
         }
     }
 

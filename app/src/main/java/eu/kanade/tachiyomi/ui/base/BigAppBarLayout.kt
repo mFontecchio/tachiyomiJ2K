@@ -82,6 +82,18 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
             return (appBarHeight + paddingTop).toFloat()
         }
 
+    val toolbarDistance: Int
+        get() {
+            val tabHeight = if (tabsFrameLayout?.isVisible == true) 48.dpToPx else 0
+            return paddingTop - (mainToolbar?.height ?: 0) - tabHeight
+        }
+
+    val recyclerOffset: Int
+        get() {
+            val tabHeight = if (tabsFrameLayout?.isVisible == true) 48.dpToPx else 0
+            return -preLayoutHeight + (mainToolbar?.height ?: 0) + tabHeight
+        }
+
     val preLayoutHeight: Int
         get() {
             val attrsArray = intArrayOf(R.attr.mainActionBarSize)

@@ -152,6 +152,14 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
     val toolbarHeight: Int
         get() = max(binding.toolbar.height, binding.cardFrame.height)
 
+    val isSearchExpanded: Boolean
+        get() {
+            if (isBindingInitialized) {
+                return binding.cardToolbar.isSearchExpanded
+            }
+            return false
+        }
+
     fun bigToolbarHeight(includeSearch: Boolean): Int {
         return if (binding.appBar.smallToolbarMode) {
             toolbarHeight
@@ -321,6 +329,24 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 rootSearchController.expandSearch()
             } else onBackPressed()
         }
+
+        binding.cardToolbar.searchItem?.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
+            override fun onMenuItemActionExpand(item: MenuItem?): Boolean {
+                val controller = router.backstack.lastOrNull()?.controller
+                controller?.moveRecyclerViewUp()
+                (controller as? BaseController<*>)?.onActionViewExpand(item)
+                (controller as? SettingsMainController)?.onActionViewExpand()
+                binding.cardToolbar.menu.forEach { it.isVisible = false }
+                return true
+            }
+
+            override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
+                setupCardMenu(binding.toolbar.menu, true)
+                (router.backstack.lastOrNull()?.controller as? BaseController<*>)
+                    ?.onActionViewCollapse(item)
+                return true
+            }
+        })
 
         binding.appBar.alpha = 1f
 

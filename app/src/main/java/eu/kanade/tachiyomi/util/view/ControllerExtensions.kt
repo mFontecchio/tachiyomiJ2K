@@ -61,12 +61,12 @@ import kotlin.math.roundToInt
 import kotlin.random.Random
 
 fun Controller.setOnQueryTextChangeListener(
-    searchView: SearchView,
+    searchView: SearchView?,
     onlyOnSubmit: Boolean = false,
     hideKbOnSubmit: Boolean = true,
     f: (text: String?) -> Boolean
 ) {
-    searchView.setOnQueryTextListener(
+    searchView?.setOnQueryTextListener(
         object : SearchView.OnQueryTextListener {
             override fun onQueryTextChange(newText: String?): Boolean {
                 if (!onlyOnSubmit && router.backstack.lastOrNull()
@@ -517,16 +517,10 @@ val Controller.mainRecyclerView: RecyclerView?
 fun Controller.moveRecyclerViewUp() {
     val recycler = mainRecyclerView ?: return
     val activityBinding = activityBinding ?: return
-    val tabHeight = if (activityBinding.tabsFrameLayout.isVisible) 48.dpToPx else 0
-    val appBarHeight = activityBinding.appBar.paddingTop -
-        activityBinding.toolbar.height - tabHeight
+    val appBarHeight = activityBinding.appBar.toolbarDistance
     if (recycler.computeVerticalScrollOffset() - recycler.paddingTop <= 0 - appBarHeight) {
         (recycler.layoutManager as? LinearLayoutManager)
-            ?.scrollToPositionWithOffset(
-                0,
-                -activityBinding.appBar.preLayoutHeight +
-                    activityBinding.toolbar.height + tabHeight
-            )
+            ?.scrollToPositionWithOffset(0, activityBinding.appBar.recyclerOffset)
         recycler.post {
             activityBinding.appBar.updateViewsAfterY(recycler)
             activityBinding.appBar.setToolbar(true)

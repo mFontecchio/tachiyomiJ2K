@@ -98,6 +98,7 @@ import eu.kanade.tachiyomi.util.view.getItemView
 import eu.kanade.tachiyomi.util.view.hide
 import eu.kanade.tachiyomi.util.view.isExpanded
 import eu.kanade.tachiyomi.util.view.isHidden
+import eu.kanade.tachiyomi.util.view.marginTop
 import eu.kanade.tachiyomi.util.view.scrollViewWith
 import eu.kanade.tachiyomi.util.view.setOnQueryTextChangeListener
 import eu.kanade.tachiyomi.util.view.setStyle
@@ -559,7 +560,7 @@ class LibraryController(
                 swipeRefreshLayout = binding.swipeRefresh,
                 afterInsets = { insets ->
                     binding.categoryRecycler.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                        topMargin = insets.getInsets(systemBars()).top + (activityBinding?.cardToolbar?.height ?: 0)
+                        topMargin = insets.getInsets(systemBars()).top + (activityBinding?.cardToolbar?.height ?: 0) + 12.dpToPx
                     }
                     binding.fastScroller.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                         topMargin = binding.libraryGridRecycler.recycler.paddingTop
@@ -1069,16 +1070,14 @@ class LibraryController(
             shouldScrollToTop = false
         }
         if (onRoot) {
-            listOf(activityBinding?.toolbar, binding.headerTitle).forEach {
-                it?.setOnClickListener {
-                    val recycler = binding.libraryGridRecycler.recycler
-                    if (!singleCategory) {
-                        showCategories(recycler.translationY == 0f)
-                    }
+            binding.headerTitle.setOnClickListener {
+                val recycler = binding.libraryGridRecycler.recycler
+                if (!singleCategory) {
+                    showCategories(recycler.translationY == 0f)
                 }
-                if (!hasMovedHopper && isAnimatingHopper == null) {
-                    showSlideAnimation()
-                }
+            }
+            if (!hasMovedHopper && isAnimatingHopper == null) {
+                showSlideAnimation()
             }
             setSubtitle()
             showMiniBar()
@@ -1120,11 +1119,10 @@ class LibraryController(
         if (closeSearch) {
             activityBinding?.cardToolbar?.menu?.findItem(R.id.action_search)?.collapseActionView()
         }
-        val full = binding.categoryRecycler.height.toFloat() + binding.libraryGridRecycler.recycler.paddingTop
+        val full = binding.categoryRecycler.height.toFloat() + binding.categoryRecycler.marginTop
         val translateY = if (show) full else 0f
         binding.libraryGridRecycler.recycler.animate().translationY(translateY).apply {
             setUpdateListener {
-                activityBinding?.appBar?.y = 0f
                 updateHopperY()
             }
         }.start()
@@ -1139,7 +1137,6 @@ class LibraryController(
                 binding.categoryRecycler.scrollToCategory(activeCategory)
             }
             binding.fastScroller.hideScrollbar()
-            activityBinding?.appBar?.y = 0f
             elevateAppBar(false)
             binding.filterBottomSheet.filterBottomSheet.sheetBehavior?.hide()
         } else {
@@ -1184,6 +1181,10 @@ class LibraryController(
             activeCategory = pos
             preferences.lastUsedCategory().set(pos)
             binding.libraryGridRecycler.recycler.suppressLayout(false)
+            binding.libraryGridRecycler.recycler.post {
+                activityBinding.appBar.y = 0f
+                activityBinding.appBar.updateViewsAfterY(binding.libraryGridRecycler.recycler)
+            }
         }
     }
 
@@ -1646,6 +1647,7 @@ class LibraryController(
         val searchItem = menu.findItem(R.id.action_search)
         val searchView = searchItem.actionView as SearchView
         searchView.queryHint = resources?.getString(R.string.library_search_hint)
+        activityBinding?.cardToolbar?.searchQueryHint = resources?.getString(R.string.library_search_hint)
 
         searchItem.collapseActionView()
         if (query.isNotEmpty()) {
@@ -1655,7 +1657,7 @@ class LibraryController(
             search(query)
         }
 
-        setOnQueryTextChangeListener(searchView) {
+        setOnQueryTextChangeListener(activityBinding?.cardToolbar?.searchView) {
             if (!it.isNullOrEmpty() && binding.recyclerCover.isClickable) {
                 showCategories(false)
             }
@@ -1678,6 +1680,24 @@ class LibraryController(
             }
         )
         hideItemsIfExpanded(searchItem, menu)
+    }
+
+    override fun onActionViewExpand(item: MenuItem?) {
+        if (!binding.recyclerCover.isClickable && query.isBlank() &&
+            !singleCategory && presenter.showAllCategories
+        ) {
+            showCategories(true)
+            binding.libraryGridRecycler.recycler.post {
+                activityBinding?.appBar?.y = (activityBinding?.appBar?.recyclerOffset ?: 0).toFloat()
+                activityBinding?.appBar?.updateViewsAfterY(binding.libraryGridRecycler.recycler)
+            }
+        }
+    }
+
+    override fun onActionViewCollapse(item: MenuItem?) {
+        if (binding.recyclerCover.isClickable) {
+            showCategories(false)
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
