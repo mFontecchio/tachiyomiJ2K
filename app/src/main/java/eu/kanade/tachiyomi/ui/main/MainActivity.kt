@@ -213,6 +213,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         val content: ViewGroup = binding.mainContent
         DownloadService.addListener(this)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayShowCustomEnabled(true)
 
         setNavBarColor(content.rootWindowInsetsCompat)
@@ -324,6 +325,12 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
 
         binding.cardToolbar.setOnClickListener {
             binding.cardToolbar.menu.findItem(R.id.action_search)?.expandActionView()
+        }
+
+        binding.cardToolbar.setOnMenuItemClickListener {
+            if (router.backstack.lastOrNull()?.controller?.onOptionsItemSelected(it) == true) {
+                return@setOnMenuItemClickListener true
+            } else return@setOnMenuItemClickListener onOptionsItemSelected(it)
         }
 
         nav.isVisible = !hideBottomNav
@@ -439,7 +446,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
             binding.toolbar
         }
         if (oldTB != currentToolbar) {
-            setSupportActionBar(if (showSearchAnyway) currentToolbar else binding.toolbar)
+//            setSupportActionBar(if (showSearchAnyway) currentToolbar else binding.toolbar)
         }
         binding.toolbar.isVisible = true
         binding.cardFrame.isVisible = (show || showSearchAnyway) && onSearchController
@@ -460,13 +467,11 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
             } else onBackPressed()
         }
         if (oldTB != currentToolbar) {
-            invalidateOptionsMenu()
-            val menuItems = oldTB?.menu?.children
-            oldTB?.menu?.forEach {
-                it.isVisible = false
-//                if (it.itemId != R.id.action_search) {
-//                    oldTB.menu.removeItem(it.itemId)
-//                }
+            setupCardMenu(binding.toolbar.menu)
+            if (oldTB == binding.cardToolbar) {
+                oldTB.menu?.forEach {
+                    it.isVisible = false
+                }
             }
         }
         if (showSearchAnyway) {
@@ -820,7 +825,51 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         if (router.backstack.lastOrNull()?.controller is FloatingSearchInterface) {
             searchItem?.isVisible = false
         }
+        setupCardMenu(menu)
         return super.onPrepareOptionsMenu(menu)
+    }
+
+    private fun setupCardMenu(menu: Menu?, showAnyway: Boolean = false) {
+        val toolbar = binding.cardToolbar
+        menu?.children?.let { menuItems ->
+            val oldItemsId = toolbar.menu.children.map { it.itemId }
+            oldItemsId.forEach {
+                if (it != R.id.action_search) {
+                    toolbar.menu.removeItem(it)
+                }
+            }
+            val searchActive = toolbar.menu.findItem(R.id.action_search)?.isActionViewExpanded == true
+            menuItems.forEach { oldMenuItem ->
+                if (oldMenuItem.itemId == R.id.action_search &&
+                    toolbar.menu.findItem(R.id.action_search) != null
+                ) {
+                    return@forEach
+                }
+                val menuItem = toolbar.menu.add(
+                    oldMenuItem.groupId,
+                    oldMenuItem.itemId,
+                    oldMenuItem.order,
+                    oldMenuItem.title
+                )
+                menuItem.isVisible = oldMenuItem.isVisible && currentToolbar == toolbar && (!searchActive || showAnyway)
+                menuItem.actionView = oldMenuItem.actionView
+                menuItem.icon = oldMenuItem.icon
+                if (oldMenuItem.itemId == R.id.action_search) {
+                    menuItem.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
+                        override fun onMenuItemActionExpand(item: MenuItem?): Boolean {
+                            toolbar.menu.forEach { it.isVisible = false }
+                            return true
+                        }
+
+                        override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
+                            setupCardMenu(binding.toolbar.menu, true)
+                            return true
+                        }
+                    })
+                }
+                menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM or MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW)
+            }
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
