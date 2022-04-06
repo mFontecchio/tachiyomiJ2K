@@ -16,6 +16,7 @@ import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.databinding.SourceGlobalSearchControllerBinding
 import eu.kanade.tachiyomi.source.CatalogueSource
+import eu.kanade.tachiyomi.ui.base.SmallToolbarInterface
 import eu.kanade.tachiyomi.ui.base.controller.NucleusController
 import eu.kanade.tachiyomi.ui.main.FloatingSearchInterface
 import eu.kanade.tachiyomi.ui.main.MainActivity
@@ -42,6 +43,7 @@ open class GlobalSearchController(
     bundle: Bundle? = null
 ) : NucleusController<SourceGlobalSearchControllerBinding, GlobalSearchPresenter>(bundle),
     FloatingSearchInterface,
+    SmallToolbarInterface,
     GlobalSearchAdapter.OnTitleClickListener,
     GlobalSearchCardAdapter.OnMangaClickListener {
 
@@ -179,6 +181,10 @@ open class GlobalSearchController(
         val searchView = activityBinding?.cardToolbar?.searchView ?: return
         searchView.onActionViewExpanded() // Required to show the query in the view
         searchView.setQuery(presenter.query, false)
+    }
+
+    override fun onActionViewCollapse(item: MenuItem?) {
+        router.popCurrentController()
     }
 
     /**

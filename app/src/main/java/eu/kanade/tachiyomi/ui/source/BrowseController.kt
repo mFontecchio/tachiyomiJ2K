@@ -29,6 +29,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.snackbar.Snackbar
 import eu.davidea.flexibleadapter.FlexibleAdapter
 import eu.davidea.flexibleadapter.items.IFlexible
+import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.databinding.BrowseControllerBinding
@@ -466,6 +467,14 @@ class BrowseController :
         if (showingExtensions) {
             updateSheetMenu()
         }
+        if (BuildConfig.DEBUG) {
+            val searchView = activityBinding?.cardToolbar?.searchView
+
+            setOnQueryTextChangeListener(searchView, onlyOnSubmit = true) {
+                if (!it.isNullOrBlank()) performGlobalSearch(it)
+                true
+            }
+        }
     }
 
     override fun onItemClick(view: View, position: Int): Boolean {
@@ -558,19 +567,18 @@ class BrowseController :
         inflater.inflate(R.menu.catalogue_main, menu)
 
         // Initialize search option.
-        val searchItem = menu.findItem(R.id.action_search)
-        val searchView = searchItem.actionView as SearchView
+        val searchView = activityBinding?.cardToolbar?.searchView
 
         // Change hint to show global search.
-        searchView.queryHint = view?.context?.getString(R.string.global_search)
+        searchView?.queryHint = view?.context?.getString(R.string.global_search)
 
-        searchItem.fixExpandInvalidate()
+//        searchItem.fixExpandInvalidate()
         // Create query listener which opens the global search view.
         setOnQueryTextChangeListener(searchView, true) {
             if (!it.isNullOrBlank()) performGlobalSearch(it)
             true
         }
-        hideItemsIfExpanded(searchItem, menu)
+//        hideItemsIfExpanded(searchItem, menu)
     }
 
     private fun performGlobalSearch(query: String) {

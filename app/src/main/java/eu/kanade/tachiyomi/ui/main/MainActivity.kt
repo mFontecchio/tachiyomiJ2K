@@ -327,8 +327,8 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
 
         binding.cardToolbar.setNavigationOnClickListener {
             val rootSearchController = router.backstack.lastOrNull()?.controller
-            if (rootSearchController is RootSearchInterface) {
-                rootSearchController.expandSearch()
+            if ((rootSearchController is RootSearchInterface || currentToolbar != it) && rootSearchController !is SmallToolbarInterface) {
+                binding.cardToolbar.menu.findItem(R.id.action_search)?.expandActionView()
             } else onBackPressed()
         }
 
@@ -487,16 +487,6 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
             binding.appBar.setBackgroundColor(
                 if (show && !solidBG) Color.TRANSPARENT else getResourceColor(R.attr.colorSurface)
             )
-        }
-        binding.toolbar.setNavigationOnClickListener {
-            onBackPressed()
-        }
-
-        binding.cardToolbar.setNavigationOnClickListener {
-            val rootSearchController = router.backstack.lastOrNull()?.controller
-            if (rootSearchController is RootSearchInterface || currentToolbar != it) {
-                binding.cardToolbar.menu.findItem(R.id.action_search)?.expandActionView()
-            } else onBackPressed()
         }
         if (oldTB != currentToolbar) {
             setupCardMenu(binding.toolbar.menu)
