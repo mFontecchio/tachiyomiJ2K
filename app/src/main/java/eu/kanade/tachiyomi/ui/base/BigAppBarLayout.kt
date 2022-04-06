@@ -243,14 +243,14 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         }
         setToolbar(offset > realHeight - toolbarHeight - tabHeight)
         if (toolbarMode != ToolbarState.BIG) return
-        val alpha = MathUtils.clamp((realHeight.toFloat() + newY * 5) / realHeight.toFloat() + .33f, 0.0f, 1.0f)
-        bigView?.alpha = if (alpha.isNaN()) 1f else alpha
-        val alpha2 = MathUtils.clamp(-newY * 3 / realHeight.toFloat() - 0.33f, 0.0f, 1.0f)
+        val alpha = (realHeight.toFloat() + newY * 5) / realHeight.toFloat() + .33f
+        bigView?.alpha = MathUtils.clamp(if (alpha.isNaN()) 1f else alpha, 0f, 1f)
         val toolbarTextView = mainToolbar?.toolbarTitle ?: return
         toolbarTextView.setTextColor(
             ColorUtils.setAlphaComponent(
                 toolbarTextView.currentTextColor,
-                ((if (alpha2.isNaN()) 0f else alpha2) * 255).roundToInt()
+                (MathUtils.clamp((1 - (alpha + 0.85f)) * 2, 0f, 1f) * 255)
+                    .roundToInt()
             )
         )
         mainToolbar?.alpha = MathUtils.clamp(
