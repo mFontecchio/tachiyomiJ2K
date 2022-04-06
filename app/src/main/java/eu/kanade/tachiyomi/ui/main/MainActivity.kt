@@ -487,12 +487,10 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 if (show && !solidBG) Color.TRANSPARENT else getResourceColor(R.attr.colorSurface)
             )
         }
-        if (oldTB != currentToolbar) {
-            setupCardMenu(binding.toolbar.menu)
-            if (oldTB == binding.cardToolbar) {
-                oldTB.menu?.forEach {
-                    it.isVisible = false
-                }
+        setupCardMenu(binding.toolbar.menu)
+        if (currentToolbar != binding.cardToolbar) {
+            binding.cardToolbar.menu?.children?.toList()?.forEach {
+                it.isVisible = false
             }
         }
         if (showSearchAnyway) {

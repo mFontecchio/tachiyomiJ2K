@@ -1662,23 +1662,23 @@ class LibraryController(
             }
             search(it)
         }
-        searchItem.fixExpand(
-            onExpand = {
-                if (!binding.recyclerCover.isClickable && query.isBlank() &&
-                    !singleCategory && presenter.showAllCategories
-                ) {
-                    showCategories(true)
-                }
-                invalidateMenuOnExpand()
-            },
-            onCollapse = {
-                if (binding.recyclerCover.isClickable) {
-                    showCategories(false)
-                }
-                true
-            }
-        )
-        hideItemsIfExpanded(searchItem, menu)
+//        searchItem.fixExpand(
+//            onExpand = {
+//                if (!binding.recyclerCover.isClickable && query.isBlank() &&
+//                    !singleCategory && presenter.showAllCategories
+//                ) {
+//                    showCategories(true)
+//                }
+//                invalidateMenuOnExpand()
+//            },
+//            onCollapse = {
+//                if (binding.recyclerCover.isClickable) {
+//                    showCategories(false)
+//                }
+//                true
+//            }
+//        )
+//        hideItemsIfExpanded(searchItem, menu)
     }
 
     override fun onActionViewExpand(item: MenuItem?) {
