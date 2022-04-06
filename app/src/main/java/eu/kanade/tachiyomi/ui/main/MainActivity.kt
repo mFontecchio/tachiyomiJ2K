@@ -326,7 +326,10 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
 
         binding.cardToolbar.setNavigationOnClickListener {
             val rootSearchController = router.backstack.lastOrNull()?.controller
-            if ((rootSearchController is RootSearchInterface || currentToolbar != binding.cardToolbar) &&
+            if ((
+                rootSearchController is RootSearchInterface ||
+                    (currentToolbar != binding.cardToolbar && preferences.useLargeToolbar())
+                ) &&
                 rootSearchController !is SmallToolbarInterface
             ) {
                 binding.cardToolbar.menu.findItem(R.id.action_search)?.expandActionView()
@@ -470,8 +473,9 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
     open fun setFloatingToolbar(show: Boolean, solidBG: Boolean = false, changeBG: Boolean = true, showSearchAnyway: Boolean = false) {
         val oldTB = currentToolbar
         val controller = if (this::router.isInitialized) router.backstack.lastOrNull()?.controller else null
+        val useLargeTB = preferences.useLargeToolbar()
         val onSearchController = canShowFloatingToolbar(controller)
-        val onSmallerController = controller is SmallToolbarInterface
+        val onSmallerController = controller is SmallToolbarInterface || !useLargeTB
         currentToolbar = if (show && ((showSearchAnyway && onSearchController) || onSmallerController)) {
             binding.cardToolbar
         } else {
@@ -494,8 +498,10 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 it.isVisible = false
             }
         }
-        if (showSearchAnyway) {
-            val onRoot = !this::router.isInitialized || router.backstackSize == 1
+        val onRoot = !this::router.isInitialized || router.backstackSize == 1
+        if (!useLargeTB) {
+            binding.cardToolbar.navigationIcon = if (onRoot) searchDrawable else backDrawable
+        } else if (showSearchAnyway) {
             binding.cardToolbar.navigationIcon = if (!show || onRoot) searchDrawable else backDrawable
         }
         binding.cardToolbar.title = searchTitle
@@ -972,7 +978,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         val onRoot = router.backstackSize == 1
         val navIcon = if (onRoot) searchDrawable else backDrawable
         binding.toolbar.navigationIcon = if (onRoot) null else backDrawable
-        binding.cardToolbar.navigationIcon = searchDrawable
+        binding.cardToolbar.navigationIcon = if (preferences.useLargeToolbar()) searchDrawable else navIcon
         binding.cardToolbar.subtitle = null
 
         nav.visibility = if (!hideBottomNav) View.VISIBLE else nav.visibility

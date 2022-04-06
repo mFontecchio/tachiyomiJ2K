@@ -151,6 +151,7 @@ fun Controller.liftAppbarWith(recycler: RecyclerView, padView: Boolean = false) 
     var toolbarColorAnim: ValueAnimator? = null
     var isToolbarColored = false
 
+    val preferences: PreferencesHelper by injectLazy()
     val colorToolbar: (Boolean) -> Unit = f@{ isColored ->
         isToolbarColored = isColored
         toolbarColorAnim?.cancel()
@@ -162,12 +163,12 @@ fun Controller.liftAppbarWith(recycler: RecyclerView, padView: Boolean = false) 
             activity!!.getResourceColor(R.attr.colorPrimaryVariant)
         )
         if (floatingBar) {
-            setAppBarBG(0f)
+            setAppBarBG(0f, preferences)
             return@f
         }
         toolbarColorAnim = ValueAnimator.ofFloat(percent, isColored.toInt().toFloat())
         toolbarColorAnim?.addUpdateListener { valueAnimator ->
-            setAppBarBG(valueAnimator.animatedValue as Float)
+            setAppBarBG(valueAnimator.animatedValue as Float, preferences)
         }
         toolbarColorAnim?.start()
     }
@@ -175,7 +176,7 @@ fun Controller.liftAppbarWith(recycler: RecyclerView, padView: Boolean = false) 
     val floatingBar =
         !(activityBinding?.toolbar?.isVisible == true || activityBinding?.tabsFrameLayout?.isVisible == true)
     if (floatingBar) {
-        setAppBarBG(0f)
+        setAppBarBG(0f, preferences)
     }
 
     activityBinding?.appBar?.setToolbarModeBy(this)
@@ -184,7 +185,7 @@ fun Controller.liftAppbarWith(recycler: RecyclerView, padView: Boolean = false) 
     activityBinding?.appBar?.updateViewsAfterY(recycler)
 
 //    colorToolbar(recycler.canScrollVertically(-1))
-    setAppBarBG(0f)
+    setAppBarBG(0f, preferences)
     recycler.addOnScrollListener(
         object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -315,6 +316,7 @@ fun Controller.scrollViewWith(
             activityBinding.toolbar.height - if (includeTabView) tabBarHeight else 0
     }
     recycler.doOnApplyWindowInsetsCompat { view, insets, _ ->
+        appBarHeight = bigToolbarHeight!! + if (includeTabView) tabBarHeight else 0
         val headerHeight = insets.getInsets(systemBars()).top + appBarHeight
         if (!customPadding) view.updatePaddingRelative(
             top = headerHeight,
@@ -345,7 +347,7 @@ fun Controller.scrollViewWith(
             val floatingBar =
                 (this as? FloatingSearchInterface)?.showFloatingBar() == true && !includeTabView
             if (floatingBar) {
-                setAppBarBG(isColored.toInt().toFloat(), includeTabView)
+                setAppBarBG(isColored.toInt().toFloat(), preferences, includeTabView)
                 return@f
             }
             val percent = ImageUtil.getPercentOfColor(
@@ -355,13 +357,13 @@ fun Controller.scrollViewWith(
             )
             toolbarColorAnim = ValueAnimator.ofFloat(percent, isColored.toInt().toFloat())
             toolbarColorAnim?.addUpdateListener { valueAnimator ->
-                setAppBarBG(valueAnimator.animatedValue as Float, includeTabView)
+                setAppBarBG(valueAnimator.animatedValue as Float, preferences, includeTabView)
             }
             toolbarColorAnim?.start()
         }
     }
     if ((this as? FloatingSearchInterface)?.showFloatingBar() == true && !includeTabView) {
-        setAppBarBG(0f, includeTabView)
+        setAppBarBG(0f, preferences, includeTabView)
     }
     addLifecycleListener(
         object : Controller.LifecycleListener() {
@@ -585,10 +587,19 @@ fun Controller.scrollViewWith(
 val Controller.mainRecyclerView: RecyclerView?
     get() = (this as? SettingsController)?.listView ?: (this as? BaseController<*>)?.mainRecycler
 
-fun Controller.moveRecyclerViewUp() {
+fun Controller.moveRecyclerViewUp(allTheWayUp: Boolean = false) {
+    if (activityBinding?.bigToolbar?.isVisible == false) return
     val recycler = mainRecyclerView ?: return
     val activityBinding = activityBinding ?: return
     val appBarHeight = activityBinding.appBar.toolbarDistance
+    if (allTheWayUp && recycler.computeVerticalScrollOffset() - recycler.paddingTop <= activityBinding.appBar.preLayoutHeight) {
+        (recycler.layoutManager as? LinearLayoutManager)?.scrollToPosition(0)
+        recycler.post {
+            activityBinding.appBar.updateViewsAfterY(recycler)
+            activityBinding.appBar.setToolbar(false)
+        }
+        return
+    }
     if (recycler.computeVerticalScrollOffset() - recycler.paddingTop <= 0 - appBarHeight) {
         (recycler.layoutManager as? LinearLayoutManager)
             ?.scrollToPositionWithOffset(0, activityBinding.appBar.recyclerOffset)
@@ -599,7 +610,7 @@ fun Controller.moveRecyclerViewUp() {
     }
 }
 
-fun Controller.setAppBarBG(value: Float, includeTabView: Boolean = false) {
+fun Controller.setAppBarBG(value: Float, preferences: PreferencesHelper, includeTabView: Boolean = false) {
     val context = view?.context ?: return
     val floatingBar =
         (this as? FloatingSearchInterface)?.showFloatingBar() == true && !includeTabView
@@ -607,7 +618,7 @@ fun Controller.setAppBarBG(value: Float, includeTabView: Boolean = false) {
     if (router.backstack.lastOrNull()?.controller != this) return
     if (floatingBar) {
         (activityBinding?.cardView as? CardView)?.setCardBackgroundColor(context.getResourceColor(R.attr.colorPrimaryVariant))
-        if (this !is SmallToolbarInterface) {
+        if (this !is SmallToolbarInterface && preferences.useLargeToolbar()) {
             val colorSurface = context.getResourceColor(R.attr.colorSurface)
             val color = ColorUtils.blendARGB(
                 colorSurface,

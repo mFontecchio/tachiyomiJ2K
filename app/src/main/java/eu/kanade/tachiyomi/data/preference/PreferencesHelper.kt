@@ -406,6 +406,8 @@ class PreferencesHelper(val context: Context) {
 
     fun themeMangaDetails() = prefs.getBoolean(Keys.themeMangaDetails, true)
 
+    fun useLargeToolbar() = prefs.getBoolean(Keys.useLargeToolbar, true)
+
     fun dohProvider() = prefs.getInt(Keys.dohProvider, -1)
 
     fun showSeriesInShortcuts() = prefs.getBoolean(Keys.showSeriesInShortcuts, true)

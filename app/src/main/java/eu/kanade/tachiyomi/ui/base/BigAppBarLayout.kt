@@ -15,11 +15,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bluelinelabs.conductor.Controller
 import com.google.android.material.appbar.AppBarLayout
 import eu.kanade.tachiyomi.R
+import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.ui.main.FloatingSearchInterface
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.getResourceColor
 import eu.kanade.tachiyomi.util.view.backgroundColor
+import uy.kohesive.injekt.injectLazy
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -32,6 +34,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
     var cardFrame: FrameLayout? = null
     var mainToolbar: CenteredToolbar? = null
     var bigTitleView: TextView? = null
+    val preferences: PreferencesHelper by injectLazy()
     var bigView: View? = null
     private var tabsFrameLayout: FrameLayout? = null
     var toolbarMode = ToolbarState.BIG
@@ -57,22 +60,30 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         SEARCH,
     }
 
-    fun setToolbarModeBy(controller: Controller) {
-        toolbarMode = when (controller) {
-            is SmallToolbarInterface -> {
-                if (controller is FloatingSearchInterface) {
-                    ToolbarState.SEARCH
-                } else {
-                    ToolbarState.MAIN
-                }
+    fun setToolbarModeBy(controller: Controller, useSmall: Boolean? = null) {
+        toolbarMode = if (useSmall ?: !preferences.useLargeToolbar()) {
+            when (controller) {
+                is FloatingSearchInterface -> ToolbarState.SEARCH
+                else -> ToolbarState.MAIN
             }
-            else -> ToolbarState.BIG
+        } else {
+            when (controller) {
+                is SmallToolbarInterface -> {
+                    if (controller is FloatingSearchInterface) {
+                        ToolbarState.SEARCH
+                    } else {
+                        ToolbarState.MAIN
+                    }
+                }
+                else -> ToolbarState.BIG
+            }
         }
     }
 
-    fun hideBigView(useSmall: Boolean) {
-        bigView?.isGone = useSmall
-        if (useSmall) {
+    fun hideBigView(useSmall: Boolean, force: Boolean? = null) {
+        val useSmallAnyway = force ?: (useSmall || !preferences.useLargeToolbar())
+        bigView?.isGone = useSmallAnyway
+        if (useSmallAnyway) {
             mainToolbar?.backgroundColor = null
             val toolbarTextView = mainToolbar?.toolbarTitle ?: return
             toolbarTextView.setTextColor(
@@ -141,7 +152,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
             bigTitleView?.measure(widthMeasureSpec, heightMeasureSpec)
             val textHeight = max(bigTitleView?.height ?: 0, bigTitleView?.measuredHeight ?: 0) + 64.dpToPx
             array.recycle()
-            return appBarHeight + if (toolbarMode != ToolbarState.BIG) 0 else textHeight +
+            return appBarHeight + (if (toolbarMode != ToolbarState.BIG) 0 else textHeight) +
                 if (useTabsInPreLayout) 48.dpToPx else 0
         }
 
@@ -227,7 +238,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
 
     fun setToolbar(showCardTB: Boolean) {
         val mainActivity = (context as? MainActivity) ?: return
-        if (showCardTB) {
+        if ((showCardTB || toolbarMode == ToolbarState.SEARCH) && cardFrame?.isVisible == true) {
             if (mainActivity.currentToolbar != cardToolbar) {
                 mainActivity.setFloatingToolbar(true, showSearchAnyway = true)
             }
