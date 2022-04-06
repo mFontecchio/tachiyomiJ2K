@@ -696,16 +696,15 @@ class RecentsController(bundle: Bundle? = null) :
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.recents, menu)
 
-        val searchItem = menu.findItem(R.id.action_search)
-        val searchView = searchItem.actionView as SearchView
-        searchView.queryHint = view?.context?.getString(R.string.search_recents)
-        searchItem.collapseActionView()
+        val searchItem = activityBinding?.cardToolbar?.searchItem
+        val searchView = activityBinding?.cardToolbar?.searchView
+        activityBinding?.cardToolbar?.searchQueryHint = view?.context?.getString(R.string.search_recents)
         if (isSearching()) {
-            searchItem.expandActionView()
-            searchView.setQuery(query, true)
-            searchView.clearFocus()
+            searchItem?.expandActionView()
+            searchView?.setQuery(query, true)
+            searchView?.clearFocus()
         }
-        setOnQueryTextChangeListener(searchView) {
+        setOnQueryTextChangeListener(activityBinding?.cardToolbar?.searchView) {
             if (query != it) {
                 query = it ?: return@setOnQueryTextChangeListener false
                 // loadNoMore()
@@ -714,8 +713,8 @@ class RecentsController(bundle: Bundle? = null) :
             }
             true
         }
-        searchItem.fixExpandInvalidate()
-        hideItemsIfExpanded(searchItem, menu)
+//        searchItem.fixExpandInvalidate()
+//        hideItemsIfExpanded(searchItem, menu)
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {

@@ -43,6 +43,7 @@ import eu.kanade.tachiyomi.util.addOrRemoveToFavorites
 import eu.kanade.tachiyomi.util.system.connectivityManager
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.openInBrowser
+import eu.kanade.tachiyomi.util.view.activityBinding
 import eu.kanade.tachiyomi.util.view.applyBottomAnimatedInsets
 import eu.kanade.tachiyomi.util.view.inflate
 import eu.kanade.tachiyomi.util.view.requestFilePermissionsSafe
@@ -225,6 +226,9 @@ open class BrowseSourceController(bundle: Bundle) :
         binding.catalogueView.addView(recycler, 1)
         if (oldPosition != RecyclerView.NO_POSITION) {
             recycler.layoutManager?.scrollToPosition(oldPosition)
+            if (oldPosition > 0 && (activity as? MainActivity)?.currentToolbar != activityBinding?.cardToolbar) {
+                activityBinding?.appBar?.setToolbar(true)
+            }
         }
         this.recycler = recycler
     }
@@ -258,7 +262,7 @@ open class BrowseSourceController(bundle: Bundle) :
 //            .map { it.queryText().toString() }
 //            .subscribeUntilDestroy { searchWithQuery(it) }
 
-        setOnQueryTextChangeListener(searchView, onlyOnSubmit = true, hideKbOnSubmit = true) {
+        setOnQueryTextChangeListener(activityBinding?.cardToolbar?.searchView, onlyOnSubmit = true, hideKbOnSubmit = true) {
             searchWithQuery(it ?: "")
             true
         }
@@ -285,6 +289,14 @@ open class BrowseSourceController(bundle: Bundle) :
             setIcon(icon)
         }
         hideItemsIfExpanded(searchItem, menu)
+    }
+
+    override fun onActionViewCollapse(item: MenuItem?) {
+        if (router.backstackSize >= 2 && router.backstack[router.backstackSize - 2].controller is GlobalSearchController) {
+            router.popController(this)
+        } else {
+            searchWithQuery("")
+        }
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
