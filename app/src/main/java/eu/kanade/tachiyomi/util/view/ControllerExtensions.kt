@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.util.view
 
 import android.Manifest
+import android.animation.Animator
 import android.animation.ValueAnimator
 import android.content.Context
 import android.content.Intent
@@ -30,6 +31,7 @@ import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.core.view.updatePaddingRelative
+import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -236,6 +238,61 @@ fun Controller.scrollViewWith(
     recycler.post {
         updateViewsNearBottom()
     }
+
+    var itemAppBarAnimator: Animator? = null
+
+    fun animateAppBar() {
+        itemAppBarAnimator?.cancel()
+        val duration = (recycler.itemAnimator?.changeDuration ?: 250) * 2
+        itemAppBarAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+            addUpdateListener {
+                activityBinding?.appBar?.updateViewsAfterY(recycler)
+            }
+        }
+        itemAppBarAnimator?.duration = duration
+        itemAppBarAnimator?.start()
+    }
+
+    recycler.itemAnimator = object : DefaultItemAnimator() {
+        override fun animateMove(
+            holder: RecyclerView.ViewHolder?,
+            fromX: Int,
+            fromY: Int,
+            toX: Int,
+            toY: Int
+        ): Boolean {
+            animateAppBar()
+            return super.animateMove(holder, fromX, fromY, toX, toY)
+        }
+
+        override fun onAnimationFinished(viewHolder: RecyclerView.ViewHolder) {
+            activityBinding?.appBar?.updateViewsAfterY(recycler)
+            super.onAnimationFinished(viewHolder)
+        }
+
+        override fun animateChange(
+            oldHolder: RecyclerView.ViewHolder,
+            newHolder: RecyclerView.ViewHolder,
+            preInfo: ItemHolderInfo,
+            postInfo: ItemHolderInfo
+        ): Boolean {
+            animateAppBar()
+            return super.animateChange(oldHolder, newHolder, preInfo, postInfo)
+        }
+
+        override fun animateChange(
+            oldHolder: RecyclerView.ViewHolder?,
+            newHolder: RecyclerView.ViewHolder?,
+            fromX: Int,
+            fromY: Int,
+            toX: Int,
+            toY: Int
+        ): Boolean {
+            animateAppBar()
+            return super.animateChange(oldHolder, newHolder, fromX, fromY, toX, toY)
+        }
+    }
+
     val randomTag = Random.nextLong()
     var lastY = 0f
     var fakeToolbarView: View? = null
@@ -537,7 +594,7 @@ fun Controller.moveRecyclerViewUp() {
             ?.scrollToPositionWithOffset(0, activityBinding.appBar.recyclerOffset)
         recycler.post {
             activityBinding.appBar.updateViewsAfterY(recycler)
-            activityBinding.appBar.setToolbar(true)
+            activityBinding.appBar.setToolbar(recycler.computeVerticalScrollOffset() != 0)
         }
     }
 }

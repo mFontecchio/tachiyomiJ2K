@@ -99,6 +99,7 @@ import eu.kanade.tachiyomi.util.view.hide
 import eu.kanade.tachiyomi.util.view.isExpanded
 import eu.kanade.tachiyomi.util.view.isHidden
 import eu.kanade.tachiyomi.util.view.marginTop
+import eu.kanade.tachiyomi.util.view.moveRecyclerViewUp
 import eu.kanade.tachiyomi.util.view.scrollViewWith
 import eu.kanade.tachiyomi.util.view.setOnQueryTextChangeListener
 import eu.kanade.tachiyomi.util.view.setStyle
@@ -1237,6 +1238,7 @@ class LibraryController(
         viewScope.launchUI {
             adapter.performFilterAsync()
         }
+        moveRecyclerViewUp()
         return true
     }
 
