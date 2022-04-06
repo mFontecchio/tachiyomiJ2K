@@ -100,7 +100,6 @@ import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
 import eu.kanade.tachiyomi.util.system.setCustomTitleAndMessage
 import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.tachiyomi.util.view.activityBinding
-import eu.kanade.tachiyomi.util.view.doOnApplyWindowInsetsCompat
 import eu.kanade.tachiyomi.util.view.findChild
 import eu.kanade.tachiyomi.util.view.getText
 import eu.kanade.tachiyomi.util.view.requestFilePermissionsSafe
@@ -382,31 +381,32 @@ class MangaDetailsController :
         if (isTablet) {
             val tHeight = toolbarHeight.takeIf { it ?: 0 > 0 } ?: appbarHeight
             headerHeight = tHeight +
-                (view.rootWindowInsetsCompat?.getInsets(systemBars())?.top ?: 0)
+                (
+                    view.rootWindowInsetsCompat?.getInsets(systemBars())?.top
+                        ?: activityBinding?.root?.rootWindowInsetsCompat?.getInsets(systemBars())?.top
+                        ?: 0
+                    )
             binding.recycler.updatePaddingRelative(top = headerHeight + 4.dpToPx)
-            binding.recycler.doOnApplyWindowInsetsCompat { _, insets, _ ->
-                setInsets(insets, appbarHeight, offset)
-            }
-        } else {
-            scrollViewWith(
-                binding.recycler,
-                padBottom = true,
-                customPadding = true,
-                afterInsets = { insets ->
-                    setInsets(insets, appbarHeight, offset)
-                },
-                liftOnScroll = {
-                    colorToolbar(it)
-                }
-            )
         }
+        scrollViewWith(
+            binding.recycler,
+            padBottom = true,
+            customPadding = true,
+            afterInsets = { insets ->
+                setInsets(insets, appbarHeight, offset)
+            },
+            liftOnScroll = {
+                colorToolbar(it)
+            }
+        )
+//        }
         val swipeCircle = binding.swipeRefresh.findChild<ImageView>()
         binding.recycler.addOnScrollListener(
             object : RecyclerView.OnScrollListener() {
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                     super.onScrolled(recyclerView, dx, dy)
                     if (!isTablet) {
-                        updateToolbarTitleAlpha(isScrollingDown = dy > 0)
+                        updateToolbarTitleAlpha(isScrollingDown = dy > 0 && !binding.root.context.isTablet())
                         val atTop = !recyclerView.canScrollVertically(-1)
                         val tY = getHeader()?.binding?.backdrop?.translationY ?: 0f
                         getHeader()?.binding?.backdrop?.translationY = max(0f, tY + dy * 0.25f)
@@ -570,8 +570,18 @@ class MangaDetailsController :
     override fun onChangeStarted(handler: ControllerChangeHandler, type: ControllerChangeType) {
         super.onChangeStarted(handler, type)
         if (type.isEnter) {
+            activityBinding?.appBar?.y = 0f
+            activityBinding?.appBar?.updateViewsAfterY(binding.recycler)
             updateToolbarTitleAlpha(0f)
             setStatusBarAndToolbar()
+//            if (isTablet) {
+//                view?.post {
+//                    val toolbarTextView = activityBinding?.toolbar?.toolbarTitle ?: return@post
+//                    toolbarTextView.setTextColor(
+//                        ColorUtils.setAlphaComponent(toolbarTextView.currentTextColor, 0)
+//                    )
+//                }
+//            }
         } else {
             if (router.backstack.lastOrNull()?.controller is DialogController) {
                 return
@@ -1129,20 +1139,22 @@ class MangaDetailsController :
         toolbarTextView.setTextColor(
             ColorUtils.setAlphaComponent(
                 toolbarTextView.currentTextColor,
-                (
-                    when {
-                        // Specific alpha provided
-                        alpha != null -> alpha
+                if (isTablet) 0 else {
+                    (
+                        when {
+                            // Specific alpha provided
+                            alpha != null -> alpha
 
-                        // First item isn't in view, full opacity
-                        ((scrolledList.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition() > 0) -> 1f
-                        ((scrolledList.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition() == 0) -> 0f
+                            // First item isn't in view, full opacity
+                            ((scrolledList.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition() > 0) -> 1f
+                            ((scrolledList.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition() == 0) -> 0f
 
-                        // Based on scroll amount when first item is in view
-                        else -> (scrolledList.computeVerticalScrollOffset() - (20.dpToPx))
-                            .coerceIn(0, 255) / 255f
-                    } * 255
-                    ).roundToInt()
+                            // Based on scroll amount when first item is in view
+                            else -> (scrolledList.computeVerticalScrollOffset() - (20.dpToPx))
+                                .coerceIn(0, 255) / 255f
+                        } * 255
+                        ).roundToInt()
+                }
             )
         )
     }

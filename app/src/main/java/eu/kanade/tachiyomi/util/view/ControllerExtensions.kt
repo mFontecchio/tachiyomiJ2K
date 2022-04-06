@@ -243,15 +243,17 @@ fun Controller.scrollViewWith(
     var itemAppBarAnimator: Animator? = null
 
     fun animateAppBar() {
-        itemAppBarAnimator?.cancel()
-        val duration = (recycler.itemAnimator?.changeDuration ?: 250) * 2
-        itemAppBarAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-            addUpdateListener {
-                activityBinding?.appBar?.updateViewsAfterY(recycler)
+        if (this !is SmallToolbarInterface) {
+            itemAppBarAnimator?.cancel()
+            val duration = (recycler.itemAnimator?.changeDuration ?: 250) * 2
+            itemAppBarAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+                addUpdateListener {
+                    activityBinding?.appBar?.updateViewsAfterY(recycler)
+                }
             }
+            itemAppBarAnimator?.duration = duration
+            itemAppBarAnimator?.start()
         }
-        itemAppBarAnimator?.duration = duration
-        itemAppBarAnimator?.start()
     }
 
     recycler.itemAnimator = object : DefaultItemAnimator() {
@@ -297,6 +299,7 @@ fun Controller.scrollViewWith(
     val randomTag = Random.nextLong()
     var lastY = 0f
     var fakeToolbarView: View? = null
+    val preferences: PreferencesHelper by injectLazy()
     var fakeBottomNavView: View? = null
     if (!customPadding) {
         recycler.updatePaddingRelative(
@@ -307,7 +310,7 @@ fun Controller.scrollViewWith(
         )
     }
     val atTopOfRecyclerView: () -> Boolean = f@{
-        if (this is MangaDetailsController) {
+        if (this is SmallToolbarInterface || !preferences.useLargeToolbar()) {
             return@f !recycler.canScrollVertically(-1)
         }
         val activityBinding = activityBinding ?: return@f true
@@ -337,7 +340,6 @@ fun Controller.scrollViewWith(
     var toolbarColorAnim: ValueAnimator? = null
     var isToolbarColor = false
     var isInView = true
-    val preferences: PreferencesHelper by injectLazy()
     val colorToolbar: (Boolean) -> Unit = f@{ isColored ->
         isToolbarColor = isColored
         if (liftOnScroll != null) {
@@ -375,7 +377,10 @@ fun Controller.scrollViewWith(
                 super.onChangeStart(controller, changeHandler, changeType)
                 isInView = changeType.isEnter
                 if (changeType.isEnter) {
-                    activityBinding?.appBar?.hideBigView(this@scrollViewWith is SmallToolbarInterface)
+                    activityBinding?.appBar?.hideBigView(
+                        this@scrollViewWith is SmallToolbarInterface,
+                        setTitleAlpha = this@scrollViewWith !is MangaDetailsController
+                    )
                     activityBinding?.appBar?.setToolbarModeBy(this@scrollViewWith)
                     activityBinding?.appBar?.useTabsInPreLayout = includeTabView
                     colorToolbar(isToolbarColor)
@@ -478,37 +483,37 @@ fun Controller.scrollViewWith(
                         lastY = 0f
                         if (isToolbarColor) colorToolbar(false)
                     } else {
-                        if (!isTablet) {
-                            activityBinding!!.appBar.y -= dy
-                            activityBinding!!.appBar.updateViewsAfterY(recycler)
-                            activityBinding!!.bottomNav?.let { bottomNav ->
-                                if (bottomNav.isVisible && isInView) {
-                                    if (preferences.hideBottomNavOnScroll().get()) {
-                                        bottomNav.translationY += dy
-                                        bottomNav.translationY = MathUtils.clamp(
-                                            bottomNav.translationY,
-                                            0f,
-                                            bottomNav.height.toFloat()
-                                        )
-                                        updateViewsNearBottom()
-                                    } else if (bottomNav.translationY != 0f) {
-                                        bottomNav.translationY = 0f
-                                        activityBinding!!.bottomView?.translationY = 0f
-                                    }
+//                        if (!isTablet) {
+                        activityBinding!!.appBar.y -= dy
+                        activityBinding!!.appBar.updateViewsAfterY(recycler)
+                        activityBinding!!.bottomNav?.let { bottomNav ->
+                            if (bottomNav.isVisible && isInView) {
+                                if (preferences.hideBottomNavOnScroll().get()) {
+                                    bottomNav.translationY += dy
+                                    bottomNav.translationY = MathUtils.clamp(
+                                        bottomNav.translationY,
+                                        0f,
+                                        bottomNav.height.toFloat()
+                                    )
+                                    updateViewsNearBottom()
+                                } else if (bottomNav.translationY != 0f) {
+                                    bottomNav.translationY = 0f
+                                    activityBinding!!.bottomView?.translationY = 0f
                                 }
                             }
-
-                            if (!isToolbarColor && (
-                                dy == 0 ||
-                                    (
-                                        activityBinding!!.appBar.y <= -activityBinding!!.appBar.height.toFloat() ||
-                                            dy == 0 && activityBinding!!.appBar.y == 0f
-                                        )
-                                )
-                            ) {
-                                colorToolbar(true)
-                            }
                         }
+
+                        if (!isToolbarColor && (
+                            dy == 0 ||
+                                (
+                                    activityBinding!!.appBar.y <= -activityBinding!!.appBar.height.toFloat() ||
+                                        dy == 0 && activityBinding!!.appBar.y == 0f
+                                    )
+                            )
+                        ) {
+                            colorToolbar(true)
+                        }
+//                        }
                         val notAtTop = !atTopOfRecyclerView()
                         if (notAtTop != isToolbarColor) colorToolbar(notAtTop)
                         lastY = activityBinding!!.appBar.y
@@ -525,9 +530,9 @@ fun Controller.scrollViewWith(
                 if (newState == RecyclerView.SCROLL_STATE_IDLE &&
                     (this@scrollViewWith as? BaseController<*>)?.isDragging != true
                 ) {
-                    if (isTablet) {
-                        return
-                    }
+//                    if (isTablet) {
+//                        return
+//                    }
                     if (router?.backstack?.lastOrNull()
                         ?.controller == this@scrollViewWith && statusBarHeight > -1 &&
                         activity != null && activityBinding!!.appBar.height > 0 &&

@@ -90,6 +90,7 @@ import eu.kanade.tachiyomi.util.view.backgroundColor
 import eu.kanade.tachiyomi.util.view.blurBehindWindow
 import eu.kanade.tachiyomi.util.view.doOnApplyWindowInsetsCompat
 import eu.kanade.tachiyomi.util.view.getItemView
+import eu.kanade.tachiyomi.util.view.mainRecyclerView
 import eu.kanade.tachiyomi.util.view.moveRecyclerViewUp
 import eu.kanade.tachiyomi.util.view.snack
 import eu.kanade.tachiyomi.util.view.withFadeInTransaction
@@ -152,14 +153,6 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
 
     val toolbarHeight: Int
         get() = max(binding.toolbar.height, binding.cardFrame.height)
-
-    val isSearchExpanded: Boolean
-        get() {
-            if (isBindingInitialized) {
-                return binding.cardToolbar.isSearchExpanded
-            }
-            return false
-        }
 
     fun bigToolbarHeight(includeSearch: Boolean): Int {
         return if (binding.appBar.toolbarMode != BigAppBarLayout.ToolbarState.BIG) {
@@ -227,6 +220,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         supportActionBar?.setDisplayShowCustomEnabled(true)
 
         setNavBarColor(content.rootWindowInsetsCompat)
+        binding.appBar.mainActivity = this
         nav.isVisible = false
         content.doOnApplyWindowInsetsCompat { v, insets, _ ->
             setNavBarColor(insets)
@@ -590,6 +584,13 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         setExtensionsBadge()
         DownloadService.callListeners()
         showDLQueueTutorial()
+        lifecycleScope.launchUI {
+            delay(50)
+            if (isBindingInitialized && this@MainActivity::router.isInitialized) {
+                val recycler = router.backstack.lastOrNull()?.controller?.mainRecyclerView ?: return@launchUI
+                binding.appBar.updateViewsAfterY(recycler)
+            }
+        }
     }
 
     private fun showDLQueueTutorial() {
@@ -776,6 +777,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         overflowDialog = null
         DownloadService.removeListener(this)
         if (isBindingInitialized) {
+            binding.appBar.mainActivity = null
             binding.toolbar.setNavigationOnClickListener(null)
             binding.cardToolbar.setNavigationOnClickListener(null)
         }

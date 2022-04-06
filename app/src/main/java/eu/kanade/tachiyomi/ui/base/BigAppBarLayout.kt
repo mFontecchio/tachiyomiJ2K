@@ -1,16 +1,21 @@
 package eu.kanade.tachiyomi.ui.base
 
 import android.content.Context
+import android.content.res.Configuration
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewPropertyAnimator
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.graphics.ColorUtils
 import androidx.core.math.MathUtils
 import androidx.core.view.isGone
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
+import androidx.core.view.marginTop
+import androidx.core.view.updateLayoutParams
+import androidx.core.widget.TextViewCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.bluelinelabs.conductor.Controller
 import com.google.android.material.appbar.AppBarLayout
@@ -20,6 +25,7 @@ import eu.kanade.tachiyomi.ui.main.FloatingSearchInterface
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.getResourceColor
+import eu.kanade.tachiyomi.util.system.isTablet
 import eu.kanade.tachiyomi.util.view.backgroundColor
 import uy.kohesive.injekt.injectLazy
 import kotlin.math.abs
@@ -36,7 +42,9 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
     var bigTitleView: TextView? = null
     val preferences: PreferencesHelper by injectLazy()
     var bigView: View? = null
+    var imageView: ImageView? = null
     private var tabsFrameLayout: FrameLayout? = null
+    var mainActivity: MainActivity? = null
     var toolbarMode = ToolbarState.BIG
         set(value) {
             field = value
@@ -80,12 +88,13 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         }
     }
 
-    fun hideBigView(useSmall: Boolean, force: Boolean? = null) {
+    fun hideBigView(useSmall: Boolean, force: Boolean? = null, setTitleAlpha: Boolean = true) {
         val useSmallAnyway = force ?: (useSmall || !preferences.useLargeToolbar())
         bigView?.isGone = useSmallAnyway
         if (useSmallAnyway) {
             mainToolbar?.backgroundColor = null
             val toolbarTextView = mainToolbar?.toolbarTitle ?: return
+            if (!setTitleAlpha) return
             toolbarTextView.setTextColor(
                 ColorUtils.setAlphaComponent(
                     toolbarTextView.currentTextColor,
@@ -95,6 +104,16 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         }
     }
 
+    private val minTabletHeight: Int
+        get() {
+            val tabHeight = if (tabsFrameLayout?.isVisible == true) 48.dpToPx else 0
+            return if (context.isTablet()) {
+                (mainToolbar?.height ?: 0) + paddingTop + tabHeight
+            } else {
+                0
+            }
+        }
+
     override fun onFinishInflate() {
         super.onFinishInflate()
         bigTitleView = findViewById(R.id.big_title)
@@ -103,6 +122,8 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         bigView = findViewById(R.id.big_toolbar)
         cardFrame = findViewById(R.id.card_frame)
         tabsFrameLayout = findViewById(R.id.tabs_frame_layout)
+        imageView = findViewById(R.id.big_icon)
+        updateBigView(resources.configuration)
     }
 
     fun setTitle(title: CharSequence?) {
@@ -112,18 +133,21 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
 
     override fun setTranslationY(translationY: Float) {
         val realHeight = (preLayoutHeight + paddingTop).toFloat()
-        val newY = MathUtils.clamp(translationY, -realHeight, 0f)
+        val newY = MathUtils.clamp(translationY, -realHeight + minTabletHeight, 0f)
         super.setTranslationY(newY)
     }
 
     private val toolbarHeight: Float
         get() {
-            val attrsArray = intArrayOf(R.attr.mainActionBarSize)
-            val array = context.obtainStyledAttributes(attrsArray)
-            val appBarHeight = (
-                array.getDimensionPixelSize(0, 0)
-                )
-            array.recycle()
+            val appBarHeight = if (mainToolbar?.height ?: 0 > 0) {
+                mainToolbar?.height ?: 0
+            } else {
+                val attrsArray = intArrayOf(R.attr.mainActionBarSize)
+                val array = context.obtainStyledAttributes(attrsArray)
+                val height = array.getDimensionPixelSize(0, 0)
+                array.recycle()
+                height
+            }
             return (appBarHeight + paddingTop).toFloat()
         }
 
@@ -150,12 +174,43 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
             val widthMeasureSpec = MeasureSpec.makeMeasureSpec(resources.displayMetrics.widthPixels, MeasureSpec.AT_MOST)
             val heightMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
             bigTitleView?.measure(widthMeasureSpec, heightMeasureSpec)
-            val textHeight = max(bigTitleView?.height ?: 0, bigTitleView?.measuredHeight ?: 0) + 64.dpToPx
+            val textHeight = max(bigTitleView?.height ?: 0, bigTitleView?.measuredHeight ?: 0) +
+                (bigTitleView?.marginTop?.plus(bigView?.paddingBottom ?: 0) ?: 0)
             array.recycle()
             return appBarHeight + (if (toolbarMode != ToolbarState.BIG) 0 else textHeight) +
                 if (useTabsInPreLayout) 48.dpToPx else 0
         }
 
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        super.onConfigurationChanged(newConfig)
+        updateBigView(newConfig)
+    }
+
+    private fun updateBigView(config: Configuration?) {
+        config ?: return
+        if (config.orientation == Configuration.ORIENTATION_LANDSCAPE ||
+            config.screenWidthDp >= 720
+        ) {
+            val bigTitleView = bigTitleView ?: return
+            val isTablet = config.smallestScreenWidthDp >= 600
+            val attrs = intArrayOf(
+                if (isTablet) R.attr.textAppearanceHeadlineLarge
+                else R.attr.textAppearanceHeadlineMedium
+            )
+            val ta = context.obtainStyledAttributes(attrs)
+            val resId = ta.getResourceId(0, 0)
+            ta.recycle()
+            TextViewCompat.setTextAppearance(bigTitleView, resId)
+            bigTitleView.setTextColor(context.getResourceColor(R.attr.actionBarTintColor))
+            bigTitleView.updateLayoutParams<MarginLayoutParams> {
+                topMargin = if (isTablet) 52.dpToPx else 12.dpToPx
+            }
+            imageView?.updateLayoutParams<MarginLayoutParams> {
+                height = if (isTablet) 52.dpToPx else 48.dpToPx
+                width = if (isTablet) 52.dpToPx else 48.dpToPx
+            }
+        }
+    }
     fun updateViewsAfterY(recyclerView: RecyclerView, cancelAnim: Boolean = true) {
         if (cancelAnim) {
             yAnimator?.cancel()
@@ -170,14 +225,13 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         } else {
             MathUtils.clamp(
                 translationY,
-                -realHeight.toFloat() + top,
+                -realHeight.toFloat() + top + minTabletHeight,
                 max(
                     smallHeight,
                     if (offset > realHeight - toolbarHeight - tabHeight) smallHeight else min(-offset.toFloat(), 0f)
                 ) + top.toFloat()
             )
         }
-        setToolbar(offset > realHeight - toolbarHeight - tabHeight)
 
         translationY = newY
         mainToolbar?.let { mainToolbar ->
@@ -187,6 +241,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
                 else -> bigHeight.toFloat()
             }
         }
+        setToolbar(offset > realHeight - toolbarHeight - tabHeight)
         if (toolbarMode != ToolbarState.BIG) return
         val alpha = MathUtils.clamp((realHeight.toFloat() + newY * 5) / realHeight.toFloat() + .33f, 0.0f, 1.0f)
         bigView?.alpha = if (alpha.isNaN()) 1f else alpha
@@ -211,7 +266,8 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         val shortAnimationDuration = resources?.getInteger(
             android.R.integer.config_longAnimTime
         ) ?: 0
-        val closerToTop = abs(y) > height - halfWay
+        val realHeight = preLayoutHeight + paddingTop
+        val closerToTop = abs(y) > realHeight - halfWay
         val atTop = !recyclerView.canScrollVertically(-1)
         val lastY = if (closerToTop && !atTop) {
             -height.toFloat()
@@ -219,7 +275,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
             toolbarHeight
         }
 
-        val onFirstItem = recyclerView.computeVerticalScrollOffset() < height - toolbarHeight
+        val onFirstItem = recyclerView.computeVerticalScrollOffset() < realHeight - toolbarHeight
 
         return if (!onFirstItem) {
             yAnimator = animate().y(lastY)
@@ -237,7 +293,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
     }
 
     fun setToolbar(showCardTB: Boolean) {
-        val mainActivity = (context as? MainActivity) ?: return
+        val mainActivity = mainActivity ?: return
         if ((showCardTB || toolbarMode == ToolbarState.SEARCH) && cardFrame?.isVisible == true) {
             if (mainActivity.currentToolbar != cardToolbar) {
                 mainActivity.setFloatingToolbar(true, showSearchAnyway = true)
