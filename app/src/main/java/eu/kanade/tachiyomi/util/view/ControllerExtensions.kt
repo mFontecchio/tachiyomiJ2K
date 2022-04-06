@@ -249,6 +249,9 @@ fun Controller.scrollViewWith(
         )
     }
     val atTopOfRecyclerView: () -> Boolean = f@{
+        if (this is MangaDetailsController) {
+            return@f !recycler.canScrollVertically(-1)
+        }
         val activityBinding = activityBinding ?: return@f true
         return@f recycler.computeVerticalScrollOffset() - recycler.paddingTop <=
             0 - activityBinding.appBar.paddingTop -
