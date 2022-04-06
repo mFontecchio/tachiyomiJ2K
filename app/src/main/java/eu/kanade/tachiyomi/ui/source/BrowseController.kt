@@ -15,6 +15,7 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
+import androidx.core.view.doOnNextLayout
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
@@ -438,6 +439,12 @@ class BrowseController :
             binding.bottomSheet.root.updateExtTitle()
             binding.bottomSheet.root.presenter.refreshExtensions()
             presenter.updateSources()
+            if (type.isEnter) {
+                activityBinding?.appBar?.doOnNextLayout {
+                    activityBinding?.appBar?.y = 0f
+                    activityBinding?.appBar?.updateViewsAfterY(binding.sourceRecycler)
+                }
+            }
         }
         if (!type.isEnter) {
             binding.bottomSheet.root.canExpand = false
