@@ -187,6 +187,11 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
                 ((if (alpha2.isNaN()) 0f else alpha2) * 255).roundToInt()
             )
         )
+        mainToolbar?.alpha = MathUtils.clamp(
+            (y + (mainToolbar?.y ?: 0f)) / paddingTop,
+            0f,
+            1f
+        )
     }
 
     fun snapY(recyclerView: RecyclerView): Float {
