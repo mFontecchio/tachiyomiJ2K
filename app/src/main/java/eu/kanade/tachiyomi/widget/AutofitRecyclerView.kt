@@ -143,6 +143,7 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
                 }
             }
         }
+        scrolledY += maxHeight
         return scrolledY + paddingTop
     }
 }
