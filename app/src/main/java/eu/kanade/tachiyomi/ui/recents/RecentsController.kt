@@ -392,6 +392,7 @@ class RecentsController(bundle: Bundle? = null) :
             val activity = (activity as? MainActivity) ?: return
             (activity as? MainActivity)?.setStatusBarColorTransparent(showingDownloads)
             activityBinding?.appBar?.isInvisible = showingDownloads
+            setTitle()
         }
     }
 
@@ -536,13 +537,7 @@ class RecentsController(bundle: Bundle? = null) :
                 moveRecyclerViewUp()
             } else {
                 (binding.recycler.layoutManager as? LinearLayoutManager)
-                    ?.scrollToPositionWithOffset(
-                        0,
-                        if (!isSearchExpanded) 0 else (
-                            activityBinding?.appBar?.recyclerOffset
-                                ?: 0
-                            )
-                    )
+                    ?.scrollToPositionWithOffset(0, 0)
             }
         }
         if (lastChapterId != null) {
