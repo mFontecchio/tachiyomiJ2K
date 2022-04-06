@@ -681,8 +681,11 @@ class LinearLayoutManagerAccurateOffset(context: Context?) : LinearLayoutManager
             } else {
                 val type = rView?.adapter?.getItemViewType(i) ?: 0
                 if (childAvgHeightMap[type] == null) {
-                    childAvgHeightMap[type] =
-                        childTypeMap[type]?.values?.average()?.roundToInt() ?: 0
+                    val array = (childTypeMap[type]?.values ?: mutableListOf(0)).toIntArray()
+                    childAvgHeightMap[type] = array
+                        .copyOfRange(0, min(array.size, 50))
+                        .average()
+                        .roundToInt()
                 }
                 childAvgHeightMap[type] ?: 0
             }
@@ -708,8 +711,11 @@ class LinearLayoutManagerAccurateOffset(context: Context?) : LinearLayoutManager
             } else {
                 val type = rView?.adapter?.getItemViewType(i) ?: 0
                 if (childAvgHeightMap[type] == null) {
-                    childAvgHeightMap[type] =
-                        childTypeMap[type]?.values?.average()?.roundToInt() ?: 0
+                    val array = (childTypeMap[type]?.values ?: mutableListOf(0)).toIntArray()
+                    childAvgHeightMap[type] = array
+                        .copyOfRange(0, min(array.size, 50))
+                        .average()
+                        .roundToInt()
                 }
                 childAvgHeightMap[type] ?: 0
             }
