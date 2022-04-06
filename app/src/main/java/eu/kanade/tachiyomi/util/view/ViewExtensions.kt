@@ -431,7 +431,7 @@ fun setCards(
 var View.backgroundColor: Int?
     get() = (background as? ColorDrawable)?.color
     set(value) {
-        background = (if (value == null) null else ColorDrawable(value))
+        if (value != null) setBackgroundColor(value) else background = null
     }
 
 /**
