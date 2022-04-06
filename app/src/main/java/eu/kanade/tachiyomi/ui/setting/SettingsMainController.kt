@@ -11,6 +11,7 @@ import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.ui.main.FloatingSearchInterface
 import eu.kanade.tachiyomi.ui.setting.search.SettingsSearchController
 import eu.kanade.tachiyomi.util.system.getResourceColor
+import eu.kanade.tachiyomi.util.view.activityBinding
 import eu.kanade.tachiyomi.util.view.withFadeTransaction
 
 class SettingsMainController : SettingsController(), FloatingSearchInterface {
@@ -95,7 +96,7 @@ class SettingsMainController : SettingsController(), FloatingSearchInterface {
         searchView.maxWidth = Int.MAX_VALUE
 
         // Change hint to show global search.
-        searchView.queryHint = applicationContext?.getString(R.string.search_settings)
+        activityBinding?.cardToolbar?.searchQueryHint = applicationContext?.getString(R.string.search_settings)
 
         searchItem.setOnActionExpandListener(
             object : MenuItem.OnActionExpandListener {

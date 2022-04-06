@@ -10,7 +10,6 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.SearchView
 import androidx.core.view.WindowInsetsCompat.Type.ime
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.isVisible
@@ -117,6 +116,9 @@ open class BrowseSourceController(bundle: Bundle) :
 
     /** Current filter sheet */
     var filterSheet: SourceFilterSheet? = null
+
+    private val isBehindGlobalSearch: Boolean
+        get() = router.backstackSize >= 2 && router.backstack[router.backstackSize - 2].controller is GlobalSearchController
 
     init {
         setHasOptionsMenu(true)
@@ -237,14 +239,18 @@ open class BrowseSourceController(bundle: Bundle) :
         inflater.inflate(R.menu.browse_source, menu)
 
         // Initialize search menu
-        val searchItem = menu.findItem(R.id.action_search)
-        val searchView = searchItem.actionView as SearchView
+        val searchItem = activityBinding?.cardToolbar?.searchItem
+        val searchView = activityBinding?.cardToolbar?.searchView
+//        activityBinding?.cardToolbar?.searchQueryHint = getSearchTitle()
 
         val query = presenter.query
         if (query.isNotBlank()) {
-            searchItem.expandActionView()
-            searchView.setQuery(query, true)
-            searchView.clearFocus()
+            searchItem?.expandActionView()
+            searchView?.setQuery(query, true)
+            searchView?.clearFocus()
+        } else {
+            searchItem?.collapseActionView()
+            searchView?.setQuery("", true)
         }
 
 //        val searchEventsObservable = searchView.queryTextChangeEvents()
@@ -262,22 +268,22 @@ open class BrowseSourceController(bundle: Bundle) :
 //            .map { it.queryText().toString() }
 //            .subscribeUntilDestroy { searchWithQuery(it) }
 
-        setOnQueryTextChangeListener(activityBinding?.cardToolbar?.searchView, onlyOnSubmit = true, hideKbOnSubmit = true) {
+        setOnQueryTextChangeListener(searchView, onlyOnSubmit = true, hideKbOnSubmit = true) {
             searchWithQuery(it ?: "")
             true
         }
 
-        searchItem.fixExpand(
-            onExpand = { invalidateMenuOnExpand() },
-            onCollapse = {
-                if (router.backstackSize >= 2 && router.backstack[router.backstackSize - 2].controller is GlobalSearchController) {
-                    router.popController(this)
-                } else {
-                    searchWithQuery("")
-                }
-                true
-            }
-        )
+//        searchItem.fixExpand(
+//            onExpand = { invalidateMenuOnExpand() },
+//            onCollapse = {
+//                if (router.backstackSize >= 2 && router.backstack[router.backstackSize - 2].controller is GlobalSearchController) {
+//                    router.popController(this)
+//                } else {
+//                    searchWithQuery("")
+//                }
+//                true
+//            }
+//        )
 
         // Show next display mode
         menu.findItem(R.id.action_display_mode).apply {
@@ -288,11 +294,11 @@ open class BrowseSourceController(bundle: Bundle) :
             }
             setIcon(icon)
         }
-        hideItemsIfExpanded(searchItem, menu)
+//        hideItemsIfExpanded(searchItem, menu)
     }
 
     override fun onActionViewCollapse(item: MenuItem?) {
-        if (router.backstackSize >= 2 && router.backstack[router.backstackSize - 2].controller is GlobalSearchController) {
+        if (isBehindGlobalSearch) {
             router.popController(this)
         } else {
             searchWithQuery("")
@@ -301,6 +307,8 @@ open class BrowseSourceController(bundle: Bundle) :
 
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
+
+        activityBinding?.cardToolbar?.setQueryHint("", !isBehindGlobalSearch)
 
         val isHttpSource = presenter.source is HttpSource
         menu.findItem(R.id.action_open_in_web_view).isVisible = isHttpSource
@@ -493,10 +501,8 @@ open class BrowseSourceController(bundle: Bundle) :
     override fun onActivityResumed(activity: Activity) {
         super.onActivityResumed(activity)
 
-        if (BuildConfig.DEBUG && presenter.query.isBlank()) {
-            val searchItem =
-                (activity as? MainActivity)?.binding?.cardToolbar?.menu?.findItem(R.id.action_search)
-            val searchView = searchItem?.actionView as? SearchView ?: return
+        if (BuildConfig.DEBUG && this == router.backstack.lastOrNull()?.controller) {
+            val searchView = activityBinding?.cardToolbar?.searchView
             setOnQueryTextChangeListener(searchView, onlyOnSubmit = true, hideKbOnSubmit = true) {
                 searchWithQuery(it ?: "")
                 true

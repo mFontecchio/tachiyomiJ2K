@@ -38,9 +38,18 @@ class FloatingToolbar @JvmOverloads constructor(context: Context, attrs: Attribu
             return searchView.queryHint
         }
         set(value) {
-            val searchView = searchItem?.actionView as? SearchView ?: return
-            searchView.queryHint = value
+            setQueryHint(value)
         }
+
+    fun setQueryHint(query: CharSequence?, collapseSearch: Boolean = true) {
+        val searchView = searchItem?.actionView as? SearchView ?: return
+        val oldV = searchView.queryHint
+        searchView.queryHint = query
+        if (oldV != query && collapseSearch) {
+            searchView.setQuery("", false)
+            searchItem?.collapseActionView()
+        }
+    }
 
     val searchView: SearchView?
         get() {

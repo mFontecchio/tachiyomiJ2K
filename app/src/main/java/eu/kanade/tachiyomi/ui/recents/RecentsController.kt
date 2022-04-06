@@ -463,7 +463,7 @@ class RecentsController(bundle: Bundle? = null) :
         setBottomPadding()
         binding.downloadBottomSheet.dlBottomSheet.update()
 
-        if (BuildConfig.DEBUG && query.isBlank()) {
+        if (BuildConfig.DEBUG && query.isBlank() && this == router.backstack.lastOrNull()?.controller) {
             val searchItem =
                 (activity as? MainActivity)?.binding?.cardToolbar?.menu?.findItem(R.id.action_search)
             val searchView = searchItem?.actionView as? SearchView ?: return

@@ -467,7 +467,7 @@ class BrowseController :
         if (showingExtensions) {
             updateSheetMenu()
         }
-        if (BuildConfig.DEBUG) {
+        if (BuildConfig.DEBUG && this == router.backstack.lastOrNull()?.controller) {
             val searchView = activityBinding?.cardToolbar?.searchView
 
             setOnQueryTextChangeListener(searchView, onlyOnSubmit = true) {
@@ -570,7 +570,7 @@ class BrowseController :
         val searchView = activityBinding?.cardToolbar?.searchView
 
         // Change hint to show global search.
-        searchView?.queryHint = view?.context?.getString(R.string.global_search)
+        activityBinding?.cardToolbar?.searchQueryHint = view?.context?.getString(R.string.global_search)
 
 //        searchItem.fixExpandInvalidate()
         // Create query listener which opens the global search view.
