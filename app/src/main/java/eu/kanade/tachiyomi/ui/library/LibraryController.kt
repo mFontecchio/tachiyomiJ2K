@@ -1646,7 +1646,7 @@ class LibraryController(
 
         val searchItem = menu.findItem(R.id.action_search)
         val searchView = searchItem.actionView as SearchView
-        activityBinding?.cardToolbar?.searchQueryHint = resources?.getString(R.string.library_search_hint)
+        activityBinding?.cardToolbar?.setQueryHint(resources?.getString(R.string.library_search_hint), query.isEmpty())
 
         searchItem.collapseActionView()
         if (query.isNotEmpty()) {

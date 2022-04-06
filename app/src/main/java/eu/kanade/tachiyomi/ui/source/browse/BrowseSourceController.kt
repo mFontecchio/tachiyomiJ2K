@@ -308,7 +308,7 @@ open class BrowseSourceController(bundle: Bundle) :
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
 
-        activityBinding?.cardToolbar?.setQueryHint("", !isBehindGlobalSearch)
+        activityBinding?.cardToolbar?.setQueryHint("", !isBehindGlobalSearch && presenter.query.isBlank())
 
         val isHttpSource = presenter.source is HttpSource
         menu.findItem(R.id.action_open_in_web_view).isVisible = isHttpSource

@@ -702,7 +702,7 @@ class RecentsController(bundle: Bundle? = null) :
 
         val searchItem = activityBinding?.cardToolbar?.searchItem
         val searchView = activityBinding?.cardToolbar?.searchView
-        activityBinding?.cardToolbar?.searchQueryHint = view?.context?.getString(R.string.search_recents)
+        activityBinding?.cardToolbar?.setQueryHint(view?.context?.getString(R.string.search_recents), !isSearching())
         if (isSearching()) {
             searchItem?.expandActionView()
             searchView?.setQuery(query, true)

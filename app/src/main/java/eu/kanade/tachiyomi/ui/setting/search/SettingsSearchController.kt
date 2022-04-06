@@ -66,7 +66,7 @@ class SettingsSearchController :
         val searchItem = activityBinding?.cardToolbar?.searchItem
         searchView = activityBinding?.cardToolbar?.searchView
 
-        activityBinding?.cardToolbar?.searchQueryHint = applicationContext?.getString(R.string.search_settings)
+        activityBinding?.cardToolbar?.setQueryHint(applicationContext?.getString(R.string.search_settings), false)
 
         searchItem?.expandActionView()
         setItems(getResultSet())

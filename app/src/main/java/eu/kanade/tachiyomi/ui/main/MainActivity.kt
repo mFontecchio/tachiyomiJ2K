@@ -893,7 +893,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM or MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW)
             }
         }
-        val controller = router.backstack.lastOrNull()?.controller
+        val controller = if (this::router.isInitialized) router.backstack.lastOrNull()?.controller else null
         if (controller is FloatingSearchInterface) {
             binding.toolbar.menu.removeItem(R.id.action_search)
         }
