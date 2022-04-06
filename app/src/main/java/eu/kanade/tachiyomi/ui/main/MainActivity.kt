@@ -326,7 +326,9 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
 
         binding.cardToolbar.setNavigationOnClickListener {
             val rootSearchController = router.backstack.lastOrNull()?.controller
-            if ((rootSearchController is RootSearchInterface || currentToolbar != it) && rootSearchController !is SmallToolbarInterface) {
+            if ((rootSearchController is RootSearchInterface || currentToolbar != binding.cardToolbar) &&
+                rootSearchController !is SmallToolbarInterface
+            ) {
                 binding.cardToolbar.menu.findItem(R.id.action_search)?.expandActionView()
             } else onBackPressed()
         }
@@ -774,6 +776,10 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
     }
 
     override fun onBackPressed() {
+        if (binding.cardToolbar.isSearchExpanded) {
+            binding.cardToolbar.searchItem?.collapseActionView()
+            return
+        }
         val sheetController = router.backstack.lastOrNull()?.controller as? BottomSheetController
         if (if (router.backstackSize == 1) !(sheetController?.handleSheetBack() ?: false)
             else !router.handleBack()

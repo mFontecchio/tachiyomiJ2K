@@ -40,6 +40,10 @@ class SearchActivity : MainActivity() {
     }
 
     override fun onBackPressed() {
+        if (binding.cardToolbar.isSearchExpanded) {
+            binding.cardToolbar.searchItem?.collapseActionView()
+            return
+        }
         if (router.backstack.size <= 1 || !router.handleBack()) {
             SecureActivityDelegate.locked = true
             super.onBackPressed()
