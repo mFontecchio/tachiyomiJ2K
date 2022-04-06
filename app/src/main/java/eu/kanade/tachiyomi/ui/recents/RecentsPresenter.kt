@@ -194,6 +194,10 @@ class RecentsPresenter(
             else -> emptyList()
         }
 
+        if (cReading.size < ENDLESS_LIMIT) {
+            finished = true
+        }
+
         if (!isCustom &&
             (pageOffset == 0 || updatePageCount)
         ) {
