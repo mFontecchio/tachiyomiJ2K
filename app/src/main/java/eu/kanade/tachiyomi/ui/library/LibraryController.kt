@@ -118,6 +118,7 @@ import java.util.ArrayList
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.roundToInt
 import kotlin.random.Random
 import kotlin.random.nextInt
 
@@ -279,6 +280,19 @@ class LibraryController(
                 }
                 if (!preferences.hideBottomNavOnScroll().get() || activityBinding?.bottomNav == null) {
                     updateFilterSheetY()
+                }
+                if (!binding.fastScroller.isFastScrolling) {
+                    activityBinding?.let { activityBinding ->
+                        val value = max(
+                            activityBinding.appBar.paddingTop,
+                            activityBinding.appBar.height + activityBinding.appBar.y.roundToInt()
+                        )
+                        if (value != binding.fastScroller.marginTop) {
+                            binding.fastScroller.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                                topMargin = value
+                            }
+                        }
+                    }
                 }
                 binding.roundedCategoryHopper.upCategory.alpha = if (isAtTop()) 0.25f else 1f
                 binding.roundedCategoryHopper.downCategory.alpha = if (isAtBottom()) 0.25f else 1f
@@ -564,7 +578,11 @@ class LibraryController(
                         topMargin = insets.getInsets(systemBars()).top + (activityBinding?.cardToolbar?.height ?: 0) + 12.dpToPx
                     }
                     binding.fastScroller.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                        topMargin = binding.libraryGridRecycler.recycler.paddingTop
+                        val activityBinding = activityBinding ?: return@updateLayoutParams
+                        topMargin = max(
+                            activityBinding.appBar.paddingTop,
+                            activityBinding.appBar.height + activityBinding.appBar.y.roundToInt()
+                        )
                     }
                     binding.headerCard.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                         topMargin = insets.getInsets(systemBars()).top + 4.dpToPx
