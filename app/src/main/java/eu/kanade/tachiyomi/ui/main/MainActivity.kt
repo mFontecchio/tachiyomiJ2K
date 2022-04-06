@@ -468,10 +468,9 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
 
     open fun setFloatingToolbar(show: Boolean, solidBG: Boolean = false, changeBG: Boolean = true, showSearchAnyway: Boolean = false) {
         val oldTB = currentToolbar
-        val onSearchController = !this::router.isInitialized ||
-            router.backstack.lastOrNull()?.controller is FloatingSearchInterface
-        val onSmallerController = !this::router.isInitialized ||
-            router.backstack.lastOrNull()?.controller is SmallToolbarInterface
+        val controller = if (this::router.isInitialized) router.backstack.lastOrNull()?.controller else null
+        val onSearchController = canShowFloatingToolbar(controller)
+        val onSmallerController = controller is SmallToolbarInterface
         currentToolbar = if (show && ((showSearchAnyway && onSearchController) || onSmallerController)) {
             binding.cardToolbar
         } else {
@@ -841,7 +840,9 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         if (router.backstack.lastOrNull()?.controller is FloatingSearchInterface) {
             searchItem?.isVisible = false
         }
-        setupCardMenu(menu)
+        binding.root.post {
+            setupCardMenu(binding.toolbar.menu)
+        }
         return super.onPrepareOptionsMenu(menu)
     }
 
@@ -858,7 +859,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 toolbar.menu.removeItem(it)
             }
         }
-        menu?.children?.let { menuItems ->
+        menu?.children?.toList()?.let { menuItems ->
             val searchActive = toolbar.menu.findItem(R.id.action_search)?.isActionViewExpanded == true
             menuItems.forEach { oldMenuItem ->
                 if (oldMenuItem.itemId == R.id.action_search &&
