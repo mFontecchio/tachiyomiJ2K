@@ -104,20 +104,71 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
     // map of child adapter position to its height.
     private val childSizesMap = mutableMapOf<Int, Int>()
     private val childSpanMap = mutableMapOf<Int, Int>()
+    private val childTypeMap = mutableMapOf<Int, MutableMap<Int, Int>>()
+    var rView: RecyclerView? = null
 
     override fun onLayoutCompleted(state: RecyclerView.State) {
         super.onLayoutCompleted(state)
         for (i in 0 until childCount) {
             val child = getChildAt(i) ?: return
-            childSizesMap[getPosition(child)] = child.height
-            childSizesMap[getPosition(child)] = spanSizeLookup.getSpanSize(getPosition(child))
+            val position = getPosition(child)
+            childSizesMap[position] = child.height
+            childSpanMap[position] = spanSizeLookup.getSpanSize(getPosition(child))
+            childTypeMap[getItemViewType(child)] = (
+                childTypeMap[getItemViewType(child)]?.also {
+                    it[position] = child.height
+                } ?: mutableMapOf(position to child.height)
+                )
         }
+    }
+
+    override fun onAttachedToWindow(view: RecyclerView?) {
+        super.onAttachedToWindow(view)
+        rView = view
+    }
+
+    override fun computeVerticalScrollRange(state: RecyclerView.State): Int {
+        if (childCount == 0) {
+            return 0
+        }
+        val childAvgHeightMap = mutableMapOf<Int, Int>()
+        var scrolledY = 0
+        var spanC = 0
+        var maxHeight = 0
+        for (i in 0 until itemCount) {
+            val height: Int = if (childSizesMap[i] != null) {
+                childSizesMap[i] ?: 0
+            } else {
+                val type = rView?.adapter?.getItemViewType(i) ?: 0
+                if (childAvgHeightMap[type] == null) {
+                    childAvgHeightMap[type] = childTypeMap[type]?.values?.average()?.roundToInt() ?: 0
+                }
+                childAvgHeightMap[type] ?: 0
+            }
+            val spanCurrentSize = childSpanMap[i] ?: spanSizeLookup.getSpanSize(i)
+            if (spanCount <= spanCurrentSize) {
+                scrolledY += height
+                scrolledY += maxHeight
+                maxHeight = 0
+                spanC = 0
+            } else if (spanCurrentSize == 1) {
+                maxHeight = max(maxHeight, height)
+                spanC++
+                if (spanC <= spanCount) {
+                    scrolledY += maxHeight
+                    maxHeight = 0
+                    spanC = 0
+                }
+            }
+        }
+        return scrolledY
     }
 
     override fun computeVerticalScrollOffset(state: RecyclerView.State): Int {
         if (childCount == 0) {
             return 0
         }
+        val childAvgHeightMap = mutableMapOf<Int, Int>()
         val firstChild = getChildAt(0) ?: return 0
         val firstChildPosition = (0 to childCount).toList()
             .mapNotNull { getChildAt(it) }
@@ -127,14 +178,23 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
         var spanC = 0
         var maxHeight = 0
         for (i in 0 until firstChildPosition) {
-            val spanCurrentSize = childSizesMap[i] ?: 1
+            val height: Int = if (childSizesMap[i] != null) {
+                childSizesMap[i] ?: 0
+            } else {
+                val type = rView?.adapter?.getItemViewType(i) ?: 0
+                if (childAvgHeightMap[type] == null) {
+                    childAvgHeightMap[type] = childTypeMap[type]?.values?.average()?.roundToInt() ?: 0
+                }
+                childAvgHeightMap[type] ?: 0
+            }
+            val spanCurrentSize = childSpanMap[i] ?: spanSizeLookup.getSpanSize(i)
             if (spanCount <= spanCurrentSize) {
-                scrolledY += childSizesMap[i] ?: 0
+                scrolledY += height
                 scrolledY += maxHeight
                 maxHeight = 0
                 spanC = 0
             } else if (spanCurrentSize == 1) {
-                maxHeight = max(maxHeight, childSizesMap[i] ?: 0)
+                maxHeight = max(maxHeight, height)
                 spanC++
                 if (spanC <= spanCount) {
                     scrolledY += maxHeight
