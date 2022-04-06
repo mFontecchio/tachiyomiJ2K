@@ -44,6 +44,7 @@ import androidx.core.view.WindowInsetsAnimationCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.ime
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
+import androidx.core.view.children
 import androidx.core.view.descendants
 import androidx.core.view.forEach
 import androidx.core.view.updateLayoutParams
@@ -432,6 +433,13 @@ var View.backgroundColor: Int?
     set(value) {
         background = (if (value == null) null else ColorDrawable(value))
     }
+
+/**
+ * Returns this ViewGroup's first descendant of specified class
+ */
+inline fun <reified T> ViewGroup.findChild(): T? {
+    return children.find { it is T } as? T
+}
 
 /**
  * Returns this ViewGroup's first descendant of specified class

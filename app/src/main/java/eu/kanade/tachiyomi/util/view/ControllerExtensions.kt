@@ -17,6 +17,7 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
+import android.widget.ImageView
 import androidx.appcompat.widget.SearchView
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
@@ -58,6 +59,7 @@ import eu.kanade.tachiyomi.util.system.toInt
 import eu.kanade.tachiyomi.util.system.toast
 import uy.kohesive.injekt.injectLazy
 import kotlin.math.abs
+import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -220,6 +222,7 @@ fun Controller.scrollViewWith(
         )
     array.recycle()
     swipeRefreshLayout?.setDistanceToTriggerSync(150.dpToPx)
+    val swipeCircle = swipeRefreshLayout?.findChild<ImageView>()
     activityBinding!!.appBar.doOnLayout {
         if (bigToolbarHeight!! > 0) {
             appBarHeight = bigToolbarHeight!! + if (includeTabView) tabBarHeight else 0
@@ -448,6 +451,10 @@ fun Controller.scrollViewWith(
                         if (notAtTop != isToolbarColor) colorToolbar(notAtTop)
                         lastY = activityBinding!!.appBar.y
                     }
+                    swipeCircle?.translationY = max(
+                        activityBinding!!.appBar.y,
+                        -activityBinding!!.appBar.height + activityBinding!!.appBar.paddingTop.toFloat()
+                    )
                 }
             }
 

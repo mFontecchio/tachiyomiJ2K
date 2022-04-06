@@ -18,6 +18,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import android.widget.ImageView
 import androidx.annotation.ColorInt
 import androidx.annotation.FloatRange
 import androidx.appcompat.app.AppCompatActivity
@@ -99,6 +100,7 @@ import eu.kanade.tachiyomi.util.system.setCustomTitleAndMessage
 import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.tachiyomi.util.view.activityBinding
 import eu.kanade.tachiyomi.util.view.doOnApplyWindowInsetsCompat
+import eu.kanade.tachiyomi.util.view.findChild
 import eu.kanade.tachiyomi.util.view.getText
 import eu.kanade.tachiyomi.util.view.requestFilePermissionsSafe
 import eu.kanade.tachiyomi.util.view.scrollViewWith
@@ -397,7 +399,7 @@ class MangaDetailsController :
                 }
             )
         }
-
+        val swipeCircle = binding.swipeRefresh.findChild<ImageView>()
         binding.recycler.addOnScrollListener(
             object : RecyclerView.OnScrollListener() {
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -408,6 +410,10 @@ class MangaDetailsController :
                         val tY = getHeader()?.binding?.backdrop?.translationY ?: 0f
                         getHeader()?.binding?.backdrop?.translationY = max(0f, tY + dy * 0.25f)
                         if (atTop) getHeader()?.binding?.backdrop?.translationY = 0f
+                        swipeCircle?.translationY = max(
+                            activityBinding!!.appBar.y,
+                            -activityBinding!!.appBar.height + activityBinding!!.appBar.paddingTop.toFloat()
+                        )
                     }
                 }
 
