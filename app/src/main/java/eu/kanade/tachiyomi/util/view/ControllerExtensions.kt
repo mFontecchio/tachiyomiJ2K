@@ -288,7 +288,7 @@ fun Controller.scrollViewWith(
             val floatingBar =
                 (this as? FloatingSearchInterface)?.showFloatingBar() == true && !includeTabView
             if (floatingBar) {
-                setAppBarBG(0f, includeTabView)
+                setAppBarBG(isColored.toInt().toFloat(), includeTabView)
                 return@f
             }
             val percent = ImageUtil.getPercentOfColor(
@@ -550,7 +550,17 @@ fun Controller.setAppBarBG(value: Float, includeTabView: Boolean = false) {
     if (router.backstack.lastOrNull()?.controller != this) return
     if (floatingBar) {
         (activityBinding?.cardView as? CardView)?.setCardBackgroundColor(context.getResourceColor(R.attr.colorPrimaryVariant))
-        activityBinding?.appBar?.setBackgroundColor(Color.TRANSPARENT)
+        if (this !is SmallToolbarInterface) {
+            val colorSurface = context.getResourceColor(R.attr.colorSurface)
+            val color = ColorUtils.blendARGB(
+                colorSurface,
+                ColorUtils.setAlphaComponent(colorSurface, 0),
+                value
+            )
+            activityBinding?.appBar?.backgroundColor = color
+        } else {
+            activityBinding?.appBar?.backgroundColor = Color.TRANSPARENT
+        }
         activity?.window?.statusBarColor = context.getResourceColor(android.R.attr.statusBarColor)
     } else {
         val color = ColorUtils.blendARGB(
@@ -647,4 +657,6 @@ val Controller.toolbarHeight: Int?
     get() = (activity as? MainActivity)?.toolbarHeight
 
 val Controller.bigToolbarHeight: Int?
-    get() = (activity as? MainActivity)?.bigToolbarHeight(this is FloatingSearchInterface)
+    get() = (activity as? MainActivity)?.bigToolbarHeight(
+        (this as? FloatingSearchInterface)?.showFloatingBar() == true
+    )
