@@ -33,12 +33,19 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
     var mainToolbar: CenteredToolbar? = null
     var bigTitleView: TextView? = null
     var bigView: View? = null
-    var tabsFrameLayout: FrameLayout? = null
+    private var tabsFrameLayout: FrameLayout? = null
     var toolbarMode = ToolbarState.BIG
         set(value) {
             field = value
             if (value == ToolbarState.SEARCH) {
                 mainToolbar?.isGone = true
+            } else if (value == ToolbarState.MAIN) {
+                mainToolbar?.alpha = 1f
+                mainToolbar?.isVisible = true
+            }
+            if (value != ToolbarState.BIG) {
+                mainToolbar?.translationY = 0f
+                y = 0f
             }
         }
     var useTabsInPreLayout = false
@@ -220,7 +227,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
                 mainActivity.setFloatingToolbar(true, showSearchAnyway = true)
             }
             if (mainActivity.currentToolbar == cardToolbar) {
-                if (toolbarMode != ToolbarState.SEARCH) {
+                if (toolbarMode == ToolbarState.BIG) {
                     mainToolbar?.isInvisible = true
                 }
                 mainToolbar?.backgroundColor = null
@@ -230,7 +237,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
             if (mainActivity.currentToolbar != mainToolbar) {
                 mainActivity.setFloatingToolbar(false, showSearchAnyway = true)
             }
-            if (toolbarMode != ToolbarState.SEARCH) {
+            if (toolbarMode == ToolbarState.BIG) {
                 mainToolbar?.isInvisible = false
             }
             if (tabsFrameLayout?.isVisible == false) {

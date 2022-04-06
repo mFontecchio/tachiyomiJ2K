@@ -176,8 +176,11 @@ fun Controller.liftAppbarWith(recycler: RecyclerView, padView: Boolean = false) 
 
     activityBinding?.appBar?.setToolbarModeBy(this)
     activityBinding?.appBar?.hideBigView(true)
+    activityBinding?.appBar?.y = 0f
+    activityBinding?.appBar?.updateViewsAfterY(recycler)
 
-    colorToolbar(recycler.canScrollVertically(-1))
+//    colorToolbar(recycler.canScrollVertically(-1))
+    setAppBarBG(0f)
     recycler.addOnScrollListener(
         object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
