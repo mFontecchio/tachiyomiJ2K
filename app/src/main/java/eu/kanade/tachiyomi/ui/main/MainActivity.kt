@@ -470,7 +470,9 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         val oldTB = currentToolbar
         val onSearchController = !this::router.isInitialized ||
             router.backstack.lastOrNull()?.controller is FloatingSearchInterface
-        currentToolbar = if (show && showSearchAnyway && onSearchController) {
+        val onSmallerController = !this::router.isInitialized ||
+            router.backstack.lastOrNull()?.controller is SmallToolbarInterface
+        currentToolbar = if (show && ((showSearchAnyway && onSearchController) || onSmallerController)) {
             binding.cardToolbar
         } else {
             binding.toolbar
@@ -478,8 +480,6 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         if (oldTB != currentToolbar) {
 //            setSupportActionBar(currentToolbar)
         }
-        val onSmallerController = !this::router.isInitialized ||
-            router.backstack.lastOrNull()?.controller is SmallToolbarInterface
         binding.toolbar.isVisible = !(onSmallerController && onSearchController)
         binding.cardFrame.isVisible = (show || showSearchAnyway) && onSearchController
         val bgColor = binding.appBar.backgroundColor ?: Color.TRANSPARENT
@@ -501,11 +501,6 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
             binding.cardToolbar.navigationIcon = if (!show || onRoot) searchDrawable else backDrawable
         }
         binding.cardToolbar.title = searchTitle
-    }
-
-    fun setDismissIcon(enabled: Boolean) {
-//        binding.cardToolbar.navigationIcon = if (enabled) dismissDrawable else searchDrawable
-//        binding.toolbar.navigationIcon = if (enabled) dismissDrawable else null
     }
 
     private fun setNavBarColor(insets: WindowInsetsCompat?) {
@@ -567,11 +562,10 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
 
     fun setStatusBarColorTransparent(show: Boolean) {
         window?.statusBarColor = if (show) {
-            Color.TRANSPARENT
+            ColorUtils.setAlphaComponent(window?.statusBarColor ?: Color.TRANSPARENT, 0)
         } else {
-            getResourceColor(
-                android.R.attr.statusBarColor
-            )
+            val color = getResourceColor(android.R.attr.statusBarColor)
+            ColorUtils.setAlphaComponent(window?.statusBarColor ?: color, Color.alpha(color))
         }
     }
 
@@ -858,13 +852,13 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
 
     private fun setupCardMenu(menu: Menu?, showAnyway: Boolean = false) {
         val toolbar = binding.cardToolbar
-        menu?.children?.let { menuItems ->
-            val oldItemsId = toolbar.menu.children.map { it.itemId }
-            oldItemsId.forEach {
-                if (it != R.id.action_search) {
-                    toolbar.menu.removeItem(it)
-                }
+        val oldItemsId = toolbar.menu.children.toList().map { it.itemId }
+        oldItemsId.forEach {
+            if (it != R.id.action_search) {
+                toolbar.menu.removeItem(it)
             }
+        }
+        menu?.children?.let { menuItems ->
             val searchActive = toolbar.menu.findItem(R.id.action_search)?.isActionViewExpanded == true
             menuItems.forEach { oldMenuItem ->
                 if (oldMenuItem.itemId == R.id.action_search &&
@@ -897,6 +891,10 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 }
                 menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM or MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW)
             }
+        }
+        val controller = router.backstack.lastOrNull()?.controller
+        if (controller is FloatingSearchInterface) {
+            binding.toolbar.menu.removeItem(R.id.action_search)
         }
     }
 

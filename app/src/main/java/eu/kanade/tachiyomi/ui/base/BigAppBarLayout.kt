@@ -166,7 +166,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
                 ) + top.toFloat()
             )
         }
-        setToolbar(offset > height - toolbarHeight - tabHeight)
+        setToolbar(offset > realHeight - toolbarHeight - tabHeight)
 
         translationY = newY
         mainToolbar?.let { mainToolbar ->
