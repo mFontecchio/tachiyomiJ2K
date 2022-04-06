@@ -379,7 +379,11 @@ class RecentsController(bundle: Bundle? = null) :
             return@setOnMenuItemClickListener binding.downloadBottomSheet.dlBottomSheet.onOptionsItemSelected(item)
         }
         binding.downloadBottomSheet.sheetToolbar.setNavigationOnClickListener {
-            binding.downloadBottomSheet.root.sheetBehavior?.collapse()
+            if (binding.downloadBottomSheet.dlBottomSheet.sheetBehavior?.isHideable == true) {
+                binding.downloadBottomSheet.dlBottomSheet.sheetBehavior?.hide()
+            } else {
+                binding.downloadBottomSheet.dlBottomSheet.sheetBehavior?.collapse()
+            }
         }
     }
 
