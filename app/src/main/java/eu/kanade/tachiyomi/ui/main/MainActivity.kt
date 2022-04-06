@@ -90,7 +90,6 @@ import eu.kanade.tachiyomi.util.view.backgroundColor
 import eu.kanade.tachiyomi.util.view.blurBehindWindow
 import eu.kanade.tachiyomi.util.view.doOnApplyWindowInsetsCompat
 import eu.kanade.tachiyomi.util.view.getItemView
-import eu.kanade.tachiyomi.util.view.mainRecyclerView
 import eu.kanade.tachiyomi.util.view.moveRecyclerViewUp
 import eu.kanade.tachiyomi.util.view.snack
 import eu.kanade.tachiyomi.util.view.withFadeInTransaction
@@ -154,11 +153,11 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
     val toolbarHeight: Int
         get() = max(binding.toolbar.height, binding.cardFrame.height)
 
-    fun bigToolbarHeight(includeSearch: Boolean): Int {
+    fun bigToolbarHeight(): Int {
         return if (binding.appBar.toolbarMode != BigAppBarLayout.ToolbarState.BIG) {
             toolbarHeight
         } else {
-            binding.bigToolbar.height + (toolbarHeight * if (includeSearch) 2 else 1)
+            binding.appBar.preLayoutHeight
         }
     }
 
@@ -584,13 +583,6 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         setExtensionsBadge()
         DownloadService.callListeners()
         showDLQueueTutorial()
-        lifecycleScope.launchUI {
-            delay(50)
-            if (isBindingInitialized && this@MainActivity::router.isInitialized) {
-                val recycler = router.backstack.lastOrNull()?.controller?.mainRecyclerView ?: return@launchUI
-                binding.appBar.updateViewsAfterY(recycler)
-            }
-        }
     }
 
     private fun showDLQueueTutorial() {

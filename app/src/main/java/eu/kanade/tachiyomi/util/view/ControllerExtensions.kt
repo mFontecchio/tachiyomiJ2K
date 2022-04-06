@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
-import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Environment
@@ -54,7 +53,6 @@ import eu.kanade.tachiyomi.ui.setting.SettingsController
 import eu.kanade.tachiyomi.util.system.ImageUtil
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.getResourceColor
-import eu.kanade.tachiyomi.util.system.isTablet
 import eu.kanade.tachiyomi.util.system.materialAlertDialog
 import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
 import eu.kanade.tachiyomi.util.system.toInt
@@ -220,7 +218,7 @@ fun Controller.scrollViewWith(
     val attrsArray = intArrayOf(R.attr.mainActionBarSize)
     val array = recycler.context.obtainStyledAttributes(attrsArray)
     var appBarHeight = (
-        if (bigToolbarHeight ?: 0 > 0) bigToolbarHeight!! + (if (includeTabView) tabBarHeight else 0)
+        if (bigToolbarHeight ?: 0 > 0) bigToolbarHeight!!
         else activityBinding?.appBar?.preLayoutHeight ?: array.getDimensionPixelSize(0, 0)
         )
     array.recycle()
@@ -228,7 +226,7 @@ fun Controller.scrollViewWith(
     val swipeCircle = swipeRefreshLayout?.findChild<ImageView>()
     activityBinding!!.appBar.doOnLayout {
         if (bigToolbarHeight!! > 0) {
-            appBarHeight = bigToolbarHeight!! + if (includeTabView) tabBarHeight else 0
+            appBarHeight = bigToolbarHeight!!
             recycler.requestApplyInsets()
         }
     }
@@ -319,7 +317,7 @@ fun Controller.scrollViewWith(
             activityBinding.toolbar.height - if (includeTabView) tabBarHeight else 0
     }
     recycler.doOnApplyWindowInsetsCompat { view, insets, _ ->
-        appBarHeight = bigToolbarHeight!! + if (includeTabView) tabBarHeight else 0
+        appBarHeight = bigToolbarHeight!!
         val headerHeight = insets.getInsets(systemBars()).top + appBarHeight
         if (!customPadding) view.updatePaddingRelative(
             top = headerHeight,
@@ -332,9 +330,6 @@ fun Controller.scrollViewWith(
         )
         statusBarHeight = insets.getInsets(systemBars()).top
         afterInsets?.invoke(insets)
-//        recycler.doOnNextLayout {
-//            activityBinding!!.appBar.updateViewsAfterY(recycler)
-//        }
     }
 
     var toolbarColorAnim: ValueAnimator? = null
@@ -453,7 +448,6 @@ fun Controller.scrollViewWith(
         activityBinding!!.appBar.updateViewsAfterY(recycler)
         colorToolbar(!atTopOfRecyclerView())
     }
-    val isTablet = recycler.context.isTablet() && recycler.context.resources.configuration?.orientation == Configuration.ORIENTATION_LANDSCAPE
     recycler.addOnScrollListener(
         object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -730,6 +724,4 @@ val Controller.toolbarHeight: Int?
     get() = (activity as? MainActivity)?.toolbarHeight
 
 val Controller.bigToolbarHeight: Int?
-    get() = (activity as? MainActivity)?.bigToolbarHeight(
-        (this as? FloatingSearchInterface)?.showFloatingBar() == true
-    )
+    get() = (activity as? MainActivity)?.bigToolbarHeight()
