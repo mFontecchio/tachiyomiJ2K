@@ -283,9 +283,9 @@ class LibraryController(
                 if (!binding.fastScroller.isFastScrolling) {
                     activityBinding?.let { activityBinding ->
                         val value = max(
-                            activityBinding.appBar.paddingTop,
-                            activityBinding.appBar.height + activityBinding.appBar.y.roundToInt()
-                        )
+                            0,
+                            bigToolbarHeight!! + activityBinding.appBar.y.roundToInt()
+                        ) + activityBinding.appBar.paddingTop
                         if (value != binding.fastScroller.marginTop) {
                             binding.fastScroller.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                                 topMargin = value
@@ -579,9 +579,9 @@ class LibraryController(
                     binding.fastScroller.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                         val activityBinding = activityBinding ?: return@updateLayoutParams
                         topMargin = max(
-                            activityBinding.appBar.paddingTop,
-                            activityBinding.appBar.height + activityBinding.appBar.y.roundToInt()
-                        )
+                            0,
+                            bigToolbarHeight!! + activityBinding.appBar.y.roundToInt()
+                        ) + activityBinding.appBar.paddingTop
                     }
                     binding.headerCard.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                         topMargin = insets.getInsets(systemBars()).top + 4.dpToPx
