@@ -48,6 +48,7 @@ import eu.kanade.tachiyomi.ui.base.controller.OneWayFadeChangeHandler
 import eu.kanade.tachiyomi.ui.main.BottomSheetController
 import eu.kanade.tachiyomi.ui.main.FloatingSearchInterface
 import eu.kanade.tachiyomi.ui.main.MainActivity
+import eu.kanade.tachiyomi.ui.main.TabbedInterface
 import eu.kanade.tachiyomi.ui.manga.MangaDetailsController
 import eu.kanade.tachiyomi.ui.setting.SettingsController
 import eu.kanade.tachiyomi.util.system.ImageUtil
@@ -583,7 +584,7 @@ fun Controller.moveRecyclerViewUp(allTheWayUp: Boolean = false) {
     val recycler = mainRecyclerView ?: return
     val activityBinding = activityBinding ?: return
     val appBarHeight = activityBinding.appBar.toolbarDistance
-    if (allTheWayUp && recycler.computeVerticalScrollOffset() - recycler.paddingTop <= activityBinding.appBar.preLayoutHeight) {
+    if (allTheWayUp && recycler.computeVerticalScrollOffset() - recycler.paddingTop <= bigToolbarHeight ?: activityBinding.appBar.preLayoutHeight) {
         (recycler.layoutManager as? LinearLayoutManager)?.scrollToPosition(0)
         recycler.post {
             activityBinding.appBar.updateViewsAfterY(recycler)
@@ -716,4 +717,8 @@ val Controller.toolbarHeight: Int?
     get() = (activity as? MainActivity)?.toolbarHeight
 
 val Controller.bigToolbarHeight: Int?
-    get() = (activity as? MainActivity)?.bigToolbarHeight()
+    get() = (activity as? MainActivity)?.bigToolbarHeight(
+        this is FloatingSearchInterface,
+        this is TabbedInterface,
+        this !is SmallToolbarInterface
+    )

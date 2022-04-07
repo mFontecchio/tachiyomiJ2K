@@ -60,7 +60,6 @@ import eu.kanade.tachiyomi.databinding.MainActivityBinding
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.extension.api.ExtensionGithubApi
 import eu.kanade.tachiyomi.source.online.HttpSource
-import eu.kanade.tachiyomi.ui.base.BigAppBarLayout
 import eu.kanade.tachiyomi.ui.base.MaterialMenuSheet
 import eu.kanade.tachiyomi.ui.base.SmallToolbarInterface
 import eu.kanade.tachiyomi.ui.base.activity.BaseActivity
@@ -154,11 +153,11 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
     val toolbarHeight: Int
         get() = max(binding.toolbar.height, binding.cardFrame.height)
 
-    fun bigToolbarHeight(): Int {
-        return if (binding.appBar.toolbarMode != BigAppBarLayout.ToolbarState.BIG) {
-            toolbarHeight + if (binding.appBar.useTabsInPreLayout) 48.dpToPx else 0
+    fun bigToolbarHeight(includeSearchToolbar: Boolean, includeTabs: Boolean, includeLargeToolbar: Boolean): Int {
+        return if (!includeLargeToolbar || !preferences.useLargeToolbar()) {
+            toolbarHeight + if (includeTabs) 48.dpToPx else 0
         } else {
-            binding.appBar.preLayoutHeight
+            binding.appBar.getEstimatedLayout(includeSearchToolbar, includeTabs, includeLargeToolbar)
         }
     }
 
@@ -1162,6 +1161,8 @@ interface RootSearchInterface {
         }
     }
 }
+
+interface TabbedInterface
 
 interface FloatingSearchInterface {
     fun searchTitle(title: String?): String? {

@@ -90,6 +90,7 @@ import eu.kanade.tachiyomi.util.system.materialAlertDialog
 import eu.kanade.tachiyomi.util.system.openInBrowser
 import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
 import eu.kanade.tachiyomi.util.view.activityBinding
+import eu.kanade.tachiyomi.util.view.bigToolbarHeight
 import eu.kanade.tachiyomi.util.view.collapse
 import eu.kanade.tachiyomi.util.view.expand
 import eu.kanade.tachiyomi.util.view.getItemView
@@ -1133,7 +1134,7 @@ class LibraryController(
         if (headerPosition > -1) {
             val activityBinding = activityBinding ?: return
             binding.libraryGridRecycler.recycler.suppressLayout(true)
-            val appbarOffset = if (pos == 0) 0 else -activityBinding.appBar.preLayoutHeight +
+            val appbarOffset = if (pos == 0) 0 else -bigToolbarHeight!! +
                 activityBinding.toolbar.height
             //                if (appbar?.y ?: 0f > -20) 0 else (
 //                appbar?.y?.plus(
