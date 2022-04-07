@@ -8,6 +8,7 @@ import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
+import androidx.core.view.isVisible
 import androidx.core.view.updatePaddingRelative
 import com.bluelinelabs.conductor.ControllerChangeHandler
 import com.bluelinelabs.conductor.ControllerChangeType
@@ -197,7 +198,9 @@ open class GlobalSearchController(
     }
 
     override fun onActionViewCollapse(item: MenuItem?) {
-        if (customTitle == null) {
+        if (activity is SearchActivity && extensionFilter != null) {
+            (activity as? SearchActivity)?.backPress()
+        } else if (customTitle == null) {
             router.popCurrentController()
         }
     }
@@ -280,6 +283,7 @@ open class GlobalSearchController(
                 customTitle = null
                 setTitle()
                 activity?.invalidateOptionsMenu()
+                activityBinding?.appBar?.updateViewsAfterY(binding.recycler)
             }
         }
         adapter?.updateDataSet(searchResult)

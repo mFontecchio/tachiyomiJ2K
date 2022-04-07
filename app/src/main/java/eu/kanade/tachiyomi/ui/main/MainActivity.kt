@@ -777,10 +777,14 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
     }
 
     override fun onBackPressed() {
-        if (binding.cardToolbar.isSearchExpanded) {
+        if (binding.cardToolbar.isSearchExpanded && binding.cardFrame.isVisible) {
             binding.cardToolbar.searchItem?.collapseActionView()
             return
         }
+        backPress()
+    }
+
+    open fun backPress() {
         val sheetController = router.backstack.lastOrNull()?.controller as? BottomSheetController
         if (if (router.backstackSize == 1) !(sheetController?.handleSheetBack() ?: false)
             else !router.handleBack()
