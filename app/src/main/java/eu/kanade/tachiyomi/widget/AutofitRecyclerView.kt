@@ -1,13 +1,20 @@
 package eu.kanade.tachiyomi.widget
 
 import android.content.Context
+import android.graphics.Rect
 import android.util.AttributeSet
+import android.view.View
+import android.widget.TextView
 import androidx.core.content.edit
+import androidx.core.view.WindowInsetsCompat.Type.systemBars
+import androidx.core.view.marginTop
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.util.system.pxToDp
+import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -108,6 +115,14 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
     private val childTypeMap = mutableMapOf<Int, MutableMap<Int, Int>>()
     var rView: RecyclerView? = null
 
+    val toolbarHeight by lazy {
+        val attrsArray = intArrayOf(R.attr.mainActionBarSize)
+        val array = (context ?: rView?.context)?.obtainStyledAttributes(attrsArray)
+        val height = array?.getDimensionPixelSize(0, 0) ?: 0
+        array?.recycle()
+        height
+    }
+
     override fun onLayoutCompleted(state: RecyclerView.State) {
         super.onLayoutCompleted(state)
         for (i in 0 until childCount) {
@@ -175,7 +190,7 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
         }
         val childAvgHeightMap = mutableMapOf<Int, Int>()
         val firstChild = getChildAt(0) ?: return 0
-        val firstChildPosition = (0 to childCount).toList()
+        val firstChildPosition = (0 until childCount)
             .mapNotNull { getChildAt(it) }
             .mapNotNull { pos -> getPosition(pos).takeIf { it != RecyclerView.NO_POSITION } }
             .minOrNull() ?: 0
@@ -214,5 +229,36 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
         }
         scrolledY += maxHeight
         return scrolledY + paddingTop
+    }
+
+    override fun findFirstVisibleItemPosition(): Int {
+        return getFirstPos()
+    }
+
+    override fun findFirstCompletelyVisibleItemPosition(): Int {
+        return getFirstPos()
+    }
+
+    private fun getFirstPos(): Int {
+        val inset = rView?.rootWindowInsetsCompat?.getInsets(systemBars())?.top ?: 0
+        return (0 until childCount)
+            .mapNotNull { getChildAt(it) }
+            .filter {
+                val isLibraryHeader = getItemViewType(it) == R.layout.library_category_header_item
+                val marginTop = if (isLibraryHeader) it.findViewById<TextView>(R.id.category_title)?.marginTop ?: 0 else 0
+                it.y >= inset + toolbarHeight - marginTop
+            }
+            .mapNotNull { pos -> getPosition(pos).takeIf { it != RecyclerView.NO_POSITION } }
+            .minOrNull() ?: RecyclerView.NO_POSITION
+    }
+
+    private fun View.isInBounds(): Boolean {
+        if (!isShown) {
+            return false
+        }
+        val actualPosition = Rect()
+        getGlobalVisibleRect(actualPosition)
+        val screen = Rect(0, 0, 0, 0)
+        return actualPosition.intersect(screen)
     }
 }

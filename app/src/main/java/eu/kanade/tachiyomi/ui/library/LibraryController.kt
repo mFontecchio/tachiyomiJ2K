@@ -780,7 +780,7 @@ class LibraryController(
         if (presenter.showAllCategories) {
             if (!next) {
                 val fPosition =
-                    (binding.libraryGridRecycler.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition() - 1
+                    (binding.libraryGridRecycler.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
                 if (fPosition > adapter.currentItems.indexOf(category)) {
                     scrollToHeader(category.category.order)
                     return
