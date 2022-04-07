@@ -1,9 +1,7 @@
 package eu.kanade.tachiyomi.widget
 
 import android.content.Context
-import android.graphics.Rect
 import android.util.AttributeSet
-import android.view.View
 import android.widget.TextView
 import androidx.core.content.edit
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
@@ -112,10 +110,13 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
     // map of child adapter position to its height.
     private val childSizesMap = mutableMapOf<Int, Int>()
     private val childSpanMap = mutableMapOf<Int, Int>()
-    private val childTypeMap = mutableMapOf<Int, MutableMap<Int, Int>>()
+    private val childTypeHeightMap = mutableMapOf<Int, MutableMap<Int, Int>>()
+    private val childTypeMap = mutableMapOf<Int, Int>()
+    private val childTypeEstimateMap = mutableMapOf<Int, Int>()
+    val childAvgHeightMap = mutableMapOf<Int, Int>()
     var rView: RecyclerView? = null
 
-    val toolbarHeight by lazy {
+    private val toolbarHeight by lazy {
         val attrsArray = intArrayOf(R.attr.mainActionBarSize)
         val array = (context ?: rView?.context)?.obtainStyledAttributes(attrsArray)
         val height = array?.getDimensionPixelSize(0, 0) ?: 0
@@ -130,8 +131,15 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
             val position = getPosition(child)
             childSizesMap[position] = child.height
             childSpanMap[position] = spanSizeLookup.getSpanSize(getPosition(child))
-            childTypeMap[getItemViewType(child)] = (
-                childTypeMap[getItemViewType(child)]?.also {
+            val type = getItemViewType(child)
+            childTypeMap[position] = type
+            if (childSizesMap[type] != null) {
+                childTypeHeightMap[type]!![position] = child.height
+            } else {
+                childTypeHeightMap[type] = mutableMapOf(position to child.height)
+            }
+            childTypeHeightMap[type] = (
+                childTypeHeightMap[type]?.also {
                     it[position] = child.height
                 } ?: mutableMapOf(position to child.height)
                 )
@@ -143,28 +151,22 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
         rView = view
     }
 
+    override fun onDetachedFromWindow(view: RecyclerView?, recycler: RecyclerView.Recycler?) {
+        super.onDetachedFromWindow(view, recycler)
+        rView = null
+    }
+
     override fun computeVerticalScrollRange(state: RecyclerView.State): Int {
         if (childCount == 0) {
             return 0
         }
-        val childAvgHeightMap = mutableMapOf<Int, Int>()
+        rView ?: return super.computeVerticalScrollRange(state)
         var scrolledY = 0
         var spanC = 0
         var maxHeight = 0
+        childAvgHeightMap.clear()
         for (i in 0 until itemCount) {
-            val height: Int = if (childSizesMap[i] != null) {
-                childSizesMap[i] ?: 0
-            } else {
-                val type = rView?.adapter?.getItemViewType(i) ?: 0
-                if (childAvgHeightMap[type] == null) {
-                    val array = (childTypeMap[type]?.values ?: mutableListOf(0)).toIntArray()
-                    childAvgHeightMap[type] = array
-                        .copyOfRange(0, min(array.size, 50))
-                        .average()
-                        .roundToInt()
-                }
-                childAvgHeightMap[type] ?: 0
-            }
+            val height: Int = getItemHeight(i)
             val spanCurrentSize = childSpanMap[i] ?: spanSizeLookup.getSpanSize(i)
             if (spanCount <= spanCurrentSize) {
                 scrolledY += height
@@ -188,6 +190,7 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
         if (childCount == 0) {
             return 0
         }
+        rView ?: return super.computeVerticalScrollOffset(state)
         val childAvgHeightMap = mutableMapOf<Int, Int>()
         val firstChild = getChildAt(0) ?: return 0
         val firstChildPosition = (0 until childCount)
@@ -197,20 +200,9 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
         var scrolledY: Int = -firstChild.y.toInt()
         var spanC = 0
         var maxHeight = 0
+        childAvgHeightMap.clear()
         for (i in 0 until firstChildPosition) {
-            val height: Int = if (childSizesMap[i] != null) {
-                childSizesMap[i] ?: 0
-            } else {
-                val type = rView?.adapter?.getItemViewType(i) ?: 0
-                if (childAvgHeightMap[type] == null) {
-                    val array = (childTypeMap[type]?.values ?: mutableListOf(0)).toIntArray()
-                    childAvgHeightMap[type] = array
-                        .copyOfRange(0, min(array.size, 50))
-                        .average()
-                        .roundToInt()
-                }
-                childAvgHeightMap[type] ?: 0
-            }
+            val height: Int = getItemHeight(i)
             val spanCurrentSize = childSpanMap[i] ?: spanSizeLookup.getSpanSize(i)
             if (spanCount <= spanCurrentSize) {
                 scrolledY += height
@@ -229,6 +221,35 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
         }
         scrolledY += maxHeight
         return scrolledY + paddingTop
+    }
+
+    private fun getItemHeight(pos: Int): Int {
+        return if (childSizesMap[pos] != null) {
+            childSizesMap[pos] ?: 0
+        } else {
+            val type = if (childTypeMap[pos] == null) {
+                val t = rView?.adapter?.getItemViewType(pos) ?: 0
+                childTypeMap[pos] = t
+                t
+            } else {
+                childTypeMap[pos] ?: 0
+            }
+            when {
+                childTypeEstimateMap[type] != null -> childTypeEstimateMap[type] ?: 0
+                childAvgHeightMap[type] == null -> {
+                    val array = (childTypeHeightMap[type]?.values ?: mutableListOf(0)).toIntArray()
+                    childAvgHeightMap[type] = array
+                        .copyOfRange(0, min(array.size, 10))
+                        .average()
+                        .roundToInt()
+                    if (array.size >= 10) {
+                        childTypeEstimateMap[type] = childAvgHeightMap[type]!!
+                    }
+                    childAvgHeightMap[type] ?: 0
+                }
+                else -> childAvgHeightMap[type] ?: 0
+            }
+        }
     }
 
     override fun findFirstVisibleItemPosition(): Int {
@@ -250,15 +271,5 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
             }
             .mapNotNull { pos -> getPosition(pos).takeIf { it != RecyclerView.NO_POSITION } }
             .minOrNull() ?: RecyclerView.NO_POSITION
-    }
-
-    private fun View.isInBounds(): Boolean {
-        if (!isShown) {
-            return false
-        }
-        val actualPosition = Rect()
-        getGlobalVisibleRect(actualPosition)
-        val screen = Rect(0, 0, 0, 0)
-        return actualPosition.intersect(screen)
     }
 }
