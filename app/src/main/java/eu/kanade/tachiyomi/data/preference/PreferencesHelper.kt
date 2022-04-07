@@ -335,8 +335,6 @@ class PreferencesHelper(val context: Context) {
 
     fun refreshCoversToo() = flowPrefs.getBoolean(Keys.refreshCoversToo, true)
 
-    fun updateOnRefresh() = flowPrefs.getInt(Keys.updateOnRefresh, -1)
-
     fun extensionUpdatesCount() = flowPrefs.getInt("ext_updates_count", 0)
 
     fun recentsViewType() = flowPrefs.getInt("recents_view_type", 0)

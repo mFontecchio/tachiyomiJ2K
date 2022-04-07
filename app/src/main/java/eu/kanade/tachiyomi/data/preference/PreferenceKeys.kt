@@ -203,8 +203,6 @@ object PreferenceKeys {
 
     const val refreshCoversToo = "refresh_covers_too"
 
-    const val updateOnRefresh = "update_on_refresh"
-
     const val showDLsInRecents = "show_dls_in_recents"
     const val showRemHistoryInRecents = "show_rem_history_in_recents"
     const val showReadInAllRecents = "show_read_in_all_recents"

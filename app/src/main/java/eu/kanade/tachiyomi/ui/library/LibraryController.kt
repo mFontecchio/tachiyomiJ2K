@@ -6,7 +6,6 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -21,7 +20,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewPropertyAnimator
 import android.view.inputmethod.InputMethodManager
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
 import androidx.appcompat.widget.SearchView
@@ -626,48 +624,7 @@ class LibraryController(
                             updateLibrary(it)
                         }
                     }
-                    presenter.allCategories.size <= 1 || presenter.groupType > BY_DEFAULT -> {
-                        updateLibrary()
-                    }
-                    preferences.updateOnRefresh().get() == -1 -> {
-                        var selected = 0
-                        activity!!.materialAlertDialog()
-                            .setTitle(R.string.what_should_update)
-                            .setNegativeButton(android.R.string.cancel, null)
-                            .setSingleChoiceItems(
-                                arrayOf(
-                                    context.getString(
-                                        R.string.top_category,
-                                        presenter.allCategories.first().name
-                                    ),
-                                    context.getString(
-                                        R.string.categories_in_global_update
-                                    )
-                                ),
-                                -1
-                            ) { dialog, index ->
-                                selected = index
-                                (dialog as? AlertDialog)?.getButton(DialogInterface.BUTTON_POSITIVE)?.isEnabled = true
-                            }
-                            .setPositiveButton(
-                                R.string.update
-                            ) { _, _ ->
-                                preferences.updateOnRefresh().set(selected)
-                                when (selected) {
-                                    0 -> updateLibrary(presenter.allCategories.first())
-                                    else -> updateLibrary()
-                                }
-                            }
-                            .show().apply {
-                                getButton(DialogInterface.BUTTON_POSITIVE).isEnabled = false
-                            }
-                    }
-                    else -> {
-                        when (preferences.updateOnRefresh().get()) {
-                            0 -> updateLibrary(presenter.allCategories.first())
-                            else -> updateLibrary()
-                        }
-                    }
+                    else -> updateLibrary()
                 }
             }
         }
