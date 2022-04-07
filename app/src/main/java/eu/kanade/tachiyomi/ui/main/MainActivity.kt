@@ -78,6 +78,7 @@ import eu.kanade.tachiyomi.ui.source.BrowseController
 import eu.kanade.tachiyomi.ui.source.browse.BrowseSourceController
 import eu.kanade.tachiyomi.util.manga.MangaShortcutManager
 import eu.kanade.tachiyomi.util.system.contextCompatDrawable
+import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.getResourceColor
 import eu.kanade.tachiyomi.util.system.hasSideNavBar
 import eu.kanade.tachiyomi.util.system.isBottomTappable
@@ -155,7 +156,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
 
     fun bigToolbarHeight(): Int {
         return if (binding.appBar.toolbarMode != BigAppBarLayout.ToolbarState.BIG) {
-            toolbarHeight
+            toolbarHeight + if (binding.appBar.useTabsInPreLayout) 48.dpToPx else 0
         } else {
             binding.appBar.preLayoutHeight
         }
