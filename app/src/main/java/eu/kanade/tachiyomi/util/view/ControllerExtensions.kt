@@ -544,15 +544,7 @@ fun Controller.scrollViewWith(
                             if (activityBinding!!.bottomNav?.isVisible == true &&
                                 preferences.hideBottomNavOnScroll().get()
                             ) closerToBottom else closerToTop
-                        lastY =
-                            if (closerToEdge && !atTop) (-activityBinding!!.appBar.height.toFloat()) else 0f
-                        activityBinding!!.appBar.snapY(recycler)
-//                        val yAnimator = activityBinding!!.appBar.animate().y(lastY)
-//                            .setDuration(shortAnimationDuration.toLong())
-//                        yAnimator.setUpdateListener {
-//                            activityBinding!!.appBar.updateViewsAfterY(recycler)
-//                        }
-//                        yAnimator.start()
+                        lastY = activityBinding!!.appBar.snapY(recycler)
                         if (activityBinding!!.bottomNav?.isVisible == true &&
                             isInView && preferences.hideBottomNavOnScroll().get()
                         ) {

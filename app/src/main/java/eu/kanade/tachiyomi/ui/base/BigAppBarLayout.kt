@@ -241,8 +241,10 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
                 else -> bigHeight.toFloat()
             }
         }
-        setToolbar(offset > realHeight - toolbarHeight - tabHeight)
-        if (toolbarMode != ToolbarState.BIG) return
+        if (toolbarMode != ToolbarState.BIG) {
+            setToolbar(offset > realHeight - toolbarHeight - tabHeight)
+            return
+        }
         val alpha = (realHeight.toFloat() + newY * 5) / realHeight.toFloat() + .33f
         bigView?.alpha = MathUtils.clamp(if (alpha.isNaN()) 1f else alpha, 0f, 1f)
         val toolbarTextView = mainToolbar?.toolbarTitle ?: return
@@ -258,6 +260,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
             0f,
             1f
         )
+        setToolbar(mainToolbar?.alpha ?: 0f <= 0f)
     }
 
     fun snapY(recyclerView: RecyclerView): Float {
@@ -287,7 +290,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
             setToolbar(true)
             lastY
         } else {
-            setToolbar(false)
+            setToolbar(mainToolbar?.alpha ?: 0f <= 0f)
             y
         }
     }
