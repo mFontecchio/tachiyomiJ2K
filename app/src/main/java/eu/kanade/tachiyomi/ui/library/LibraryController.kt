@@ -1622,16 +1622,21 @@ class LibraryController(
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.library, menu)
 
-        val searchItem = menu.findItem(R.id.action_search)
-        val searchView = searchItem.actionView as SearchView
+        val searchItem = activityBinding?.cardToolbar?.searchItem
+        val searchView = activityBinding?.cardToolbar?.searchView
         activityBinding?.cardToolbar?.setQueryHint(resources?.getString(R.string.library_search_hint), query.isEmpty())
 
-        searchItem.collapseActionView()
         if (query.isNotEmpty()) {
-            searchItem.expandActionView()
-            searchView.setQuery(query, true)
-            searchView.clearFocus()
+            if (activityBinding?.cardToolbar?.isSearchExpanded != true) {
+                searchItem?.expandActionView()
+                searchView?.setQuery(query, true)
+                searchView?.clearFocus()
+            } else {
+                searchView?.setQuery(query, false)
+            }
             search(query)
+        } else {
+            searchItem?.collapseActionView()
         }
 
         setOnQueryTextChangeListener(activityBinding?.cardToolbar?.searchView) {
@@ -1640,23 +1645,6 @@ class LibraryController(
             }
             search(it)
         }
-//        searchItem.fixExpand(
-//            onExpand = {
-//                if (!binding.recyclerCover.isClickable && query.isBlank() &&
-//                    !singleCategory && presenter.showAllCategories
-//                ) {
-//                    showCategories(true)
-//                }
-//                invalidateMenuOnExpand()
-//            },
-//            onCollapse = {
-//                if (binding.recyclerCover.isClickable) {
-//                    showCategories(false)
-//                }
-//                true
-//            }
-//        )
-//        hideItemsIfExpanded(searchItem, menu)
     }
 
     override fun onActionViewExpand(item: MenuItem?) {
