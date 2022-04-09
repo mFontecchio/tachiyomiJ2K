@@ -946,7 +946,7 @@ class LibraryController(
                         val searchView = searchItem?.actionView as? SearchView
                             ?: return@setOnLongClickListener false
                         searchItem.expandActionView()
-                        searchView.setQuery(suggestion, false)
+                        searchView.setQuery(suggestion.removeSuffix("…"), false)
                         true
                     } else {
                         false
