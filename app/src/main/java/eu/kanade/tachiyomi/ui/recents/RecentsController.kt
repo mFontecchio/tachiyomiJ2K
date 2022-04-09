@@ -725,11 +725,6 @@ class RecentsController(bundle: Bundle? = null) :
 //        hideItemsIfExpanded(searchItem, menu)
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-        if (showingDownloads) binding.downloadBottomSheet.dlBottomSheet.prepareMenu(menu)
-    }
-
     override fun onChangeStarted(handler: ControllerChangeHandler, type: ControllerChangeType) {
         super.onChangeStarted(handler, type)
         if (type.isEnter) {

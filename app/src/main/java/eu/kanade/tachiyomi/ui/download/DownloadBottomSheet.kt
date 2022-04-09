@@ -108,6 +108,7 @@ class DownloadBottomSheet @JvmOverloads constructor(
         presenter.getItems()
         onQueueStatusChange(!presenter.downloadManager.isPaused())
         binding.downloadFab.isInvisible = presenter.downloadQueue.isEmpty()
+        prepareMenu(binding.sheetToolbar.menu)
     }
 
     private fun updateDLTitle() {
