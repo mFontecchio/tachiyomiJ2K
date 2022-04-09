@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.ui.recents
 
 import android.app.Activity
+import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
@@ -52,6 +53,7 @@ import eu.kanade.tachiyomi.ui.source.LinearLayoutManagerAccurateOffset
 import eu.kanade.tachiyomi.ui.source.browse.ProgressItem
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.getBottomGestureInsets
+import eu.kanade.tachiyomi.util.system.getResourceColor
 import eu.kanade.tachiyomi.util.system.isLTR
 import eu.kanade.tachiyomi.util.system.launchUI
 import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
@@ -64,6 +66,7 @@ import eu.kanade.tachiyomi.util.view.expand
 import eu.kanade.tachiyomi.util.view.hide
 import eu.kanade.tachiyomi.util.view.isCollapsed
 import eu.kanade.tachiyomi.util.view.isExpanded
+import eu.kanade.tachiyomi.util.view.isHidden
 import eu.kanade.tachiyomi.util.view.moveRecyclerViewUp
 import eu.kanade.tachiyomi.util.view.requestFilePermissionsSafe
 import eu.kanade.tachiyomi.util.view.scrollViewWith
@@ -210,6 +213,29 @@ class RecentsController(bundle: Bundle? = null) :
             )
             val isExpanded = binding.downloadBottomSheet.root.sheetBehavior.isExpanded()
             binding.downloadBottomSheet.dlRecycler.alpha = isExpanded.toInt().toFloat()
+            binding.downloadBottomSheet.titleText.alpha = (!isExpanded).toInt().toFloat()
+            binding.downloadBottomSheet.sheetToolbar.alpha = isExpanded.toInt().toFloat()
+            if (binding.downloadBottomSheet.root.sheetBehavior.isCollapsed()) {
+                if (hasQueue()) {
+                    binding.downloadBottomSheet.dlBottomSheet.sheetBehavior?.isHideable =
+                        false
+                } else {
+                    binding.downloadBottomSheet.dlBottomSheet.sheetBehavior?.isHideable =
+                        true
+                    binding.downloadBottomSheet.dlBottomSheet.sheetBehavior?.state =
+                        BottomSheetBehavior.STATE_HIDDEN
+                }
+            } else if (binding.downloadBottomSheet.root.sheetBehavior.isHidden()) {
+                if (!hasQueue()) {
+                    binding.downloadBottomSheet.dlBottomSheet.sheetBehavior?.skipCollapsed =
+                        true
+                } else {
+                    binding.downloadBottomSheet.dlBottomSheet.sheetBehavior?.skipCollapsed =
+                        false
+                    binding.downloadBottomSheet.dlBottomSheet.sheetBehavior?.state =
+                        BottomSheetBehavior.STATE_COLLAPSED
+                }
+            }
 //            binding.downloadBottomSheet.sheetLayout.backgroundTintList = ColorStateList.valueOf(
 //                ColorUtils.blendARGB(
 //                    view.context.getResourceColor(R.attr.colorPrimaryVariant),
@@ -377,6 +403,7 @@ class RecentsController(bundle: Bundle? = null) :
 
     private fun setSheetToolbar() {
         binding.downloadBottomSheet.sheetToolbar.title = view?.context?.getString(R.string.download_queue)
+        binding.downloadBottomSheet.sheetToolbar.overflowIcon?.setTint(view?.context?.getResourceColor(R.attr.actionBarTintColor) ?: Color.BLACK)
         binding.downloadBottomSheet.sheetToolbar.setOnMenuItemClickListener { item ->
             return@setOnMenuItemClickListener binding.downloadBottomSheet.dlBottomSheet.onOptionsItemSelected(item)
         }
