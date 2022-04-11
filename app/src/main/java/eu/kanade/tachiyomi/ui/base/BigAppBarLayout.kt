@@ -270,7 +270,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         setToolbar(mainToolbar?.alpha ?: 0f <= 0f)
     }
 
-    fun snapY(recyclerView: RecyclerView): Float {
+    fun snapAppBarY(recyclerView: RecyclerView, callback: (() -> Unit)?): Float {
         yAnimator?.cancel()
         val halfWay = toolbarHeight / 2
         val shortAnimationDuration = resources?.getInteger(
@@ -292,6 +292,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
                 .setDuration(shortAnimationDuration.toLong())
             yAnimator?.setUpdateListener {
                 updateViewsAfterY(recyclerView, false)
+                callback?.invoke()
             }
             yAnimator?.start()
             setToolbar(true)
