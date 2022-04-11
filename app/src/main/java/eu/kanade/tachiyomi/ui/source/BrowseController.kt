@@ -59,7 +59,6 @@ import eu.kanade.tachiyomi.util.view.checkHeightThen
 import eu.kanade.tachiyomi.util.view.collapse
 import eu.kanade.tachiyomi.util.view.expand
 import eu.kanade.tachiyomi.util.view.isCollapsed
-import eu.kanade.tachiyomi.util.view.isExpanded
 import eu.kanade.tachiyomi.util.view.requestFilePermissionsSafe
 import eu.kanade.tachiyomi.util.view.scrollViewWith
 import eu.kanade.tachiyomi.util.view.setOnQueryTextChangeListener
@@ -249,6 +248,12 @@ class BrowseController :
                 if (binding.bottomSheet.tabs.selectedTabPosition == 0) R.string.extensions
                 else R.string.source_migration
             )
+        val onExtensionTab = binding.bottomSheet.tabs.selectedTabPosition == 0
+        if (binding.bottomSheet.sheetToolbar.menu.findItem(if (onExtensionTab) R.id.action_search else R.id.action_migration_guide) != null) {
+            return
+        }
+        val oldSearchView = binding.bottomSheet.sheetToolbar.menu.findItem(R.id.action_search)?.actionView as? SearchView
+        oldSearchView?.setOnQueryTextListener(null)
         binding.bottomSheet.sheetToolbar.menu.clear()
         binding.bottomSheet.sheetToolbar.inflateMenu(
             if (binding.bottomSheet.tabs.selectedTabPosition == 0) R.menu.extension_main
@@ -261,11 +266,13 @@ class BrowseController :
 
             // Change hint to show global search.
             searchView.queryHint = view?.context?.getString(R.string.search_extensions)
-            searchItem.collapseActionView()
             if (extQuery.isNotEmpty()) {
+                searchView.setOnQueryTextListener(null)
                 searchItem.expandActionView()
                 searchView.setQuery(extQuery, true)
                 searchView.clearFocus()
+            } else {
+                searchItem.collapseActionView()
             }
             // Create query listener which opens the global search view.
             setOnQueryTextChangeListener(searchView) {
@@ -442,12 +449,17 @@ class BrowseController :
                     activityBinding?.appBar?.y = 0f
                     activityBinding?.appBar?.updateViewsAfterY(binding.sourceRecycler)
                 }
+                updateSheetMenu()
             }
         }
         if (!type.isEnter) {
             binding.bottomSheet.root.canExpand = false
             activityBinding?.appBar?.alpha = 1f
             activityBinding?.appBar?.isInvisible = false
+            binding.bottomSheet.sheetToolbar.menu.findItem(R.id.action_search)?.let { searchItem ->
+                val searchView = searchItem.actionView as SearchView
+                searchView.clearFocus()
+            }
         } else {
             binding.bottomSheet.root.presenter.refreshMigrations()
             updateTitleAndMenu()

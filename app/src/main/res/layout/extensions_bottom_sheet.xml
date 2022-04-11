@@ -49,7 +49,6 @@
             app:layout_constraintHeight_max="?mainActionBarSize"
             app:layout_constraintTop_toBottomOf="@id/pill"
             app:layout_constraintVertical_bias="1.0"
-            app:menu="@menu/extension_main"
             app:navigationIcon="@drawable/ic_close_24dp"
             app:navigationIconTint="?actionBarTintColor"
             app:titleTextColor="?actionBarTintColor"
