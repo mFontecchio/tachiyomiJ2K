@@ -562,7 +562,7 @@ class RecentsController(bundle: Bundle? = null) :
         val isSearchExpanded = activityBinding?.cardToolbar?.isSearchExpanded == true
         if (shouldMoveToTop) {
             if (isSearchExpanded) {
-                moveRecyclerViewUp()
+                moveRecyclerViewUp(scrollUpAnyway = true)
             } else {
                 (binding.recycler.layoutManager as? LinearLayoutManager)
                     ?.scrollToPositionWithOffset(0, 0)

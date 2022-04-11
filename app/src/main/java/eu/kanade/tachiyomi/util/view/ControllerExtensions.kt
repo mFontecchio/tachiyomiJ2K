@@ -45,7 +45,6 @@ import eu.kanade.tachiyomi.ui.base.SmallToolbarInterface
 import eu.kanade.tachiyomi.ui.base.controller.BaseController
 import eu.kanade.tachiyomi.ui.base.controller.DialogController
 import eu.kanade.tachiyomi.ui.base.controller.OneWayFadeChangeHandler
-import eu.kanade.tachiyomi.ui.main.BottomSheetController
 import eu.kanade.tachiyomi.ui.main.FloatingSearchInterface
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.main.TabbedInterface
@@ -391,9 +390,7 @@ fun Controller.scrollViewWith(
                         fakeBottomNavView = null
                     }
                     lastY = 0f
-//                    recycler.doOnLayout {
                     activityBinding!!.appBar.updateViewsAfterY(recycler)
-//                    }
                     activityBinding!!.toolbar.tag = randomTag
                     activityBinding!!.toolbar.setOnClickListener {
                         recycler.smoothScrollToTop()
@@ -575,7 +572,7 @@ fun Controller.scrollViewWith(
 val Controller.mainRecyclerView: RecyclerView?
     get() = (this as? SettingsController)?.listView ?: (this as? BaseController<*>)?.mainRecycler
 
-fun Controller.moveRecyclerViewUp(allTheWayUp: Boolean = false) {
+fun Controller.moveRecyclerViewUp(allTheWayUp: Boolean = false, scrollUpAnyway: Boolean = false) {
     if (activityBinding?.bigToolbar?.isVisible == false) return
     val recycler = mainRecyclerView ?: return
     val activityBinding = activityBinding ?: return
@@ -588,7 +585,7 @@ fun Controller.moveRecyclerViewUp(allTheWayUp: Boolean = false) {
         }
         return
     }
-    if (recycler.computeVerticalScrollOffset() - recycler.paddingTop <= 0 - appBarHeight) {
+    if (scrollUpAnyway || recycler.computeVerticalScrollOffset() - recycler.paddingTop <= 0 - appBarHeight) {
         (recycler.layoutManager as? LinearLayoutManager)
             ?.scrollToPositionWithOffset(0, activityBinding.appBar.recyclerOffset)
         recycler.post {
