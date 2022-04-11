@@ -674,6 +674,11 @@ class LinearLayoutManagerAccurateOffset(context: Context?) : LinearLayoutManager
         rView = view
     }
 
+    override fun onDetachedFromWindow(view: RecyclerView?, recycler: RecyclerView.Recycler?) {
+        super.onDetachedFromWindow(view, recycler)
+        rView = null
+    }
+
     override fun computeVerticalScrollRange(state: RecyclerView.State): Int {
         if (childCount == 0) {
             return 0
