@@ -713,7 +713,7 @@ val Controller.toolbarHeight: Int?
 
 val Controller.bigToolbarHeight: Int?
     get() = (activity as? MainActivity)?.bigToolbarHeight(
-        this is FloatingSearchInterface,
+        (this as? FloatingSearchInterface)?.showFloatingBar() == true,
         this is TabbedInterface,
         this !is SmallToolbarInterface
     )
