@@ -411,8 +411,6 @@ class BrowseController :
         }
     }
 
-    override fun sheetIsFullscreen(): Boolean = binding.bottomSheet.root.sheetBehavior.isExpanded()
-
     override fun handleSheetBack(): Boolean {
         if (showingExtensions) {
             if (binding.bottomSheet.root.canGoBack()) {

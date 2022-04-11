@@ -396,11 +396,7 @@ fun Controller.scrollViewWith(
 //                    }
                     activityBinding!!.toolbar.tag = randomTag
                     activityBinding!!.toolbar.setOnClickListener {
-                        if ((this@scrollViewWith as? BottomSheetController)?.sheetIsFullscreen() != true) {
-                            recycler.smoothScrollToTop()
-                        } else {
-                            (this@scrollViewWith as? BottomSheetController)?.toggleSheet()
-                        }
+                        recycler.smoothScrollToTop()
                     }
                 } else {
                     if (!customPadding && lastY == 0f && (
@@ -606,7 +602,6 @@ fun Controller.setAppBarBG(value: Float, preferences: PreferencesHelper, include
     val context = view?.context ?: return
     val floatingBar =
         (this as? FloatingSearchInterface)?.showFloatingBar() == true && !includeTabView
-    if ((this as? BottomSheetController)?.sheetIsFullscreen() == true) return
     if (router.backstack.lastOrNull()?.controller != this) return
     if (floatingBar) {
         (activityBinding?.cardView as? CardView)?.setCardBackgroundColor(context.getResourceColor(R.attr.colorPrimaryVariant))

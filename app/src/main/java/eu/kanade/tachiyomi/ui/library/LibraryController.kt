@@ -1603,8 +1603,6 @@ class LibraryController(
         }
     }
 
-    override fun sheetIsFullscreen(): Boolean = false
-
     override fun handleSheetBack(): Boolean {
         if (binding.recyclerCover.isClickable) {
             showCategories(false)

@@ -1180,5 +1180,4 @@ interface BottomSheetController {
     fun hideSheet()
     fun toggleSheet()
     fun handleSheetBack(): Boolean
-    fun sheetIsFullscreen(): Boolean
 }
