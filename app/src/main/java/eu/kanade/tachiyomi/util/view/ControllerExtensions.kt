@@ -209,11 +209,11 @@ fun Controller.scrollViewWith(
     liftOnScroll: ((Boolean) -> Unit)? = null,
     onLeavingController: (() -> Unit)? = null,
     onBottomNavUpdate: (() -> Unit)? = null,
-    includeTabView: Boolean = false
 ): ((Boolean) -> Unit) {
     var statusBarHeight = -1
     val tabBarHeight = 48.dpToPx
     activityBinding?.appBar?.y = 0f
+    val includeTabView = this is TabbedInterface
     activityBinding?.appBar?.useTabsInPreLayout = includeTabView
     activityBinding?.appBar?.setToolbarModeBy(this@scrollViewWith)
     val attrsArray = intArrayOf(R.attr.mainActionBarSize)

@@ -174,7 +174,6 @@ class RecentsController(bundle: Bundle? = null) :
         scrollViewWith(
             binding.recycler,
             swipeRefreshLayout = binding.swipeRefresh,
-            includeTabView = true,
             afterInsets = {
                 headerHeight = it.getInsets(systemBars()).top + appBarHeight + 48.dpToPx
                 binding.recycler.updatePaddingRelative(
