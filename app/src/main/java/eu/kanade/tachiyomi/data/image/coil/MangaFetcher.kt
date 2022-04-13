@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.data.image.coil
 
+import android.graphics.BitmapFactory
 import android.webkit.MimeTypeMap
 import coil.bitmap.BitmapPool
 import coil.decode.DataSource
@@ -10,11 +11,13 @@ import coil.fetch.SourceResult
 import coil.size.Size
 import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.database.models.Manga
+import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.storage.DiskUtil
+import eu.kanade.tachiyomi.util.system.launchIO
 import okhttp3.CacheControl
 import okhttp3.Call
 import okhttp3.Request
@@ -28,6 +31,7 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.io.File
 import java.util.Date
+import java.util.concurrent.ConcurrentHashMap
 
 class MangaFetcher : Fetcher<Manga> {
 
@@ -65,6 +69,7 @@ class MangaFetcher : Fetcher<Manga> {
         if (!shouldFetchRemotely) {
             val customCoverFile = coverCache.getCustomCoverFile(manga)
             if (customCoverFile.exists() && options.parameters.value(realCover) != true) {
+                setRatios(manga, customCoverFile)
                 return fileLoader(customCoverFile)
             }
         }
@@ -73,6 +78,7 @@ class MangaFetcher : Fetcher<Manga> {
             if (!manga.favorite) {
                 coverFile.setLastModified(Date().time)
             }
+            setRatios(manga, coverFile)
             return fileLoader(coverFile)
         }
         val (response, body) = awaitGetCall(
@@ -104,7 +110,24 @@ class MangaFetcher : Fetcher<Manga> {
                 coverCache.deleteCachedCovers()
             }
         }
+        setRatios(manga, coverFile, true)
         return fileLoader(coverFile)
+    }
+
+    private fun setRatios(manga: Manga, ogFile: File? = null, force: Boolean = false) {
+        launchIO {
+            // if (!force && MangaCoverRatios.getRatio(manga) != null) return@launchIO
+            val file = ogFile ?: coverCache.getCustomCoverFile(manga).takeIf { it.exists() } ?: coverCache.getCoverFile(manga)
+            // if the file exists and the there was still an error then the file is corrupted
+            if (file.exists()) {
+                val options = BitmapFactory.Options()
+                options.inJustDecodeBounds = true
+                BitmapFactory.decodeFile(file.path, options)
+                if (!(options.outWidth == -1 || options.outHeight == -1)) {
+                    MangaCoverRatios.addCover(manga, options.outWidth / options.outHeight.toFloat())
+                }
+            }
+        }
     }
 
     private suspend fun awaitGetCall(manga: Manga, onlyCache: Boolean = false, forceNetwork: Boolean): Pair<Response,
@@ -185,5 +208,42 @@ class MangaFetcher : Fetcher<Manga> {
 
     private enum class Type {
         File, URL;
+    }
+}
+
+object MangaCoverRatios {
+    private var coverRatioMap = ConcurrentHashMap<Long, Float>()
+
+    fun load() {
+        val preferences = Injekt.get<PreferencesHelper>()
+        val ratios = preferences.coverRatios().get()
+        coverRatioMap = ConcurrentHashMap(
+            ratios.mapNotNull {
+                val splits = it.split("|")
+                val id = splits.firstOrNull()?.toLongOrNull()
+                val ratio = splits.lastOrNull()?.toFloatOrNull()
+                if (id != null && ratio != null) {
+                    id to ratio
+                } else {
+                    null
+                }
+            }.toMap()
+        )
+    }
+
+    fun addCover(manga: Manga, ratio: Float) {
+        val id = manga.id ?: return
+        coverRatioMap[id] = ratio
+        savePrefs()
+    }
+
+    fun getRatio(manga: Manga): Float? {
+        return coverRatioMap[manga.id]
+    }
+
+    private fun savePrefs() {
+        val preferences = Injekt.get<PreferencesHelper>()
+        val mapCopy = coverRatioMap.toMap()
+        preferences.coverRatios().set(mapCopy.map { "${it.key}|${it.value}" }.toSet())
     }
 }

@@ -238,61 +238,7 @@ fun Controller.scrollViewWith(
         updateViewsNearBottom()
     }
 
-    var itemAppBarAnimator: Animator? = null
-
-    fun animateAppBar() {
-        if (this !is SmallToolbarInterface) {
-            itemAppBarAnimator?.cancel()
-            val duration = (recycler.itemAnimator?.changeDuration ?: 250) * 2
-            itemAppBarAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-                addUpdateListener {
-                    activityBinding?.appBar?.updateViewsAfterY(recycler)
-                }
-            }
-            itemAppBarAnimator?.duration = duration
-            itemAppBarAnimator?.start()
-        }
-    }
-
-    recycler.itemAnimator = object : DefaultItemAnimator() {
-        override fun animateMove(
-            holder: RecyclerView.ViewHolder?,
-            fromX: Int,
-            fromY: Int,
-            toX: Int,
-            toY: Int
-        ): Boolean {
-            animateAppBar()
-            return super.animateMove(holder, fromX, fromY, toX, toY)
-        }
-
-        override fun onAnimationFinished(viewHolder: RecyclerView.ViewHolder) {
-            activityBinding?.appBar?.updateViewsAfterY(recycler)
-            super.onAnimationFinished(viewHolder)
-        }
-
-        override fun animateChange(
-            oldHolder: RecyclerView.ViewHolder,
-            newHolder: RecyclerView.ViewHolder,
-            preInfo: ItemHolderInfo,
-            postInfo: ItemHolderInfo
-        ): Boolean {
-            animateAppBar()
-            return super.animateChange(oldHolder, newHolder, preInfo, postInfo)
-        }
-
-        override fun animateChange(
-            oldHolder: RecyclerView.ViewHolder?,
-            newHolder: RecyclerView.ViewHolder?,
-            fromX: Int,
-            fromY: Int,
-            toX: Int,
-            toY: Int
-        ): Boolean {
-            animateAppBar()
-            return super.animateChange(oldHolder, newHolder, fromX, fromY, toX, toY)
-        }
-    }
+    setItemAnimatorForAppBar(recycler)
 
     val randomTag = Random.nextLong()
     var lastY = 0f
@@ -574,6 +520,63 @@ fun Controller.scrollViewWith(
     return colorToolbar
 }
 
+fun Controller.setItemAnimatorForAppBar(recycler: RecyclerView) {
+    var itemAppBarAnimator: Animator? = null
+
+    fun animateAppBar() {
+        if (this !is SmallToolbarInterface) {
+            itemAppBarAnimator?.cancel()
+            val duration = (recycler.itemAnimator?.changeDuration ?: 250) * 2
+            itemAppBarAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+                addUpdateListener {
+                    activityBinding?.appBar?.updateViewsAfterY(recycler)
+                }
+            }
+            itemAppBarAnimator?.duration = duration
+            itemAppBarAnimator?.start()
+        }
+    }
+
+    recycler.itemAnimator = object : DefaultItemAnimator() {
+        override fun animateMove(
+            holder: RecyclerView.ViewHolder?,
+            fromX: Int,
+            fromY: Int,
+            toX: Int,
+            toY: Int
+        ): Boolean {
+            animateAppBar()
+            return super.animateMove(holder, fromX, fromY, toX, toY)
+        }
+
+        override fun onAnimationFinished(viewHolder: RecyclerView.ViewHolder) {
+            activityBinding?.appBar?.updateViewsAfterY(recycler)
+            super.onAnimationFinished(viewHolder)
+        }
+
+        override fun animateChange(
+            oldHolder: RecyclerView.ViewHolder,
+            newHolder: RecyclerView.ViewHolder,
+            preInfo: ItemHolderInfo,
+            postInfo: ItemHolderInfo
+        ): Boolean {
+            animateAppBar()
+            return super.animateChange(oldHolder, newHolder, preInfo, postInfo)
+        }
+
+        override fun animateChange(
+            oldHolder: RecyclerView.ViewHolder?,
+            newHolder: RecyclerView.ViewHolder?,
+            fromX: Int,
+            fromY: Int,
+            toX: Int,
+            toY: Int
+        ): Boolean {
+            animateAppBar()
+            return super.animateChange(oldHolder, newHolder, fromX, fromY, toX, toY)
+        }
+    }
+}
 val Controller.mainRecyclerView: RecyclerView?
     get() = (this as? SettingsController)?.listView ?: (this as? BaseController<*>)?.mainRecycler
 

@@ -31,8 +31,12 @@ class LibraryDisplayView @JvmOverloads constructor(context: Context, attrs: Attr
     override fun inflateBinding() = LibraryDisplayLayoutBinding.bind(this)
     override fun initGeneralPreferences() {
         binding.displayGroup.bindToPreference(preferences.libraryLayout())
-        binding.uniformGrid.bindToPreference(preferences.uniformGrid())
+        binding.uniformGrid.bindToPreference(preferences.uniformGrid()) {
+            binding.staggeredGrid.isEnabled = !it
+        }
         binding.outlineOnCovers.bindToPreference(preferences.outlineOnCovers())
+        binding.staggeredGrid.isEnabled = !preferences.uniformGrid().get()
+        binding.staggeredGrid.bindToPreference(preferences.useStaggeredGrid())
         binding.gridSeekbar.value = ((preferences.gridSize().get() + .5f) * 2f).roundToInt().toFloat()
         binding.resetGridSize.setOnClickListener {
             binding.gridSeekbar.value = 3f

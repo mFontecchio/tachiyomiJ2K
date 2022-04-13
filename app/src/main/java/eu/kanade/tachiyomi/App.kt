@@ -17,6 +17,7 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.multidex.MultiDex
 import eu.kanade.tachiyomi.data.image.coil.CoilSetup
+import eu.kanade.tachiyomi.data.image.coil.MangaCoverRatios
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.data.preference.asImmediateFlow
@@ -75,6 +76,7 @@ open class App : Application(), DefaultLifecycleObserver {
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 
+        MangaCoverRatios.load()
         preferences.nightMode()
             .asImmediateFlow { AppCompatDelegate.setDefaultNightMode(it) }
             .launchIn(ProcessLifecycleOwner.get().lifecycleScope)

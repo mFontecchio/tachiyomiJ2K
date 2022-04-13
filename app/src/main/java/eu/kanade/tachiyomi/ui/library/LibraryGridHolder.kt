@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.ui.library
 import android.app.Activity
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.isVisible
 import coil.clear
@@ -28,7 +29,7 @@ class LibraryGridHolder(
     adapter: LibraryCategoryAdapter,
     var width: Int,
     compact: Boolean,
-    private var fixedSize: Boolean
+    val fixedSize: Boolean
 ) : LibraryHolder(view, adapter) {
 
     private val binding = MangaGridItemBinding.bind(view)
@@ -107,7 +108,7 @@ class LibraryGridHolder(
     private fun setCover(manga: Manga) {
         if ((adapter.recyclerView.context as? Activity)?.isDestroyed == true) return
         binding.coverThumbnail.loadManga(manga) {
-            if (!fixedSize) {
+            if (!fixedSize && binding.coverThumbnail.layoutParams.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
                 precision(Precision.INEXACT)
                 scale(Scale.FIT)
             }

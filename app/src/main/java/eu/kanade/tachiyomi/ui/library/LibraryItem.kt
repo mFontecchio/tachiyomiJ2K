@@ -9,12 +9,14 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import eu.davidea.flexibleadapter.FlexibleAdapter
 import eu.davidea.flexibleadapter.items.AbstractSectionableItem
 import eu.davidea.flexibleadapter.items.IFilterable
 import eu.davidea.flexibleadapter.items.IFlexible
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.database.models.LibraryManga
+import eu.kanade.tachiyomi.data.image.coil.MangaCoverRatios
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.databinding.MangaGridItemBinding
 import eu.kanade.tachiyomi.source.SourceManager
@@ -24,6 +26,7 @@ import eu.kanade.tachiyomi.widget.AutofitRecyclerView
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import kotlin.math.roundToInt
 
 class LibraryItem(
     val manga: LibraryManga,
@@ -104,7 +107,8 @@ class LibraryItem(
                         )
                     } else {
                         binding.constraintLayout.minHeight = coverHeight / 2
-                        binding.coverThumbnail.minimumHeight = (parent.itemWidth / 3f * 3.6f).toInt()
+                        binding.coverThumbnail.minimumHeight =
+                            (parent.itemWidth / 3f * 3.6f).toInt()
                         binding.coverThumbnail.maxHeight = (parent.itemWidth / 3f * 6f).toInt()
                     }
                 }
@@ -127,8 +131,26 @@ class LibraryItem(
         position: Int,
         payloads: MutableList<Any?>?
     ) {
+        val ratio = MangaCoverRatios.getRatio(manga)
+        if (holder is LibraryGridHolder && !holder.fixedSize) {
+            val binding = MangaGridItemBinding.bind(holder.itemView)
+            binding.coverThumbnail.layoutParams = if (ratio != null) {
+                val parent = adapter.recyclerView as? AutofitRecyclerView
+                FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    (((parent?.itemWidth ?: 40.dpToPx) - 12.dpToPx) / ratio).roundToInt()
+                )
+            } else {
+                FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            }
+        }
         holder.onSetValues(this)
         (holder as? LibraryGridHolder)?.setSelected(adapter.isSelected(position))
+        val layoutParams = holder.itemView.layoutParams as? StaggeredGridLayoutManager.LayoutParams
+        layoutParams?.isFullSpan = manga.isBlank()
     }
 
     /**

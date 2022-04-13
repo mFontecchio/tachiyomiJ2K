@@ -38,6 +38,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.bluelinelabs.conductor.ControllerChangeHandler
 import com.bluelinelabs.conductor.ControllerChangeType
 import com.github.florent37.viewtooltip.ViewTooltip
@@ -107,6 +108,7 @@ import eu.kanade.tachiyomi.util.view.snack
 import eu.kanade.tachiyomi.util.view.withFadeTransaction
 import eu.kanade.tachiyomi.widget.EmptyView
 import eu.kanade.tachiyomi.widget.EndAnimatorListener
+import eu.kanade.tachiyomi.widget.StaggeredGridLayoutManagerAccurateOffset
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
@@ -525,19 +527,6 @@ class LibraryController(
         adapter = LibraryCategoryAdapter(this)
         adapter.stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
         setRecyclerLayout()
-        binding.libraryGridRecycler.recycler.manager.spanSizeLookup = (
-            object : GridLayoutManager.SpanSizeLookup() {
-                override fun getSpanSize(position: Int): Int {
-                    if (libraryLayout == 0) return binding.libraryGridRecycler.recycler.manager.spanCount
-                    val item = this@LibraryController.adapter.getItem(position)
-                    return if (item is LibraryHeaderItem || item is SearchGlobalItem || (item is LibraryItem && item.manga.isBlank())) {
-                        binding.libraryGridRecycler.recycler.manager.spanCount
-                    } else {
-                        1
-                    }
-                }
-            }
-            )
         binding.libraryGridRecycler.recycler.setHasFixedSize(true)
         binding.libraryGridRecycler.recycler.adapter = adapter
 
@@ -781,7 +770,9 @@ class LibraryController(
         if (presenter.showAllCategories) {
             if (!next) {
                 val fPosition =
-                    (binding.libraryGridRecycler.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+                    (binding.libraryGridRecycler.recycler.layoutManager as? LinearLayoutManager)?.findFirstVisibleItemPosition()
+                        ?: (binding.libraryGridRecycler.recycler.layoutManager as? StaggeredGridLayoutManagerAccurateOffset)
+                            ?.findFirstVisibleItemPosition() ?: 0
                 if (fPosition > adapter.currentItems.indexOf(category)) {
                     scrollToHeader(category.category.order)
                     return
@@ -816,7 +807,9 @@ class LibraryController(
 
     private fun getHeader(firstCompletelyVisible: Boolean = false): LibraryHeaderItem? {
         val position = if (firstCompletelyVisible) {
-            (binding.libraryGridRecycler.recycler.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()
+            (binding.libraryGridRecycler.recycler.layoutManager as? LinearLayoutManager)?.findFirstCompletelyVisibleItemPosition()
+                ?: (binding.libraryGridRecycler.recycler.layoutManager as? StaggeredGridLayoutManagerAccurateOffset)
+                    ?.findFirstCompletelyVisibleItemPosition() ?: 0
         } else {
             -1
         }
@@ -827,7 +820,9 @@ class LibraryController(
             }
         } else {
             val fPosition =
-                (binding.libraryGridRecycler.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+                (binding.libraryGridRecycler.recycler.layoutManager as? LinearLayoutManager)?.findFirstVisibleItemPosition()
+                    ?: (binding.libraryGridRecycler.recycler.layoutManager as? StaggeredGridLayoutManagerAccurateOffset)
+                        ?.findFirstVisibleItemPosition() ?: 0
             when (val item = adapter.getItem(fPosition)) {
                 is LibraryHeaderItem -> return item
                 is LibraryItem -> return item.header
@@ -838,7 +833,9 @@ class LibraryController(
 
     private fun getVisibleHeader(): LibraryHeaderItem? {
         val fPosition =
-            (binding.libraryGridRecycler.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+            (binding.libraryGridRecycler.recycler.layoutManager as? LinearLayoutManager)?.findFirstVisibleItemPosition()
+                ?: (binding.libraryGridRecycler.recycler.layoutManager as? StaggeredGridLayoutManagerAccurateOffset)
+                    ?.findFirstVisibleItemPosition() ?: 0
         when (val item = adapter.getItem(fPosition)) {
             is LibraryHeaderItem -> return item
             is LibraryItem -> return item.header
@@ -879,6 +876,7 @@ class LibraryController(
                     bottom = 50.dpToPx + (activityBinding?.bottomNav?.height ?: 0)
                 )
             }
+            useStaggered(preferences)
             if (libraryLayout == 0) {
                 spanCount = 1
                 updatePaddingRelative(
@@ -892,6 +890,19 @@ class LibraryController(
                     end = 5.dpToPx
                 )
             }
+            (manager as? GridLayoutManager)?.spanSizeLookup = (
+                object : GridLayoutManager.SpanSizeLookup() {
+                    override fun getSpanSize(position: Int): Int {
+                        if (libraryLayout == 0) return managerSpanCount
+                        val item = this@LibraryController.adapter.getItem(position)
+                        return if (item is LibraryHeaderItem || item is SearchGlobalItem || (item is LibraryItem && item.manga.isBlank())) {
+                            managerSpanCount
+                        } else {
+                            1
+                        }
+                    }
+                }
+                )
         }
     }
 
@@ -899,7 +910,8 @@ class LibraryController(
         listOf(
             preferences.libraryLayout(),
             preferences.uniformGrid(),
-            preferences.gridSize()
+            preferences.gridSize(),
+            preferences.useStaggeredGrid()
         ).forEach {
             it.asFlow()
                 .drop(1)
@@ -954,6 +966,9 @@ class LibraryController(
                 }
             }
         } else {
+            if (!type.isPush) {
+                setItem()
+            }
             updateFilterSheetY()
             closeTip()
             if (binding.filterBottomSheet.filterBottomSheet.sheetBehavior.isHidden()) {
@@ -963,6 +978,7 @@ class LibraryController(
         }
     }
 
+    var staggeredItem: Pair<Int, Float>? = null
     override fun onActivityResumed(activity: Activity) {
         super.onActivityResumed(activity)
         if (!isBindingInitialized) return
@@ -1023,6 +1039,22 @@ class LibraryController(
                 activityBinding?.appBar?.updateViewsAfterY(binding.libraryGridRecycler.recycler)
             }
         }
+//        if (this == router.backstack.lastOrNull()?.controller &&
+//            binding.libraryGridRecycler.recycler.manager is StaggeredGridLayoutManager && staggeredItem != null
+//        ) {
+//            binding.libraryGridRecycler.recycler.doOnNextLayout {
+//                val item = staggeredItem ?: return@doOnNextLayout
+//                (binding.libraryGridRecycler.recycler.manager as StaggeredGridLayoutManager).scrollToPositionWithOffset(
+//                    item.first,
+//                    -item.second.roundToInt()
+//                )
+//                staggeredItem = null
+//                binding.libraryGridRecycler.recycler.doOnNextLayout {
+//                    setItemAnimatorForAppBar(binding.libraryGridRecycler.recycler)
+// //                    (binding.libraryGridRecycler.recycler.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = true
+//                }
+//            }
+//        }
         binding.libraryGridRecycler.recycler.post {
             elevateAppBar(binding.libraryGridRecycler.recycler.canScrollVertically(-1))
             setActiveCategory()
@@ -1142,7 +1174,17 @@ class LibraryController(
 //                ) ?: 0f
 //                ).roundToInt() + 30.dpToPx
             val previousHeader = adapter.getItem(adapter.indexOf(pos - 1)) as? LibraryHeaderItem
-            (binding.libraryGridRecycler.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+            (binding.libraryGridRecycler.recycler.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
+                headerPosition,
+                (
+                    when {
+                        headerPosition == 0 -> 0
+                        previousHeader?.category?.isHidden == true -> (-3).dpToPx
+                        else -> (-30).dpToPx
+                    }
+                    ) + appbarOffset
+            )
+            (binding.libraryGridRecycler.recycler.layoutManager as? StaggeredGridLayoutManager)?.scrollToPositionWithOffset(
                 headerPosition,
                 (
                     when {
@@ -1185,10 +1227,16 @@ class LibraryController(
         libraryLayout = preferences.libraryLayout().get()
         setRecyclerLayout()
         val position =
-            (binding.libraryGridRecycler.recycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+            (binding.libraryGridRecycler.recycler.layoutManager as? LinearLayoutManager)?.findFirstVisibleItemPosition()
+                ?: (binding.libraryGridRecycler.recycler.layoutManager as? StaggeredGridLayoutManagerAccurateOffset)
+                    ?.findFirstVisibleItemPosition() ?: 0
         binding.libraryGridRecycler.recycler.adapter = adapter
 
-        (binding.libraryGridRecycler.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+        (binding.libraryGridRecycler.recycler.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
+            position,
+            0
+        )
+        (binding.libraryGridRecycler.recycler.layoutManager as? StaggeredGridLayoutManager)?.scrollToPositionWithOffset(
             position,
             0
         )
@@ -1313,16 +1361,32 @@ class LibraryController(
             toggleSelection(position)
             false
         } else {
+            setItem(position)
             openManga(item.manga)
             false
         }
     }
 
-    private fun openManga(manga: Manga) = router.pushController(
-        MangaDetailsController(
-            manga
-        ).withFadeTransaction()
-    )
+    private fun setItem(mangaPos: Int? = null) {
+        if (binding.libraryGridRecycler.recycler.manager is StaggeredGridLayoutManager && staggeredItem == null) {
+            val pos = mangaPos
+                ?: (binding.libraryGridRecycler.recycler.manager as StaggeredGridLayoutManagerAccurateOffset).findFirstVisibleItemPosition()
+            staggeredItem = pos to (binding.libraryGridRecycler.recycler.getChildAt(pos)?.y ?: 0f)
+//            (binding.libraryGridRecycler.recycler.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
+//            binding.libraryGridRecycler.recycler.itemAnimator = null
+        }
+    }
+
+    private fun openManga(manga: Manga) {
+//        val activity = activity ?: return
+//        val mangaActivity = SearchActivity.openMangaIntent(activity, manga.id, false)
+//        activity.startActivity(mangaActivity)
+        router.pushController(
+            MangaDetailsController(
+                manga
+            ).withFadeTransaction()
+        )
+    }
 
     /**
      * Called when a manga is long clicked.
