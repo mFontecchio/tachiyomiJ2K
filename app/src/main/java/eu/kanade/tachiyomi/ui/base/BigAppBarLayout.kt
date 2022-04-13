@@ -235,7 +235,10 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
                 -realHeight.toFloat() + top + minTabletHeight,
                 max(
                     smallHeight,
-                    if (offset > realHeight - toolbarHeight - tabHeight) smallHeight else min(-offset.toFloat(), 0f)
+                    if (offset > realHeight - toolbarHeight - tabHeight) smallHeight else min(
+                        -offset.toFloat(),
+                        0f
+                    )
                 ) + top.toFloat()
             )
         }
@@ -252,13 +255,20 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
             setToolbar(offset > realHeight - toolbarHeight - tabHeight)
             return
         }
-        val alpha = (bigHeight + newY * 2) / (bigHeight) + 0.45f // (realHeight.toFloat() + newY * 5) / realHeight.toFloat() + .33f
+        val alpha =
+            (bigHeight + newY * 2) / (bigHeight) + 0.45f // (realHeight.toFloat() + newY * 5) / realHeight.toFloat() + .33f
         bigView?.alpha = MathUtils.clamp(if (alpha.isNaN()) 1f else alpha, 0f, 1f)
         val toolbarTextView = mainToolbar?.toolbarTitle ?: return
         toolbarTextView.setTextColor(
             ColorUtils.setAlphaComponent(
                 toolbarTextView.currentTextColor,
-                (MathUtils.clamp((1 - ((if (alpha.isNaN()) 1f else alpha) + 0.95f)) * 2, 0f, 1f) * 255)
+                (
+                    MathUtils.clamp(
+                        (1 - ((if (alpha.isNaN()) 1f else alpha) + 0.95f)) * 2,
+                        0f,
+                        1f
+                    ) * 255
+                    )
                     .roundToInt()
             )
         )
@@ -267,7 +277,13 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
             0f,
             1f
         )
-        setToolbar(mainToolbar?.alpha ?: 0f <= 0f)
+        val mainActivity = mainActivity ?: return
+        val useSearchToolbar = mainToolbar?.alpha ?: 0f <= 0f
+        if (if (useSearchToolbar) (-y >= height || recyclerView.scrollState <= RecyclerView.SCROLL_STATE_IDLE)
+            else (mainActivity.currentToolbar == cardToolbar)
+        ) {
+            setToolbar(useSearchToolbar)
+        }
     }
 
     fun snapAppBarY(recyclerView: RecyclerView, callback: (() -> Unit)?): Float {
