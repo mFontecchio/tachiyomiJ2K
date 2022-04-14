@@ -33,6 +33,7 @@ import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.marginTop
 import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.core.view.updatePaddingRelative
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -281,17 +282,7 @@ class LibraryController(
                     updateFilterSheetY()
                 }
                 if (!binding.fastScroller.isFastScrolling) {
-                    activityBinding?.let { activityBinding ->
-                        val value = max(
-                            0,
-                            bigToolbarHeight!! + activityBinding.appBar.y.roundToInt()
-                        ) + activityBinding.appBar.paddingTop
-                        if (value != binding.fastScroller.marginTop) {
-                            binding.fastScroller.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                                topMargin = value
-                            }
-                        }
-                    }
+                    updateSmallerViewsTopMargins()
                 }
                 binding.roundedCategoryHopper.upCategory.alpha = if (isAtTop()) 0.25f else 1f
                 binding.roundedCategoryHopper.downCategory.alpha = if (isAtBottom()) 0.25f else 1f
@@ -576,13 +567,7 @@ class LibraryController(
                     binding.categoryRecycler.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                         topMargin = insets.getInsets(systemBars()).top + (activityBinding?.cardToolbar?.height ?: 0) + 12.dpToPx
                     }
-                    binding.fastScroller.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                        val activityBinding = activityBinding ?: return@updateLayoutParams
-                        topMargin = max(
-                            0,
-                            bigToolbarHeight!! + activityBinding.appBar.y.roundToInt()
-                        ) + activityBinding.appBar.paddingTop
-                    }
+                    updateSmallerViewsTopMargins()
                     binding.headerCard.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                         topMargin = insets.getInsets(systemBars()).top + 4.dpToPx
                     }
@@ -622,6 +607,27 @@ class LibraryController(
             }
         } else {
             binding.recyclerLayout.alpha = 0f
+        }
+    }
+
+    private fun updateSmallerViewsTopMargins() {
+        val activityBinding = activityBinding ?: return
+        val bigToolbarHeight = bigToolbarHeight ?: return
+        val value = max(
+            0,
+            bigToolbarHeight + activityBinding.appBar.y.roundToInt()
+        ) + activityBinding.appBar.paddingTop
+        if (value != binding.fastScroller.marginTop) {
+            binding.fastScroller.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = value
+            }
+            binding.emptyView.updatePadding(
+                top = bigToolbarHeight + activityBinding.appBar.paddingTop,
+                bottom = binding.libraryGridRecycler.recycler.paddingBottom
+            )
+            binding.progress.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = (bigToolbarHeight + activityBinding.appBar.paddingTop) / 2
+            }
         }
     }
 
@@ -951,11 +957,10 @@ class LibraryController(
                 activityBinding?.cardToolbar?.setOnLongClickListener {
                     val suggestion = preferences.librarySearchSuggestion().get()
                     if (suggestion.isNotBlank()) {
-                        val searchItem =
-                            activityBinding?.cardToolbar?.menu?.findItem(R.id.action_search)
-                        val searchView = searchItem?.actionView as? SearchView
+                        val searchItem = activityBinding?.cardToolbar?.searchItem
+                        val searchView = activityBinding?.cardToolbar?.searchView
                             ?: return@setOnLongClickListener false
-                        searchItem.expandActionView()
+                        searchItem?.expandActionView()
                         searchView.setQuery(suggestion.removeSuffix("…"), false)
                         true
                     } else {

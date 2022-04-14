@@ -14,6 +14,7 @@ import androidx.core.view.WindowInsetsCompat.Type.ime
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -44,6 +45,7 @@ import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.openInBrowser
 import eu.kanade.tachiyomi.util.view.activityBinding
 import eu.kanade.tachiyomi.util.view.applyBottomAnimatedInsets
+import eu.kanade.tachiyomi.util.view.bigToolbarHeight
 import eu.kanade.tachiyomi.util.view.inflate
 import eu.kanade.tachiyomi.util.view.isControllerVisible
 import eu.kanade.tachiyomi.util.view.requestFilePermissionsSafe
@@ -210,6 +212,14 @@ open class BrowseSourceController(bundle: Bundle) :
                         bottomMargin = insets.getInsets(systemBars() or ime()).bottom + 16.dpToPx
                     }
                 }
+                val bigToolbarHeight = bigToolbarHeight ?: 0
+                binding.progress.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                    topMargin = (bigToolbarHeight + insets.getInsets(systemBars()).top) / 2
+                }
+                binding.emptyView.updatePadding(
+                    top = (bigToolbarHeight + insets.getInsets(systemBars()).top),
+                    bottom = insets.getInsets(systemBars()).bottom
+                )
             }
         )
         binding.fab.applyBottomAnimatedInsets(16.dpToPx)

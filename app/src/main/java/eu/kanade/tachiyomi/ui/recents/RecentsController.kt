@@ -17,6 +17,7 @@ import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.core.view.updatePaddingRelative
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -60,6 +61,7 @@ import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
 import eu.kanade.tachiyomi.util.system.spToPx
 import eu.kanade.tachiyomi.util.system.toInt
 import eu.kanade.tachiyomi.util.view.activityBinding
+import eu.kanade.tachiyomi.util.view.bigToolbarHeight
 import eu.kanade.tachiyomi.util.view.collapse
 import eu.kanade.tachiyomi.util.view.compatToolTipText
 import eu.kanade.tachiyomi.util.view.expand
@@ -184,10 +186,14 @@ class RecentsController(bundle: Bundle? = null) :
                 binding.downloadBottomSheet.sheetLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                     height = appBarHeight + it.getInsets(systemBars()).top
                 }
-                binding.recentsEmptyView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                    topMargin = (activityBinding?.appBar?.height ?: 0) + 48.dpToPx
-                    bottomMargin =
-                        activityBinding?.bottomNav?.height ?: it.getInsets(systemBars()).bottom
+                val bigToolbarHeight = bigToolbarHeight ?: 0
+
+                binding.recentsEmptyView.updatePadding(
+                    top = bigToolbarHeight + it.getInsets(systemBars()).top,
+                    bottom = activityBinding?.bottomNav?.height ?: it.getInsets(systemBars()).bottom
+                )
+                binding.progress.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                    topMargin = (bigToolbarHeight + it.getInsets(systemBars()).top) / 2
                 }
                 if (activityBinding?.bottomNav == null) {
                     setBottomPadding()
