@@ -211,6 +211,7 @@ fun Controller.scrollViewWith(
 ): ((Boolean) -> Unit) {
     var statusBarHeight = -1
     val tabBarHeight = 48.dpToPx
+    activityBinding?.appBar?.lockYPos = false
     activityBinding?.appBar?.y = 0f
     val includeTabView = this is TabbedInterface
     activityBinding?.appBar?.useTabsInPreLayout = includeTabView

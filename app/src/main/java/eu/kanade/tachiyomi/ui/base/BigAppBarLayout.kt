@@ -62,6 +62,13 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
     var useTabsInPreLayout = false
     var yAnimator: ViewPropertyAnimator? = null
 
+    /**
+     * used to ignore updates to y
+     *
+     * use onlt
+     */
+    var lockYPos = false
+
     enum class ToolbarState {
         BIG,
         MAIN,
@@ -132,6 +139,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
     }
 
     override fun setTranslationY(translationY: Float) {
+        if (lockYPos) return
         val realHeight = (preLayoutHeight + paddingTop).toFloat()
         val newY = MathUtils.clamp(translationY, -realHeight + minTabletHeight, 0f)
         super.setTranslationY(newY)
@@ -222,6 +230,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         if (cancelAnim) {
             yAnimator?.cancel()
         }
+        if (lockYPos) return
         val offset = recyclerView.computeVerticalScrollOffset()
         val bigHeight = bigView?.height ?: 0
         val realHeight = preLayoutHeight + paddingTop
@@ -321,6 +330,7 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
 
     fun setToolbar(showCardTB: Boolean) {
         val mainActivity = mainActivity ?: return
+        if (lockYPos) return
         if ((showCardTB || toolbarMode == ToolbarState.SEARCH) && cardFrame?.isVisible == true) {
             if (mainActivity.currentToolbar != cardToolbar) {
                 mainActivity.setFloatingToolbar(true, showSearchAnyway = true)

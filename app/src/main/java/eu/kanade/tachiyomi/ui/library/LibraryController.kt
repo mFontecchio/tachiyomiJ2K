@@ -610,6 +610,16 @@ class LibraryController(
 
         if (presenter.libraryItems.isNotEmpty()) {
             presenter.restoreLibrary()
+            if (justStarted) {
+                val activityBinding = activityBinding ?: return
+                val bigToolbarHeight = bigToolbarHeight ?: return
+                if (lastUsedCategory > 0) {
+                    activityBinding.appBar.y =
+                        -bigToolbarHeight + activityBinding.cardFrame.height.toFloat()
+                    activityBinding.appBar.setToolbar(true)
+                }
+                activityBinding.appBar.lockYPos = true
+            }
         } else {
             binding.recyclerLayout.alpha = 0f
         }
@@ -979,6 +989,7 @@ class LibraryController(
 
     override fun onDestroyView(view: View) {
         LibraryUpdateService.removeListener(this)
+        activityBinding?.appBar?.lockYPos = false
         destroyActionModeIfNeeded()
         if (isBindingInitialized) {
             binding.libraryGridRecycler.recycler.removeOnScrollListener(scrollListener)
@@ -1017,12 +1028,19 @@ class LibraryController(
             binding.recyclerLayout.animate().alpha(1f).setDuration(500).start()
         }
         if (justStarted && freshStart) {
+            val activeC = activeCategory
             scrollToHeader(activeCategory)
             binding.libraryGridRecycler.recycler.post {
-                activityBinding?.appBar?.y = 0f
-                activityBinding?.appBar?.updateViewsAfterY(binding.libraryGridRecycler.recycler)
+                if (isControllerVisible) {
+                    activityBinding?.appBar?.y = 0f
+                    activityBinding?.appBar?.updateViewsAfterY(binding.libraryGridRecycler.recycler)
+                    if (activeC > 0) {
+                        activityBinding?.appBar?.setToolbar(true)
+                    }
+                }
             }
         }
+        activityBinding?.appBar?.lockYPos = false
         binding.libraryGridRecycler.recycler.post {
             elevateAppBar(binding.libraryGridRecycler.recycler.canScrollVertically(-1))
             setActiveCategory()
@@ -1134,13 +1152,7 @@ class LibraryController(
         if (headerPosition > -1) {
             val activityBinding = activityBinding ?: return
             binding.libraryGridRecycler.recycler.suppressLayout(true)
-            val appbarOffset = if (pos == 0) 0 else -bigToolbarHeight!! +
-                activityBinding.toolbar.height
-            //                if (appbar?.y ?: 0f > -20) 0 else (
-//                appbar?.y?.plus(
-//                    view?.rootWindowInsetsCompat?.getInsets(systemBars())?.top ?: 0
-//                ) ?: 0f
-//                ).roundToInt() + 30.dpToPx
+            val appbarOffset = if (pos == 0) 0 else -bigToolbarHeight!! + activityBinding.cardFrame.height
             val previousHeader = adapter.getItem(adapter.indexOf(pos - 1)) as? LibraryHeaderItem
             (binding.libraryGridRecycler.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
                 headerPosition,

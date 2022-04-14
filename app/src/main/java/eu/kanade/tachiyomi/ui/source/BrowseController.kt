@@ -135,7 +135,7 @@ class BrowseController :
 
     override fun onViewCreated(view: View) {
         super.onViewCreated(view)
-
+        val isReturning = adapter != null
         adapter = SourceAdapter(this)
         // Create binding.sourceRecycler and set adapter.
         binding.sourceRecycler.layoutManager = LinearLayoutManagerAccurateOffset(view.context)
@@ -168,7 +168,9 @@ class BrowseController :
                 setBottomPadding()
             }
         )
-
+        if (!isReturning) {
+            activityBinding?.appBar?.lockYPos = true
+        }
         binding.sourceRecycler.post {
             setBottomSheetTabs(if (binding.bottomSheet.root.sheetBehavior.isCollapsed()) 0f else 1f)
             binding.sourceRecycler.updatePaddingRelative(
@@ -638,6 +640,9 @@ class BrowseController :
     fun setSources(sources: List<IFlexible<*>>, lastUsed: SourceItem?) {
         adapter?.updateDataSet(sources, false)
         setLastUsedSource(lastUsed)
+        if (isControllerVisible) {
+            activityBinding?.appBar?.lockYPos = false
+        }
     }
 
     /**

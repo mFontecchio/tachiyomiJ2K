@@ -154,6 +154,7 @@ class RecentsController(bundle: Bundle? = null) :
     override fun onViewCreated(view: View) {
         super.onViewCreated(view)
         // Initialize adapter
+        val isReturning = this::adapter.isInitialized
         adapter = RecentMangaAdapter(this)
         adapter.setPreferenceFlows()
         binding.recycler.adapter = adapter
@@ -203,6 +204,10 @@ class RecentsController(bundle: Bundle? = null) :
         )
 
         viewScope.launchUI {
+            if (!isReturning) {
+                activityBinding?.appBar?.y = 0f
+                activityBinding?.appBar?.lockYPos = true
+            }
             val height =
                 activityBinding?.bottomNav?.height ?: view.rootWindowInsetsCompat?.getInsets(
                     systemBars()
@@ -539,6 +544,9 @@ class RecentsController(bundle: Bundle? = null) :
         adapter.removeAllScrollableHeaders()
         adapter.updateItems(recents)
         adapter.onLoadMoreComplete(null)
+        if (isControllerVisible) {
+            activityBinding?.appBar?.lockYPos = false
+        }
         if (!hasNewItems || presenter.viewType == RecentsPresenter.VIEW_TYPE_GROUP_ALL ||
             recents.isEmpty()
         ) {
