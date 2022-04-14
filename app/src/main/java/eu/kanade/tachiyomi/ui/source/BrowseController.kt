@@ -59,6 +59,7 @@ import eu.kanade.tachiyomi.util.view.checkHeightThen
 import eu.kanade.tachiyomi.util.view.collapse
 import eu.kanade.tachiyomi.util.view.expand
 import eu.kanade.tachiyomi.util.view.isCollapsed
+import eu.kanade.tachiyomi.util.view.isControllerVisible
 import eu.kanade.tachiyomi.util.view.requestFilePermissionsSafe
 import eu.kanade.tachiyomi.util.view.scrollViewWith
 import eu.kanade.tachiyomi.util.view.setOnQueryTextChangeListener
@@ -311,7 +312,7 @@ class BrowseController :
     }
 
     fun updateTitleAndMenu() {
-        if (router.backstack.lastOrNull()?.controller == this) {
+        if (isControllerVisible) {
             val activity = (activity as? MainActivity) ?: return
             (activity as? MainActivity)?.setStatusBarColorTransparent(showingExtensions)
             updateSheetMenu()
@@ -333,7 +334,7 @@ class BrowseController :
         }
         binding.bottomSheet.pill.alpha = (1 - progress) * 0.25f
         binding.bottomSheet.sheetToolbar.alpha = progress
-        if (router.backstack.lastOrNull()?.controller == this) {
+        if (isControllerVisible) {
             activityBinding?.appBar?.alpha = (1 - progress * 3) + 0.5f
         }
 
@@ -485,7 +486,7 @@ class BrowseController :
         if (showingExtensions) {
             updateSheetMenu()
         }
-        if (BuildConfig.DEBUG && this == router.backstack.lastOrNull()?.controller) {
+        if (BuildConfig.DEBUG && isControllerVisible) {
             val searchView = activityBinding?.cardToolbar?.searchView
 
             setOnQueryTextChangeListener(searchView, onlyOnSubmit = true) {

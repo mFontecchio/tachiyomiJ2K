@@ -65,6 +65,7 @@ import eu.kanade.tachiyomi.util.view.compatToolTipText
 import eu.kanade.tachiyomi.util.view.expand
 import eu.kanade.tachiyomi.util.view.hide
 import eu.kanade.tachiyomi.util.view.isCollapsed
+import eu.kanade.tachiyomi.util.view.isControllerVisible
 import eu.kanade.tachiyomi.util.view.isExpanded
 import eu.kanade.tachiyomi.util.view.isHidden
 import eu.kanade.tachiyomi.util.view.moveRecyclerViewUp
@@ -283,12 +284,12 @@ class RecentsController(bundle: Bundle? = null) :
 //                        )
                     val oldShow = showingDownloads
                     showingDownloads = progress > 0.92f
-                    if (router.backstack.lastOrNull()?.controller != this@RecentsController) {
+                    if (!isControllerVisible) {
                         return
                     }
 //                    binding.downloadBottomSheet.root.backgroundTintList =
 //                        binding.downloadBottomSheet.sheetLayout.backgroundTintList
-                    if (router.backstack.lastOrNull()?.controller == this@RecentsController) {
+                    if (isControllerVisible) {
                         activityBinding?.appBar?.alpha = (1 - progress * 3) + 0.5f
                     }
                     (binding.downloadBottomSheet.root.background as? GradientDrawable)?.let { drawable ->
@@ -314,7 +315,7 @@ class RecentsController(bundle: Bundle? = null) :
                         updateTitleAndMenu()
                     }
 
-                    if (router.backstack.lastOrNull()?.controller == this@RecentsController) {
+                    if (isControllerVisible) {
                         activityBinding?.tabsFrameLayout?.isVisible =
                             state != BottomSheetBehavior.STATE_EXPANDED
                     }
@@ -416,7 +417,7 @@ class RecentsController(bundle: Bundle? = null) :
     }
 
     fun updateTitleAndMenu() {
-        if (router.backstack.lastOrNull()?.controller == this) {
+        if (isControllerVisible) {
             val activity = (activity as? MainActivity) ?: return
             (activity as? MainActivity)?.setStatusBarColorTransparent(showingDownloads)
             activityBinding?.appBar?.isInvisible = showingDownloads
@@ -496,11 +497,11 @@ class RecentsController(bundle: Bundle? = null) :
         setBottomPadding()
         binding.downloadBottomSheet.dlBottomSheet.update()
 
-        if (BuildConfig.DEBUG && query.isBlank() && this == router.backstack.lastOrNull()?.controller) {
+        if (BuildConfig.DEBUG && query.isBlank() && isControllerVisible) {
             val searchItem =
                 (activity as? MainActivity)?.binding?.cardToolbar?.menu?.findItem(R.id.action_search)
             val searchView = searchItem?.actionView as? SearchView ?: return
-            if (router.backstack.lastOrNull()?.controller != this) return
+            if (!isControllerVisible) return
             setOnQueryTextChangeListener(searchView) {
                 if (query != it) {
                     query = it ?: return@setOnQueryTextChangeListener false

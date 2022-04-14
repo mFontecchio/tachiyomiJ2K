@@ -18,6 +18,7 @@ import com.bluelinelabs.conductor.ControllerChangeHandler
 import com.bluelinelabs.conductor.ControllerChangeType
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.util.view.activityBinding
+import eu.kanade.tachiyomi.util.view.isControllerVisible
 import eu.kanade.tachiyomi.util.view.removeQueryListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
@@ -79,9 +80,6 @@ abstract class BaseController<VB : ViewBinding>(bundle: Bundle? = null) :
         super.onChangeStarted(handler, type)
     }
 
-    val onRoot: Boolean
-        get() = router.backstack.lastOrNull()?.controller == this
-
     open fun getTitle(): String? {
         return null
     }
@@ -111,7 +109,7 @@ abstract class BaseController<VB : ViewBinding>(bundle: Bundle? = null) :
             parentController = parentController.parentController
         }
 
-        if (router.backstack.lastOrNull()?.controller == this) {
+        if (isControllerVisible) {
             (activity as? AppCompatActivity)?.title = getTitle()
             (activity as? MainActivity)?.searchTitle = getSearchTitle()
             val icon = getBigIcon()

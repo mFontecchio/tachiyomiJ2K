@@ -81,7 +81,7 @@ fun Controller.setOnQueryTextChangeListener(
             }
 
             override fun onQueryTextSubmit(query: String?): Boolean {
-                if (router.backstack.lastOrNull()?.controller == this@setOnQueryTextChangeListener) {
+                if (isControllerVisible) {
                     if (hideKbOnSubmit) {
                         val imm =
                             activity?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
@@ -446,8 +446,7 @@ fun Controller.scrollViewWith(
         object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                if (router?.backstack?.lastOrNull()
-                    ?.controller == this@scrollViewWith && statusBarHeight > -1 &&
+                if (isControllerVisible && statusBarHeight > -1 &&
                     (this@scrollViewWith as? BaseController<*>)?.isDragging != true &&
                     activity != null && activityBinding!!.appBar.height > 0 &&
                     recycler.translationY == 0f
@@ -604,7 +603,7 @@ fun Controller.setAppBarBG(value: Float, preferences: PreferencesHelper, include
     val context = view?.context ?: return
     val floatingBar =
         (this as? FloatingSearchInterface)?.showFloatingBar() == true && !includeTabView
-    if (router.backstack.lastOrNull()?.controller != this) return
+    if (!isControllerVisible) return
     if (floatingBar) {
         (activityBinding?.cardView as? CardView)?.setCardBackgroundColor(context.getResourceColor(R.attr.colorPrimaryVariant))
         if (this !is SmallToolbarInterface && preferences.useLargeToolbar()) {
@@ -719,3 +718,6 @@ val Controller.bigToolbarHeight: Int?
         this is TabbedInterface,
         this !is SmallToolbarInterface
     )
+
+val Controller.isControllerVisible: Boolean
+    get() = router.backstack.lastOrNull()?.controller == this

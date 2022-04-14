@@ -22,7 +22,6 @@ import android.view.ViewPropertyAnimator
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
-import androidx.appcompat.widget.SearchView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.ViewCompat
@@ -96,6 +95,7 @@ import eu.kanade.tachiyomi.util.view.collapse
 import eu.kanade.tachiyomi.util.view.expand
 import eu.kanade.tachiyomi.util.view.getItemView
 import eu.kanade.tachiyomi.util.view.hide
+import eu.kanade.tachiyomi.util.view.isControllerVisible
 import eu.kanade.tachiyomi.util.view.isExpanded
 import eu.kanade.tachiyomi.util.view.isHidden
 import eu.kanade.tachiyomi.util.view.moveRecyclerViewUp
@@ -1046,7 +1046,7 @@ class LibraryController(
             binding.libraryGridRecycler.recycler.scrollToPosition(0)
             shouldScrollToTop = false
         }
-        if (onRoot) {
+        if (isControllerVisible) {
             binding.headerTitle.setOnClickListener {
                 val recycler = binding.libraryGridRecycler.recycler
                 if (!singleCategory) {
