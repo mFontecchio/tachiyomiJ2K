@@ -6,9 +6,7 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
-import androidx.appcompat.widget.SearchView
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
-import androidx.core.view.isVisible
 import androidx.core.view.updatePaddingRelative
 import com.bluelinelabs.conductor.ControllerChangeHandler
 import com.bluelinelabs.conductor.ControllerChangeType
@@ -153,30 +151,12 @@ open class GlobalSearchController(
         inflater.inflate(R.menu.catalogue_new_list, menu)
 
         // Initialize search menu
-        val searchItem = menu.findItem(R.id.action_search)
-        val searchView = searchItem.actionView as SearchView
         activityBinding?.cardToolbar?.setQueryHint(view?.context?.getString(R.string.global_search), false)
         activityBinding?.cardToolbar?.searchItem?.expandActionView()
         activityBinding?.cardToolbar?.searchView?.setQuery(presenter.query, false)
 
-        searchItem.isVisible = customTitle == null
-        searchItem.setOnActionExpandListener(
-            object : MenuItem.OnActionExpandListener {
-                override fun onMenuItemActionExpand(item: MenuItem?): Boolean {
-                    searchView.onActionViewExpanded() // Required to show the query in the view
-                    searchView.setQuery(presenter.query, false)
-                    return true
-                }
-
-                override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
-                    return true
-                }
-            }
-        )
-
         setOnQueryTextChangeListener(activityBinding?.cardToolbar?.searchView, onlyOnSubmit = true, hideKbOnSubmit = true) {
             presenter.search(it ?: "")
-            searchItem.collapseActionView()
             setTitle() // Update toolbar title
             true
         }

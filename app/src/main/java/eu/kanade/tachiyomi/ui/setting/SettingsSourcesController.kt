@@ -16,6 +16,7 @@ import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.source.icon
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.system.LocaleHelper
+import eu.kanade.tachiyomi.util.view.isControllerVisible
 import eu.kanade.tachiyomi.widget.preference.SwitchPreferenceCategory
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -173,7 +174,7 @@ class SettingsSourcesController : SettingsController() {
             searchView.clearFocus()
         }
 
-        searchView.queryTextChanges().filter { router.backstack.lastOrNull()?.controller == this }
+        searchView.queryTextChanges().filter { isControllerVisible }
             .subscribeUntilDestroy {
                 query = it.toString()
                 drawSources()

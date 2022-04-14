@@ -82,7 +82,7 @@ fun Controller.setOnQueryTextChangeListener(
             }
 
             override fun onQueryTextSubmit(query: String?): Boolean {
-                if (router.backstack.lastOrNull()?.controller == this@setOnQueryTextChangeListener) {
+                if (isControllerVisible) {
                     if (hideKbOnSubmit) {
                         val imm =
                             activity?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
@@ -212,6 +212,7 @@ fun Controller.scrollViewWith(
 ): ((Boolean) -> Unit) {
     var statusBarHeight = -1
     val tabBarHeight = 48.dpToPx
+    activityBinding?.appBar?.lockYPos = false
     activityBinding?.appBar?.y = 0f
     val includeTabView = this is TabbedInterface
     activityBinding?.appBar?.useTabsInPreLayout = includeTabView
@@ -255,7 +256,7 @@ fun Controller.scrollViewWith(
         )
     }
     val atTopOfRecyclerView: () -> Boolean = f@{
-        if (this is SmallToolbarInterface || !preferences.useLargeToolbar()) {
+        if (this is SmallToolbarInterface || activityBinding?.appBar?.useLargeToolbar == false) {
             return@f !recycler.canScrollVertically(-1)
         }
         val activityBinding = activityBinding ?: return@f true
@@ -393,8 +394,7 @@ fun Controller.scrollViewWith(
         object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                if (router?.backstack?.lastOrNull()
-                    ?.controller == this@scrollViewWith && statusBarHeight > -1 &&
+                if (isControllerVisible && statusBarHeight > -1 &&
                     (this@scrollViewWith as? BaseController<*>)?.isDragging != true &&
                     activity != null && activityBinding!!.appBar.height > 0 &&
                     recycler.translationY == 0f
@@ -611,10 +611,10 @@ fun Controller.setAppBarBG(value: Float, preferences: PreferencesHelper, include
     val context = view?.context ?: return
     val floatingBar =
         (this as? FloatingSearchInterface)?.showFloatingBar() == true && !includeTabView
-    if (router.backstack.lastOrNull()?.controller != this) return
+    if (!isControllerVisible) return
     if (floatingBar) {
         (activityBinding?.cardView as? CardView)?.setCardBackgroundColor(context.getResourceColor(R.attr.colorPrimaryVariant))
-        if (this !is SmallToolbarInterface && preferences.useLargeToolbar()) {
+        if (this !is SmallToolbarInterface && activityBinding?.appBar?.useLargeToolbar == true) {
             val colorSurface = context.getResourceColor(R.attr.colorSurface)
             val color = ColorUtils.blendARGB(
                 colorSurface,
@@ -726,3 +726,6 @@ val Controller.bigToolbarHeight: Int?
         this is TabbedInterface,
         this !is SmallToolbarInterface
     )
+
+val Controller.isControllerVisible: Boolean
+    get() = router.backstack.lastOrNull()?.controller == this

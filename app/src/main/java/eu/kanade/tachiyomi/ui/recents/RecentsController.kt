@@ -17,6 +17,7 @@ import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.core.view.updatePaddingRelative
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -60,11 +61,13 @@ import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
 import eu.kanade.tachiyomi.util.system.spToPx
 import eu.kanade.tachiyomi.util.system.toInt
 import eu.kanade.tachiyomi.util.view.activityBinding
+import eu.kanade.tachiyomi.util.view.bigToolbarHeight
 import eu.kanade.tachiyomi.util.view.collapse
 import eu.kanade.tachiyomi.util.view.compatToolTipText
 import eu.kanade.tachiyomi.util.view.expand
 import eu.kanade.tachiyomi.util.view.hide
 import eu.kanade.tachiyomi.util.view.isCollapsed
+import eu.kanade.tachiyomi.util.view.isControllerVisible
 import eu.kanade.tachiyomi.util.view.isExpanded
 import eu.kanade.tachiyomi.util.view.isHidden
 import eu.kanade.tachiyomi.util.view.moveRecyclerViewUp
@@ -153,6 +156,7 @@ class RecentsController(bundle: Bundle? = null) :
     override fun onViewCreated(view: View) {
         super.onViewCreated(view)
         // Initialize adapter
+        val isReturning = this::adapter.isInitialized
         adapter = RecentMangaAdapter(this)
         adapter.setPreferenceFlows()
         binding.recycler.adapter = adapter
@@ -182,10 +186,14 @@ class RecentsController(bundle: Bundle? = null) :
                 binding.downloadBottomSheet.sheetLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                     height = appBarHeight + it.getInsets(systemBars()).top
                 }
-                binding.recentsEmptyView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                    topMargin = (activityBinding?.appBar?.height ?: 0) + 48.dpToPx
-                    bottomMargin =
-                        activityBinding?.bottomNav?.height ?: it.getInsets(systemBars()).bottom
+                val bigToolbarHeight = bigToolbarHeight ?: 0
+
+                binding.recentsEmptyView.updatePadding(
+                    top = bigToolbarHeight + it.getInsets(systemBars()).top,
+                    bottom = activityBinding?.bottomNav?.height ?: it.getInsets(systemBars()).bottom
+                )
+                binding.progress.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                    topMargin = (bigToolbarHeight + it.getInsets(systemBars()).top) / 2
                 }
                 if (activityBinding?.bottomNav == null) {
                     setBottomPadding()
@@ -202,6 +210,10 @@ class RecentsController(bundle: Bundle? = null) :
         )
 
         viewScope.launchUI {
+            if (!isReturning) {
+                activityBinding?.appBar?.y = 0f
+                activityBinding?.appBar?.lockYPos = true
+            }
             val height =
                 activityBinding?.bottomNav?.height ?: view.rootWindowInsetsCompat?.getInsets(
                     systemBars()
@@ -283,12 +295,12 @@ class RecentsController(bundle: Bundle? = null) :
 //                        )
                     val oldShow = showingDownloads
                     showingDownloads = progress > 0.92f
-                    if (router.backstack.lastOrNull()?.controller != this@RecentsController) {
+                    if (!isControllerVisible) {
                         return
                     }
 //                    binding.downloadBottomSheet.root.backgroundTintList =
 //                        binding.downloadBottomSheet.sheetLayout.backgroundTintList
-                    if (router.backstack.lastOrNull()?.controller == this@RecentsController) {
+                    if (isControllerVisible) {
                         activityBinding?.appBar?.alpha = (1 - progress * 3) + 0.5f
                     }
                     (binding.downloadBottomSheet.root.background as? GradientDrawable)?.let { drawable ->
@@ -314,7 +326,7 @@ class RecentsController(bundle: Bundle? = null) :
                         updateTitleAndMenu()
                     }
 
-                    if (router.backstack.lastOrNull()?.controller == this@RecentsController) {
+                    if (isControllerVisible) {
                         activityBinding?.tabsFrameLayout?.isVisible =
                             state != BottomSheetBehavior.STATE_EXPANDED
                     }
@@ -416,7 +428,7 @@ class RecentsController(bundle: Bundle? = null) :
     }
 
     fun updateTitleAndMenu() {
-        if (router.backstack.lastOrNull()?.controller == this) {
+        if (isControllerVisible) {
             val activity = (activity as? MainActivity) ?: return
             (activity as? MainActivity)?.setStatusBarColorTransparent(showingDownloads)
             activityBinding?.appBar?.isInvisible = showingDownloads
@@ -496,11 +508,11 @@ class RecentsController(bundle: Bundle? = null) :
         setBottomPadding()
         binding.downloadBottomSheet.dlBottomSheet.update()
 
-        if (BuildConfig.DEBUG && query.isBlank() && this == router.backstack.lastOrNull()?.controller) {
+        if (BuildConfig.DEBUG && query.isBlank() && isControllerVisible) {
             val searchItem =
                 (activity as? MainActivity)?.binding?.cardToolbar?.menu?.findItem(R.id.action_search)
             val searchView = searchItem?.actionView as? SearchView ?: return
-            if (router.backstack.lastOrNull()?.controller != this) return
+            if (!isControllerVisible) return
             setOnQueryTextChangeListener(searchView) {
                 if (query != it) {
                     query = it ?: return@setOnQueryTextChangeListener false
@@ -538,6 +550,9 @@ class RecentsController(bundle: Bundle? = null) :
         adapter.removeAllScrollableHeaders()
         adapter.updateItems(recents)
         adapter.onLoadMoreComplete(null)
+        if (isControllerVisible) {
+            activityBinding?.appBar?.lockYPos = false
+        }
         if (!hasNewItems || presenter.viewType == RecentsPresenter.VIEW_TYPE_GROUP_ALL ||
             recents.isEmpty()
         ) {

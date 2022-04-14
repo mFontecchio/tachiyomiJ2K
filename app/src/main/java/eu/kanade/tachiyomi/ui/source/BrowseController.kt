@@ -59,6 +59,7 @@ import eu.kanade.tachiyomi.util.view.checkHeightThen
 import eu.kanade.tachiyomi.util.view.collapse
 import eu.kanade.tachiyomi.util.view.expand
 import eu.kanade.tachiyomi.util.view.isCollapsed
+import eu.kanade.tachiyomi.util.view.isControllerVisible
 import eu.kanade.tachiyomi.util.view.requestFilePermissionsSafe
 import eu.kanade.tachiyomi.util.view.scrollViewWith
 import eu.kanade.tachiyomi.util.view.setOnQueryTextChangeListener
@@ -134,7 +135,7 @@ class BrowseController :
 
     override fun onViewCreated(view: View) {
         super.onViewCreated(view)
-
+        val isReturning = adapter != null
         adapter = SourceAdapter(this)
         // Create binding.sourceRecycler and set adapter.
         binding.sourceRecycler.layoutManager = LinearLayoutManagerAccurateOffset(view.context)
@@ -167,7 +168,9 @@ class BrowseController :
                 setBottomPadding()
             }
         )
-
+        if (!isReturning) {
+            activityBinding?.appBar?.lockYPos = true
+        }
         binding.sourceRecycler.post {
             setBottomSheetTabs(if (binding.bottomSheet.root.sheetBehavior.isCollapsed()) 0f else 1f)
             binding.sourceRecycler.updatePaddingRelative(
@@ -311,7 +314,7 @@ class BrowseController :
     }
 
     fun updateTitleAndMenu() {
-        if (router.backstack.lastOrNull()?.controller == this) {
+        if (isControllerVisible) {
             val activity = (activity as? MainActivity) ?: return
             (activity as? MainActivity)?.setStatusBarColorTransparent(showingExtensions)
             updateSheetMenu()
@@ -333,7 +336,7 @@ class BrowseController :
         }
         binding.bottomSheet.pill.alpha = (1 - progress) * 0.25f
         binding.bottomSheet.sheetToolbar.alpha = progress
-        if (router.backstack.lastOrNull()?.controller == this) {
+        if (isControllerVisible) {
             activityBinding?.appBar?.alpha = (1 - progress * 3) + 0.5f
         }
 
@@ -485,7 +488,7 @@ class BrowseController :
         if (showingExtensions) {
             updateSheetMenu()
         }
-        if (BuildConfig.DEBUG && this == router.backstack.lastOrNull()?.controller) {
+        if (BuildConfig.DEBUG && isControllerVisible) {
             val searchView = activityBinding?.cardToolbar?.searchView
 
             setOnQueryTextChangeListener(searchView, onlyOnSubmit = true) {
@@ -637,6 +640,9 @@ class BrowseController :
     fun setSources(sources: List<IFlexible<*>>, lastUsed: SourceItem?) {
         adapter?.updateDataSet(sources, false)
         setLastUsedSource(lastUsed)
+        if (isControllerVisible) {
+            activityBinding?.appBar?.lockYPos = false
+        }
     }
 
     /**
