@@ -234,14 +234,13 @@ object MangaCoverRatios {
     fun addCover(manga: Manga, ratio: Float) {
         val id = manga.id ?: return
         coverRatioMap[id] = ratio
-        savePrefs()
     }
 
     fun getRatio(manga: Manga): Float? {
         return coverRatioMap[manga.id]
     }
 
-    private fun savePrefs() {
+    fun savePrefs() {
         val preferences = Injekt.get<PreferencesHelper>()
         val mapCopy = coverRatioMap.toMap()
         preferences.coverRatios().set(mapCopy.map { "${it.key}|${it.value}" }.toSet())

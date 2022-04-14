@@ -49,6 +49,7 @@ import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.download.DownloadService
 import eu.kanade.tachiyomi.data.download.DownloadServiceListener
+import eu.kanade.tachiyomi.data.image.coil.MangaCoverRatios
 import eu.kanade.tachiyomi.data.library.LibraryUpdateService
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
 import eu.kanade.tachiyomi.data.notification.Notifications
@@ -622,7 +623,12 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         super.onPause()
         snackBar?.dismiss()
         setStartingTab()
+        saveExtras()
+    }
+
+    fun saveExtras() {
         mangaShortcutManager.updateShortcuts()
+        MangaCoverRatios.savePrefs()
     }
 
     private fun getAppUpdates() {
@@ -798,7 +804,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                     setStartingTab()
                 }
                 SecureActivityDelegate.locked = this !is SearchActivity
-                mangaShortcutManager.updateShortcuts()
+                saveExtras()
                 super.onBackPressed()
             }
         }
