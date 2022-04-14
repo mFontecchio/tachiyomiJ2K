@@ -62,7 +62,7 @@ class AutofitRecyclerView @JvmOverloads constructor(context: Context, attrs: Att
 
     private fun getTempSpan(): Int {
         if (spanCount == 0 && columnWidth > 0) {
-            val dpWidth = (measuredWidth.pxToDp / 100f).roundToInt()
+            val dpWidth = (width.pxToDp / 100f).roundToInt()
             return max(1, (dpWidth / columnWidth).roundToInt())
         }
         return 3
@@ -71,11 +71,15 @@ class AutofitRecyclerView @JvmOverloads constructor(context: Context, attrs: Att
     override fun onMeasure(widthSpec: Int, heightSpec: Int) {
         super.onMeasure(widthSpec, heightSpec)
         setSpan()
-        lastMeasuredWidth = measuredWidth
+        lastMeasuredWidth = width
     }
 
     fun useStaggered(preferences: PreferencesHelper) {
-        useStaggered(preferences.useStaggeredGrid().get() && !preferences.uniformGrid().get())
+        useStaggered(
+            preferences.useStaggeredGrid().get() &&
+                !preferences.uniformGrid().get() &&
+                preferences.libraryLayout().get() != 1
+        )
     }
 
     private fun useStaggered(use: Boolean) {
@@ -121,8 +125,8 @@ class AutofitRecyclerView @JvmOverloads constructor(context: Context, attrs: Att
     }
 
     private fun setSpan(force: Boolean = false) {
-        if ((spanCount == 0 || force || measuredHeight != lastMeasuredWidth) && columnWidth > 0) {
-            val dpWidth = (measuredWidth.pxToDp / 100f).roundToInt()
+        if ((spanCount == 0 || force || (width != lastMeasuredWidth && lastMeasuredWidth == 0)) && columnWidth > 0) {
+            val dpWidth = (width.pxToDp / 100f).roundToInt()
             val count = max(1, (dpWidth / columnWidth).roundToInt())
             spanCount = count
         }
@@ -306,13 +310,6 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
 class StaggeredGridLayoutManagerAccurateOffset(context: Context?, attr: AttributeSet?, spanCount: Int, orientation: Int) :
     StaggeredGridLayoutManager(context, attr, spanCount, orientation) {
 
-    // map of child adapter position to its height.
-    private val childSizesMap = mutableMapOf<Int, Int>()
-    private val childSpanMap = mutableMapOf<Int, Int>()
-    private val childTypeHeightMap = mutableMapOf<Int, MutableMap<Int, Int>>()
-    private val childTypeMap = mutableMapOf<Int, Int>()
-    private val childTypeEstimateMap = mutableMapOf<Int, Int>()
-    val childAvgHeightMap = mutableMapOf<Int, Int>()
     var rView: RecyclerView? = null
 
     private val toolbarHeight by lazy {
@@ -321,28 +318,6 @@ class StaggeredGridLayoutManagerAccurateOffset(context: Context?, attr: Attribut
         val height = array?.getDimensionPixelSize(0, 0) ?: 0
         array?.recycle()
         height
-    }
-
-    override fun onLayoutCompleted(state: RecyclerView.State) {
-        super.onLayoutCompleted(state)
-        for (i in 0 until childCount) {
-            val child = getChildAt(i) ?: return
-            val position = getPosition(child)
-            childSizesMap[position] = child.height
-//            childSpanMap[position] = spanSizeLookup.getSpanSize(getPosition(child))
-            val type = getItemViewType(child)
-            childTypeMap[position] = type
-            if (childSizesMap[type] != null) {
-                childTypeHeightMap[type]!![position] = child.height
-            } else {
-                childTypeHeightMap[type] = mutableMapOf(position to child.height)
-            }
-            childTypeHeightMap[type] = (
-                childTypeHeightMap[type]?.also {
-                    it[position] = child.height
-                } ?: mutableMapOf(position to child.height)
-                )
-        }
     }
 
     override fun onAttachedToWindow(view: RecyclerView?) {
@@ -371,35 +346,6 @@ class StaggeredGridLayoutManagerAccurateOffset(context: Context?, attr: Attribut
             scrolledY + paddingTop
         } else {
             super.computeVerticalScrollOffset(state)
-        }
-    }
-
-    private fun getItemHeight(pos: Int): Int {
-        return if (childSizesMap[pos] != null) {
-            childSizesMap[pos] ?: 0
-        } else {
-            val type = if (childTypeMap[pos] == null) {
-                val t = rView?.adapter?.getItemViewType(pos) ?: 0
-                childTypeMap[pos] = t
-                t
-            } else {
-                childTypeMap[pos] ?: 0
-            }
-            when {
-                childTypeEstimateMap[type] != null -> childTypeEstimateMap[type] ?: 0
-                childAvgHeightMap[type] == null -> {
-                    val array = (childTypeHeightMap[type]?.values ?: mutableListOf(0)).toIntArray()
-                    childAvgHeightMap[type] = array
-                        .copyOfRange(0, min(array.size, 10))
-                        .average()
-                        .roundToInt()
-                    if (array.size >= 10) {
-                        childTypeEstimateMap[type] = childAvgHeightMap[type]!!
-                    }
-                    childAvgHeightMap[type] ?: 0
-                }
-                else -> childAvgHeightMap[type] ?: 0
-            }
         }
     }
 

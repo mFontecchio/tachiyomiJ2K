@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.databinding.LibraryDisplayLayoutBinding
 import eu.kanade.tachiyomi.ui.library.filter.FilterBottomSheet
 import eu.kanade.tachiyomi.ui.library.filter.ManageFilterItem
 import eu.kanade.tachiyomi.util.bindToPreference
+import eu.kanade.tachiyomi.util.lang.addBetaTag
 import eu.kanade.tachiyomi.util.lang.withSubtitle
 import eu.kanade.tachiyomi.util.system.bottomCutoutInset
 import eu.kanade.tachiyomi.util.system.dpToPx
@@ -35,6 +36,7 @@ class LibraryDisplayView @JvmOverloads constructor(context: Context, attrs: Attr
             binding.staggeredGrid.isEnabled = !it
         }
         binding.outlineOnCovers.bindToPreference(preferences.outlineOnCovers())
+        binding.staggeredGrid.text = context.getString(R.string.use_staggered_grid).addBetaTag(context)
         binding.staggeredGrid.isEnabled = !preferences.uniformGrid().get()
         binding.staggeredGrid.bindToPreference(preferences.useStaggeredGrid())
         binding.gridSeekbar.value = ((preferences.gridSize().get() + .5f) * 2f).roundToInt().toFloat()

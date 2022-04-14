@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.Parcelable
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -228,6 +229,7 @@ class LibraryController(
 
     override val mainRecycler: RecyclerView
         get() = binding.libraryGridRecycler.recycler
+    var staggeredBundle: Parcelable? = null
 
     override fun getTitle(): String? {
         setSubtitle()
@@ -965,10 +967,14 @@ class LibraryController(
                     }
                 }
             }
-        } else {
             if (!type.isPush) {
-                setItem()
+                if (binding.libraryGridRecycler.recycler.manager is StaggeredGridLayoutManager && staggeredBundle != null) {
+                    binding.libraryGridRecycler.recycler.manager.onRestoreInstanceState(staggeredBundle)
+                    staggeredBundle = null
+                }
             }
+        } else {
+            setItem()
             updateFilterSheetY()
             closeTip()
             if (binding.filterBottomSheet.filterBottomSheet.sheetBehavior.isHidden()) {
@@ -978,7 +984,6 @@ class LibraryController(
         }
     }
 
-    var staggeredItem: Pair<Int, Float>? = null
     override fun onActivityResumed(activity: Activity) {
         super.onActivityResumed(activity)
         if (!isBindingInitialized) return
@@ -1033,28 +1038,24 @@ class LibraryController(
             binding.recyclerLayout.animate().alpha(1f).setDuration(500).start()
         }
         if (justStarted && freshStart) {
+            val aC = activeCategory
             scrollToHeader(activeCategory)
             binding.libraryGridRecycler.recycler.post {
                 activityBinding?.appBar?.y = 0f
                 activityBinding?.appBar?.updateViewsAfterY(binding.libraryGridRecycler.recycler)
             }
+
+            if (binding.libraryGridRecycler.recycler.manager is StaggeredGridLayoutManager) {
+                viewScope.launchUI {
+                    delay(250)
+                    scrollToHeader(aC)
+                    binding.libraryGridRecycler.recycler.post {
+                        activityBinding?.appBar?.y = 0f
+                        activityBinding?.appBar?.updateViewsAfterY(binding.libraryGridRecycler.recycler)
+                    }
+                }
+            }
         }
-//        if (this == router.backstack.lastOrNull()?.controller &&
-//            binding.libraryGridRecycler.recycler.manager is StaggeredGridLayoutManager && staggeredItem != null
-//        ) {
-//            binding.libraryGridRecycler.recycler.doOnNextLayout {
-//                val item = staggeredItem ?: return@doOnNextLayout
-//                (binding.libraryGridRecycler.recycler.manager as StaggeredGridLayoutManager).scrollToPositionWithOffset(
-//                    item.first,
-//                    -item.second.roundToInt()
-//                )
-//                staggeredItem = null
-//                binding.libraryGridRecycler.recycler.doOnNextLayout {
-//                    setItemAnimatorForAppBar(binding.libraryGridRecycler.recycler)
-// //                    (binding.libraryGridRecycler.recycler.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = true
-//                }
-//            }
-//        }
         binding.libraryGridRecycler.recycler.post {
             elevateAppBar(binding.libraryGridRecycler.recycler.canScrollVertically(-1))
             setActiveCategory()
@@ -1361,26 +1362,19 @@ class LibraryController(
             toggleSelection(position)
             false
         } else {
-            setItem(position)
+            setItem()
             openManga(item.manga)
             false
         }
     }
 
-    private fun setItem(mangaPos: Int? = null) {
-        if (binding.libraryGridRecycler.recycler.manager is StaggeredGridLayoutManager && staggeredItem == null) {
-            val pos = mangaPos
-                ?: (binding.libraryGridRecycler.recycler.manager as StaggeredGridLayoutManagerAccurateOffset).findFirstVisibleItemPosition()
-            staggeredItem = pos to (binding.libraryGridRecycler.recycler.getChildAt(pos)?.y ?: 0f)
-//            (binding.libraryGridRecycler.recycler.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
-//            binding.libraryGridRecycler.recycler.itemAnimator = null
+    private fun setItem() {
+        if (binding.libraryGridRecycler.recycler.manager is StaggeredGridLayoutManager) {
+            staggeredBundle = binding.libraryGridRecycler.recycler.manager.onSaveInstanceState()
         }
     }
 
     private fun openManga(manga: Manga) {
-//        val activity = activity ?: return
-//        val mangaActivity = SearchActivity.openMangaIntent(activity, manga.id, false)
-//        activity.startActivity(mangaActivity)
         router.pushController(
             MangaDetailsController(
                 manga

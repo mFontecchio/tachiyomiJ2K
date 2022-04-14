@@ -1,12 +1,12 @@
 package eu.kanade.tachiyomi.ui.library
 
-import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
@@ -26,7 +26,6 @@ import eu.kanade.tachiyomi.widget.AutofitRecyclerView
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import kotlin.math.roundToInt
 
 class LibraryItem(
     val manga: LibraryManga,
@@ -67,17 +66,19 @@ class LibraryItem(
             } else {
                 view.apply {
                     val binding = MangaGridItemBinding.bind(this)
-                    val coverHeight = (parent.itemWidth / 3f * 4f).toInt()
                     if (libraryLayout == 1) {
-                        binding.gradient.layoutParams = FrameLayout.LayoutParams(
-                            FrameLayout.LayoutParams.MATCH_PARENT,
-                            (coverHeight * 0.66f).toInt(),
-                            Gravity.BOTTOM
-                        )
+//                        binding.gradient.updateLayoutParams<ConstraintLayout.LayoutParams> {
+//                            FrameLayout.LayoutParams.MATCH_PARENT,
+//                            (coverHeight * 0.66f).toInt(),
+//                            Gravity.BOTTOM
+//                        )
+//                        }
                         binding.card.updateLayoutParams<ConstraintLayout.LayoutParams> {
                             bottomMargin = 6.dpToPx
                         }
-                    } else if (libraryLayout == 2) {
+                    } else if (libraryLayout >= 2) {
+                        binding.textLayout.isVisible = libraryLayout == 2
+                        binding.behindTitle.isVisible = libraryLayout != 2
                         binding.constraintLayout.background = context.contextCompatDrawable(
                             R.drawable.library_comfortable_grid_selector
                         )
@@ -101,24 +102,46 @@ class LibraryItem(
                         binding.constraintLayout.minHeight = 0
                         binding.coverThumbnail.scaleType = ImageView.ScaleType.CENTER_CROP
                         binding.coverThumbnail.adjustViewBounds = false
-                        binding.coverThumbnail.layoutParams = FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            (parent.itemWidth / 3f * 3.875f).toInt()
-                        )
+                        binding.coverThumbnail.updateLayoutParams<ConstraintLayout.LayoutParams> {
+                            height = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT
+                            dimensionRatio = "15:22"
+                        }
                     } else {
-                        binding.constraintLayout.minHeight = coverHeight / 2
-                        binding.coverThumbnail.minimumHeight =
-                            (parent.itemWidth / 3f * 3.6f).toInt()
-                        binding.coverThumbnail.maxHeight = (parent.itemWidth / 3f * 6f).toInt()
+                        val ratio = MangaCoverRatios.getRatio(manga)
+                        if (ratio != null) {
+                            binding.coverThumbnail.adjustViewBounds = false
+                            binding.coverThumbnail.maxHeight = Int.MAX_VALUE
+                            binding.coverThumbnail.minimumHeight = 0
+                            binding.constraintLayout.minHeight = 0
+                        } else {
+                            val coverHeight = (parent.itemWidth / 3f * 4f).toInt()
+                            binding.constraintLayout.minHeight = coverHeight / 2
+                            binding.coverThumbnail.minimumHeight =
+                                (parent.itemWidth / 3f * 3.6f).toInt()
+                            binding.coverThumbnail.maxHeight = (parent.itemWidth / 3f * 6f).toInt()
+                            binding.coverThumbnail.adjustViewBounds = true
+                        }
+                        binding.coverThumbnail.updateLayoutParams<ConstraintLayout.LayoutParams> {
+                            if (ratio != null) {
+                                height = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT
+                                dimensionRatio = "W,1:$ratio"
+                            } else {
+                                height = ViewGroup.LayoutParams.WRAP_CONTENT
+                                dimensionRatio = null
+                            }
+                        }
                     }
                 }
-                LibraryGridHolder(
+                val gridHolder = LibraryGridHolder(
                     view,
                     adapter as LibraryCategoryAdapter,
-                    parent.itemWidth,
                     libraryLayout == 1,
                     isFixedSize
                 )
+                if (!isFixedSize) {
+                    gridHolder.setCoverRatio(manga, parent)
+                }
+                gridHolder
             }
         } else {
             LibraryListHolder(view, adapter as LibraryCategoryAdapter)
@@ -131,21 +154,8 @@ class LibraryItem(
         position: Int,
         payloads: MutableList<Any?>?
     ) {
-        val ratio = MangaCoverRatios.getRatio(manga)
         if (holder is LibraryGridHolder && !holder.fixedSize) {
-            val binding = MangaGridItemBinding.bind(holder.itemView)
-            binding.coverThumbnail.layoutParams = if (ratio != null) {
-                val parent = adapter.recyclerView as? AutofitRecyclerView
-                FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    (((parent?.itemWidth ?: 40.dpToPx) - 12.dpToPx) / ratio).roundToInt()
-                )
-            } else {
-                FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-            }
+            holder.setCoverRatio(manga, adapter.recyclerView as? AutofitRecyclerView)
         }
         holder.onSetValues(this)
         (holder as? LibraryGridHolder)?.setSelected(adapter.isSelected(position))

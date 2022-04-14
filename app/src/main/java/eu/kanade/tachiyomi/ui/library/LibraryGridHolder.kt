@@ -5,15 +5,19 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
 import coil.clear
 import coil.size.Precision
 import coil.size.Scale
 import eu.kanade.tachiyomi.data.database.models.Manga
+import eu.kanade.tachiyomi.data.image.coil.MangaCoverRatios
 import eu.kanade.tachiyomi.data.image.coil.loadManga
 import eu.kanade.tachiyomi.databinding.MangaGridItemBinding
 import eu.kanade.tachiyomi.util.lang.highlightText
 import eu.kanade.tachiyomi.util.system.dpToPx
+import eu.kanade.tachiyomi.widget.AutofitRecyclerView
 
 /**
  * Class used to hold the displayed data of a manga in the library, like the cover or the title.
@@ -27,7 +31,6 @@ import eu.kanade.tachiyomi.util.system.dpToPx
 class LibraryGridHolder(
     private val view: View,
     adapter: LibraryCategoryAdapter,
-    var width: Int,
     compact: Boolean,
     val fixedSize: Boolean
 ) : LibraryHolder(view, adapter) {
@@ -59,6 +62,7 @@ class LibraryGridHolder(
         // Update the title and subtitle of the manga.
         binding.constraintLayout.isVisible = !item.manga.isBlank()
         binding.title.text = item.manga.title.highlightText(item.filter, color)
+        binding.behindTitle.text = item.manga.title
         val authorArtist = if (item.manga.author == item.manga.artist || item.manga.artist.isNullOrBlank()) {
             item.manga.author?.trim() ?: ""
         } else {
@@ -108,9 +112,45 @@ class LibraryGridHolder(
     private fun setCover(manga: Manga) {
         if ((adapter.recyclerView.context as? Activity)?.isDestroyed == true) return
         binding.coverThumbnail.loadManga(manga) {
-            if (!fixedSize && binding.coverThumbnail.layoutParams.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
+            val hasRatio = binding.coverThumbnail.layoutParams.height != ViewGroup.LayoutParams.WRAP_CONTENT
+            if (!fixedSize && !hasRatio) {
                 precision(Precision.INEXACT)
                 scale(Scale.FIT)
+            }
+            listener(
+                onSuccess = { _, _ ->
+                    binding.coverThumbnail.alpha = 1f
+                    if (!fixedSize && !hasRatio && MangaCoverRatios.getRatio(manga) != null) {
+                        setCoverRatio(manga)
+                    }
+                }
+            )
+        }
+    }
+
+    fun setCoverRatio(manga: Manga, parent: AutofitRecyclerView? = null) {
+        val ratio = MangaCoverRatios.getRatio(manga)
+        val itemWidth = parent?.itemWidth ?: itemView.width
+        if (ratio != null) {
+            binding.coverThumbnail.adjustViewBounds = false
+            binding.coverThumbnail.maxHeight = Int.MAX_VALUE
+            binding.coverThumbnail.minimumHeight = 0
+            binding.constraintLayout.minHeight = 0
+        } else {
+            val coverHeight = (itemWidth / 3f * 4f).toInt()
+            binding.constraintLayout.minHeight = coverHeight / 2
+            binding.coverThumbnail.minimumHeight =
+                (itemWidth / 3f * 3.6f).toInt()
+            binding.coverThumbnail.maxHeight = (itemWidth / 3f * 6f).toInt()
+            binding.coverThumbnail.adjustViewBounds = true
+        }
+        binding.coverThumbnail.updateLayoutParams<ConstraintLayout.LayoutParams> {
+            if (ratio != null) {
+                height = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT
+                dimensionRatio = "W,1:$ratio"
+            } else {
+                height = ViewGroup.LayoutParams.WRAP_CONTENT
+                dimensionRatio = null
             }
         }
     }

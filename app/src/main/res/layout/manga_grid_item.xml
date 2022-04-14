@@ -31,15 +31,60 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="1.0">
 
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/cover_constraint"
+                android:layout_width="match_parent"
+                android:background="?attr/background"
+                android:layout_height="wrap_content">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/behind_title"
+                    style="?textAppearanceBodyMedium"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:textColor="?colorOnBackground"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:textAlignment="center"
+                    android:gravity="center"
+                    android:maxLines="3"
+                    app:layout_constraintTop_toTopOf="@id/cover_thumbnail"
+                    app:layout_constraintBottom_toBottomOf="@id/cover_thumbnail"
+                    app:layout_constraintEnd_toEndOf="@id/cover_thumbnail"
+                    app:layout_constraintStart_toStartOf="@id/cover_thumbnail"
+                    tools:text="Sample name" />
+
             <ImageView
                 android:id="@+id/cover_thumbnail"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                tools:alpha="0.5"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:adjustViewBounds="true"
+                tools:adjustViewBounds="true"
                 android:scaleType="centerCrop"
-                android:background="?attr/background"
+                app:layout_constraintVertical_weight="1.0"
+                app:layout_constraintVertical_bias="0.0"
                 tools:ignore="ContentDescription"
                 tools:src="@mipmap/ic_launcher" />
+
+                <View
+                    android:id="@+id/gradient"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:alpha="0.75"
+                    android:background="@drawable/gradient_shape"
+                    app:layout_constraintBottom_toBottomOf="@id/cover_thumbnail"
+                    app:layout_constraintDimensionRatio="H,200:125"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="@id/cover_thumbnail"
+                    app:layout_constraintVertical_bias="1.0" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <FrameLayout
                 android:id="@+id/play_layout"
@@ -66,14 +111,6 @@
                     app:tint="@android:color/white" />
 
             </FrameLayout>
-
-            <View
-                android:id="@+id/gradient"
-                android:layout_width="match_parent"
-                android:layout_height="150dp"
-                android:layout_gravity="bottom"
-                android:alpha="0.75"
-                android:background="@drawable/gradient_shape" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/compact_title"

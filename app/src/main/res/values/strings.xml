@@ -171,6 +171,7 @@
     <string name="can_be_found_in_library_filters">Can also be found by expanding library filters</string>
     <string name="list">List</string>
     <string name="comfortable_grid">Comfortable Grid</string>
+    <string name="titleless_grid">Titleless Grid</string>
     <string name="compact_grid">Compact Grid</string>
     <string name="download_badge">Download badges</string>
     <string name="hide_start_reading_button">Hide start reading button</string>
