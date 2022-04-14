@@ -373,7 +373,8 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                     handler: ControllerChangeHandler
                 ) {
                     syncActivityViewWithController(to, from, isPush)
-//                    binding.appBar.y = 0f
+                    binding.appBar.isVisible = true
+                    binding.appBar.alpha = 1f
                     if (!isPush || router.backstackSize == 1) {
                         nav.translationY = 0f
                     }
