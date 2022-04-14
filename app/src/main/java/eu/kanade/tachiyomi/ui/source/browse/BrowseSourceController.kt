@@ -45,6 +45,7 @@ import eu.kanade.tachiyomi.util.system.openInBrowser
 import eu.kanade.tachiyomi.util.view.activityBinding
 import eu.kanade.tachiyomi.util.view.applyBottomAnimatedInsets
 import eu.kanade.tachiyomi.util.view.inflate
+import eu.kanade.tachiyomi.util.view.isControllerVisible
 import eu.kanade.tachiyomi.util.view.requestFilePermissionsSafe
 import eu.kanade.tachiyomi.util.view.scrollViewWith
 import eu.kanade.tachiyomi.util.view.setOnQueryTextChangeListener
@@ -255,7 +256,7 @@ open class BrowseSourceController(bundle: Bundle) :
 
 //        val searchEventsObservable = searchView.queryTextChangeEvents()
 //            .skip(1)
-//            .filter { router.backstack.lastOrNull()?.controller == this@BrowseSourceController }
+//            .filter { isControllerVisible }
 //            .share()
 //        val writingObservable = searchEventsObservable
 //            .filter { !it.isSubmitted }
@@ -501,7 +502,7 @@ open class BrowseSourceController(bundle: Bundle) :
     override fun onActivityResumed(activity: Activity) {
         super.onActivityResumed(activity)
 
-        if (BuildConfig.DEBUG && this == router.backstack.lastOrNull()?.controller) {
+        if (BuildConfig.DEBUG && isControllerVisible) {
             val searchView = activityBinding?.cardToolbar?.searchView
             setOnQueryTextChangeListener(searchView, onlyOnSubmit = true, hideKbOnSubmit = true) {
                 searchWithQuery(it ?: "")

@@ -309,7 +309,7 @@ fun Controller.scrollViewWith(
         )
     }
     val atTopOfRecyclerView: () -> Boolean = f@{
-        if (this is SmallToolbarInterface || !preferences.useLargeToolbar()) {
+        if (this is SmallToolbarInterface || activityBinding?.appBar?.useLargeToolbar == false) {
             return@f !recycler.canScrollVertically(-1)
         }
         val activityBinding = activityBinding ?: return@f true
@@ -607,7 +607,7 @@ fun Controller.setAppBarBG(value: Float, preferences: PreferencesHelper, include
     if (!isControllerVisible) return
     if (floatingBar) {
         (activityBinding?.cardView as? CardView)?.setCardBackgroundColor(context.getResourceColor(R.attr.colorPrimaryVariant))
-        if (this !is SmallToolbarInterface && preferences.useLargeToolbar()) {
+        if (this !is SmallToolbarInterface && activityBinding?.appBar?.useLargeToolbar == true) {
             val colorSurface = context.getResourceColor(R.attr.colorSurface)
             val color = ColorUtils.blendARGB(
                 colorSurface,

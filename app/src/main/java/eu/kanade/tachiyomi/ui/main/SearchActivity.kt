@@ -73,7 +73,7 @@ class SearchActivity : MainActivity() {
             val rootSearchController = router.backstack.lastOrNull()?.controller
             if ((
                 rootSearchController is RootSearchInterface ||
-                    (currentToolbar != binding.cardToolbar && preferences.useLargeToolbar())
+                    (currentToolbar != binding.cardToolbar && binding.appBar.useLargeToolbar)
                 ) && rootSearchController !is SmallToolbarInterface
             ) {
                 binding.cardToolbar.menu.findItem(R.id.action_search)?.expandActionView()
@@ -94,7 +94,7 @@ class SearchActivity : MainActivity() {
             return
         }
         setFloatingToolbar(canShowFloatingToolbar(to))
-        binding.cardToolbar.navigationIcon = if (preferences.useLargeToolbar()) searchDrawable else backDrawable
+        binding.cardToolbar.navigationIcon = if (binding.appBar.useLargeToolbar) searchDrawable else backDrawable
         binding.toolbar.navigationIcon = backDrawable
 
         nav.isVisible = false
