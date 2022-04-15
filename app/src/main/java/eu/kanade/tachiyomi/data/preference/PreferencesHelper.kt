@@ -439,5 +439,6 @@ class PreferencesHelper(val context: Context) {
     fun sortChapterByAscendingOrDescending() = prefs.getInt(Keys.defaultChapterSortByAscendingOrDescending, Manga.CHAPTER_SORT_DESC)
 
     fun coverRatios() = flowPrefs.getStringSet("coverRatio", emptySet())
+    fun coverColors() = flowPrefs.getStringSet("coverColors", emptySet())
     fun useStaggeredGrid() = flowPrefs.getBoolean(Keys.useStaggeredGrid, false)
 }

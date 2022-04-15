@@ -11,12 +11,15 @@ import androidx.core.view.updateLayoutParams
 import coil.clear
 import coil.size.Precision
 import coil.size.Scale
+import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.image.coil.loadManga
 import eu.kanade.tachiyomi.databinding.MangaGridItemBinding
 import eu.kanade.tachiyomi.util.lang.highlightText
 import eu.kanade.tachiyomi.util.manga.MangaCoverRatios
 import eu.kanade.tachiyomi.util.system.dpToPx
+import eu.kanade.tachiyomi.util.system.getResourceColor
+import eu.kanade.tachiyomi.util.view.backgroundColor
 import eu.kanade.tachiyomi.widget.AutofitRecyclerView
 
 /**
@@ -63,6 +66,11 @@ class LibraryGridHolder(
         binding.constraintLayout.isVisible = !item.manga.isBlank()
         binding.title.text = item.manga.title.highlightText(item.filter, color)
         binding.behindTitle.text = item.manga.title
+        val mangaColor = item.manga.dominantCoverColors
+        binding.coverConstraint.backgroundColor = mangaColor?.first ?: itemView.context.getResourceColor(R.attr.background)
+        binding.behindTitle.setTextColor(
+            mangaColor?.second ?: itemView.context.getResourceColor(R.attr.colorOnBackground)
+        )
         val authorArtist = if (item.manga.author == item.manga.artist || item.manga.artist.isNullOrBlank()) {
             item.manga.author?.trim() ?: ""
         } else {

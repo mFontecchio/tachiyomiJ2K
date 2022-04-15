@@ -1343,7 +1343,6 @@ class LibraryController(
             toggleSelection(position)
             false
         } else {
-            saveStaggeredState()
             openManga(item.manga)
             false
         }

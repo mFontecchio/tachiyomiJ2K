@@ -29,6 +29,9 @@ class LibraryMangaImageTarget(
             val bitmap = (drawable as? BitmapDrawable)?.bitmap ?: return
             Palette.from(bitmap).generate {
                 if (it == null) return@generate
+                it.dominantSwatch?.let { swatch ->
+                    manga.dominantCoverColors = swatch.rgb to swatch.titleTextColor
+                }
                 val color = it.getBestColor() ?: return@generate
                 manga.vibrantCoverColor = color
             }
