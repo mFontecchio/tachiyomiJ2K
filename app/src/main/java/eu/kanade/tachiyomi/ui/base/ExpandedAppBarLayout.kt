@@ -33,7 +33,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) :
+class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) :
     AppBarLayout(context, attrs) {
 
     var cardToolbar: FloatingToolbar? = null

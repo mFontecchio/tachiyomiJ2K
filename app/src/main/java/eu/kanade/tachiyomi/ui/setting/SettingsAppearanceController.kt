@@ -89,7 +89,7 @@ class SettingsAppearanceController : SettingsController() {
         preferenceCategory {
             switchPreference {
                 key = Keys.useLargeToolbar
-                titleRes = R.string.large_toolbar
+                titleRes = R.string.expanded_toolbar
                 summaryRes = R.string.show_larger_toolbar
                 defaultValue = true
 

@@ -20,7 +20,7 @@
 
     </com.bluelinelabs.conductor.ChangeHandlerFrameLayout>
 
-    <eu.kanade.tachiyomi.ui.base.BigAppBarLayout
+    <eu.kanade.tachiyomi.ui.base.ExpandedAppBarLayout
         android:id="@+id/app_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -202,7 +202,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:tabGravity="fill"/>
         </FrameLayout>
-    </eu.kanade.tachiyomi.ui.base.BigAppBarLayout>
+    </eu.kanade.tachiyomi.ui.base.ExpandedAppBarLayout>
 
     <View
         android:id="@+id/bottom_view"
