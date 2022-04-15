@@ -1423,11 +1423,11 @@ class LibraryController(
 
     override fun onItemMove(fromPosition: Int, toPosition: Int) {
         // Because padding a recycler causes it to scroll up we have to scroll it back down... wild
-        if ((
-            adapter.getItem(fromPosition) is LibraryItem &&
-                adapter.getItem(fromPosition) is LibraryItem
-            ) ||
-            adapter.getItem(fromPosition) == null
+        val fromItem = adapter.getItem(fromPosition)
+        val toItem = adapter.getItem(toPosition)
+        if (binding.libraryGridRecycler.recycler.layoutManager !is StaggeredGridLayoutManager && (
+            (fromItem is LibraryItem && toItem is LibraryItem) || fromItem == null
+            )
         ) {
             binding.libraryGridRecycler.recycler.scrollBy(
                 0,
