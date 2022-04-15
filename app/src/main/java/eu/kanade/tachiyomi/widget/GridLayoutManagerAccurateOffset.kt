@@ -39,16 +39,11 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
             childSpanMap[position] = spanSizeLookup.getSpanSize(getPosition(child))
             val type = getItemViewType(child)
             childTypeMap[position] = type
-            if (childSizesMap[type] != null) {
+            if (childTypeHeightMap[type] != null) {
                 childTypeHeightMap[type]!![position] = child.height
             } else {
                 childTypeHeightMap[type] = hashMapOf(position to child.height)
             }
-            childTypeHeightMap[type] = (
-                childTypeHeightMap[type]?.also {
-                    it[position] = child.height
-                } ?: hashMapOf(position to child.height)
-                )
         }
     }
 
