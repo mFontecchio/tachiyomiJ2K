@@ -49,7 +49,6 @@ import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.download.DownloadService
 import eu.kanade.tachiyomi.data.download.DownloadServiceListener
-import eu.kanade.tachiyomi.data.image.coil.MangaCoverRatios
 import eu.kanade.tachiyomi.data.library.LibraryUpdateService
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
 import eu.kanade.tachiyomi.data.notification.Notifications
@@ -76,6 +75,7 @@ import eu.kanade.tachiyomi.ui.setting.SettingsController
 import eu.kanade.tachiyomi.ui.setting.SettingsMainController
 import eu.kanade.tachiyomi.ui.source.BrowseController
 import eu.kanade.tachiyomi.ui.source.browse.BrowseSourceController
+import eu.kanade.tachiyomi.util.manga.MangaCoverRatios
 import eu.kanade.tachiyomi.util.manga.MangaShortcutManager
 import eu.kanade.tachiyomi.util.system.contextCompatDrawable
 import eu.kanade.tachiyomi.util.system.dpToPx

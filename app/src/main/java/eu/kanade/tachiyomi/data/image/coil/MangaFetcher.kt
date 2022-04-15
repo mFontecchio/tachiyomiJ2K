@@ -11,11 +11,11 @@ import coil.fetch.SourceResult
 import coil.size.Size
 import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.database.models.Manga
-import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.source.online.HttpSource
+import eu.kanade.tachiyomi.util.manga.MangaCoverRatios
 import eu.kanade.tachiyomi.util.storage.DiskUtil
 import eu.kanade.tachiyomi.util.system.launchIO
 import okhttp3.CacheControl
@@ -31,7 +31,6 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.io.File
 import java.util.Date
-import java.util.concurrent.ConcurrentHashMap
 
 class MangaFetcher : Fetcher<Manga> {
 
@@ -208,41 +207,5 @@ class MangaFetcher : Fetcher<Manga> {
 
     private enum class Type {
         File, URL;
-    }
-}
-
-object MangaCoverRatios {
-    private var coverRatioMap = ConcurrentHashMap<Long, Float>()
-
-    fun load() {
-        val preferences = Injekt.get<PreferencesHelper>()
-        val ratios = preferences.coverRatios().get()
-        coverRatioMap = ConcurrentHashMap(
-            ratios.mapNotNull {
-                val splits = it.split("|")
-                val id = splits.firstOrNull()?.toLongOrNull()
-                val ratio = splits.lastOrNull()?.toFloatOrNull()
-                if (id != null && ratio != null) {
-                    id to ratio
-                } else {
-                    null
-                }
-            }.toMap()
-        )
-    }
-
-    fun addCover(manga: Manga, ratio: Float) {
-        val id = manga.id ?: return
-        coverRatioMap[id] = ratio
-    }
-
-    fun getRatio(manga: Manga): Float? {
-        return coverRatioMap[manga.id]
-    }
-
-    fun savePrefs() {
-        val preferences = Injekt.get<PreferencesHelper>()
-        val mapCopy = coverRatioMap.toMap()
-        preferences.coverRatios().set(mapCopy.map { "${it.key}|${it.value}" }.toSet())
     }
 }

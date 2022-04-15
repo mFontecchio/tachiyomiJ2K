@@ -16,10 +16,10 @@ import eu.davidea.flexibleadapter.items.IFilterable
 import eu.davidea.flexibleadapter.items.IFlexible
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.database.models.LibraryManga
-import eu.kanade.tachiyomi.data.image.coil.MangaCoverRatios
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.databinding.MangaGridItemBinding
 import eu.kanade.tachiyomi.source.SourceManager
+import eu.kanade.tachiyomi.util.manga.MangaCoverRatios
 import eu.kanade.tachiyomi.util.system.contextCompatDrawable
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.widget.AutofitRecyclerView

@@ -12,10 +12,10 @@ import coil.clear
 import coil.size.Precision
 import coil.size.Scale
 import eu.kanade.tachiyomi.data.database.models.Manga
-import eu.kanade.tachiyomi.data.image.coil.MangaCoverRatios
 import eu.kanade.tachiyomi.data.image.coil.loadManga
 import eu.kanade.tachiyomi.databinding.MangaGridItemBinding
 import eu.kanade.tachiyomi.util.lang.highlightText
+import eu.kanade.tachiyomi.util.manga.MangaCoverRatios
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.widget.AutofitRecyclerView
 

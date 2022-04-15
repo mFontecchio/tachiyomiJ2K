@@ -17,11 +17,11 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.multidex.MultiDex
 import eu.kanade.tachiyomi.data.image.coil.CoilSetup
-import eu.kanade.tachiyomi.data.image.coil.MangaCoverRatios
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.data.preference.asImmediateFlow
 import eu.kanade.tachiyomi.ui.security.SecureActivityDelegate
+import eu.kanade.tachiyomi.util.manga.MangaCoverRatios
 import eu.kanade.tachiyomi.util.system.AuthenticatorUtil
 import eu.kanade.tachiyomi.util.system.notification
 import kotlinx.coroutines.flow.launchIn
