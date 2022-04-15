@@ -141,8 +141,8 @@ class LibraryGridHolder(
         if (ratio != null) {
             binding.coverThumbnail.adjustViewBounds = false
             binding.coverThumbnail.maxHeight = Int.MAX_VALUE
-            binding.coverThumbnail.minimumHeight = 0
-            binding.constraintLayout.minHeight = 0
+            binding.coverThumbnail.minimumHeight = 56.dpToPx
+            binding.constraintLayout.minHeight = 56.dpToPx
         } else {
             val coverHeight = (itemWidth / 3f * 4f).toInt()
             binding.constraintLayout.minHeight = coverHeight / 2
