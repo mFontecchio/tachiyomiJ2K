@@ -2,7 +2,7 @@ package eu.kanade.tachiyomi.widget
 
 import android.content.Context
 import android.widget.TextView
-import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.marginTop
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -168,7 +168,7 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
     }
 
     private fun getFirstPos(): Int {
-        val inset = rView?.rootWindowInsetsCompat?.getInsets(WindowInsetsCompat.Type.systemBars())?.top ?: 0
+        val inset = rView?.rootWindowInsetsCompat?.getInsets(systemBars())?.top ?: 0
         return (0 until childCount)
             .mapNotNull { getChildAt(it) }
             .filter {
