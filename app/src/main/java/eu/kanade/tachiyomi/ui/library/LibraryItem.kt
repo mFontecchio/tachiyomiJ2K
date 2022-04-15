@@ -67,12 +67,6 @@ class LibraryItem(
                 view.apply {
                     val binding = MangaGridItemBinding.bind(this)
                     if (libraryLayout == 1) {
-//                        binding.gradient.updateLayoutParams<ConstraintLayout.LayoutParams> {
-//                            FrameLayout.LayoutParams.MATCH_PARENT,
-//                            (coverHeight * 0.66f).toInt(),
-//                            Gravity.BOTTOM
-//                        )
-//                        }
                         binding.card.updateLayoutParams<ConstraintLayout.LayoutParams> {
                             bottomMargin = 6.dpToPx
                         }

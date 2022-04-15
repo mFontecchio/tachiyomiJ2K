@@ -119,7 +119,6 @@ class LibraryGridHolder(
             }
             listener(
                 onSuccess = { _, _ ->
-                    binding.coverThumbnail.alpha = 1f
                     if (!fixedSize && !hasRatio && MangaCoverRatios.getRatio(manga) != null) {
                         setCoverRatio(manga)
                     }
