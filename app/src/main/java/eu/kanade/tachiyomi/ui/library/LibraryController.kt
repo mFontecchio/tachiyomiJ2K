@@ -38,7 +38,6 @@ import androidx.core.view.updatePadding
 import androidx.core.view.updatePaddingRelative
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.bluelinelabs.conductor.ControllerChangeHandler
@@ -110,7 +109,6 @@ import eu.kanade.tachiyomi.util.view.snack
 import eu.kanade.tachiyomi.util.view.withFadeTransaction
 import eu.kanade.tachiyomi.widget.EmptyView
 import eu.kanade.tachiyomi.widget.EndAnimatorListener
-import eu.kanade.tachiyomi.widget.StaggeredGridLayoutManagerAccurateOffset
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
@@ -787,10 +785,7 @@ class LibraryController(
         val category = getVisibleHeader() ?: return
         if (presenter.showAllCategories) {
             if (!next) {
-                val fPosition =
-                    (binding.libraryGridRecycler.recycler.layoutManager as? LinearLayoutManager)?.findFirstVisibleItemPosition()
-                        ?: (binding.libraryGridRecycler.recycler.layoutManager as? StaggeredGridLayoutManagerAccurateOffset)
-                            ?.findFirstVisibleItemPosition() ?: 0
+                val fPosition = binding.libraryGridRecycler.recycler.findFirstVisibleItemPosition()
                 if (fPosition > adapter.currentItems.indexOf(category)) {
                     scrollToHeader(category.category.order)
                     return
@@ -825,9 +820,7 @@ class LibraryController(
 
     private fun getHeader(firstCompletelyVisible: Boolean = false): LibraryHeaderItem? {
         val position = if (firstCompletelyVisible) {
-            (binding.libraryGridRecycler.recycler.layoutManager as? LinearLayoutManager)?.findFirstCompletelyVisibleItemPosition()
-                ?: (binding.libraryGridRecycler.recycler.layoutManager as? StaggeredGridLayoutManagerAccurateOffset)
-                    ?.findFirstCompletelyVisibleItemPosition() ?: 0
+            binding.libraryGridRecycler.recycler.findFirstCompletelyVisibleItemPosition()
         } else {
             -1
         }
@@ -837,10 +830,7 @@ class LibraryController(
                 is LibraryItem -> return item.header
             }
         } else {
-            val fPosition =
-                (binding.libraryGridRecycler.recycler.layoutManager as? LinearLayoutManager)?.findFirstVisibleItemPosition()
-                    ?: (binding.libraryGridRecycler.recycler.layoutManager as? StaggeredGridLayoutManagerAccurateOffset)
-                        ?.findFirstVisibleItemPosition() ?: 0
+            val fPosition = binding.libraryGridRecycler.recycler.findFirstVisibleItemPosition()
             when (val item = adapter.getItem(fPosition)) {
                 is LibraryHeaderItem -> return item
                 is LibraryItem -> return item.header
@@ -850,10 +840,7 @@ class LibraryController(
     }
 
     private fun getVisibleHeader(): LibraryHeaderItem? {
-        val fPosition =
-            (binding.libraryGridRecycler.recycler.layoutManager as? LinearLayoutManager)?.findFirstVisibleItemPosition()
-                ?: (binding.libraryGridRecycler.recycler.layoutManager as? StaggeredGridLayoutManagerAccurateOffset)
-                    ?.findFirstVisibleItemPosition() ?: 0
+        val fPosition = binding.libraryGridRecycler.recycler.findFirstVisibleItemPosition()
         when (val item = adapter.getItem(fPosition)) {
             is LibraryHeaderItem -> return item
             is LibraryItem -> return item.header
@@ -982,11 +969,9 @@ class LibraryController(
                     }
                 }
             }
-            if (!type.isPush) {
-                if (binding.libraryGridRecycler.recycler.manager is StaggeredGridLayoutManager && staggeredBundle != null) {
-                    binding.libraryGridRecycler.recycler.manager.onRestoreInstanceState(staggeredBundle)
-                    staggeredBundle = null
-                }
+            if (binding.libraryGridRecycler.recycler.manager is StaggeredGridLayoutManager && staggeredBundle != null) {
+                binding.libraryGridRecycler.recycler.manager.onRestoreInstanceState(staggeredBundle)
+                staggeredBundle = null
             }
         } else {
             setItem()
@@ -1022,6 +1007,7 @@ class LibraryController(
         }
         displaySheet?.dismiss()
         displaySheet = null
+        setItem()
         super.onDestroyView(view)
     }
 
@@ -1191,17 +1177,7 @@ class LibraryController(
             binding.libraryGridRecycler.recycler.suppressLayout(true)
             val appbarOffset = if (pos == 0) 0 else -bigToolbarHeight!! + activityBinding.cardFrame.height
             val previousHeader = adapter.getItem(adapter.indexOf(pos - 1)) as? LibraryHeaderItem
-            (binding.libraryGridRecycler.recycler.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
-                headerPosition,
-                (
-                    when {
-                        headerPosition == 0 -> 0
-                        previousHeader?.category?.isHidden == true -> (-3).dpToPx
-                        else -> (-30).dpToPx
-                    }
-                    ) + appbarOffset
-            )
-            (binding.libraryGridRecycler.recycler.layoutManager as? StaggeredGridLayoutManager)?.scrollToPositionWithOffset(
+            binding.libraryGridRecycler.recycler.scrollToPositionWithOffset(
                 headerPosition,
                 (
                     when {
@@ -1243,20 +1219,9 @@ class LibraryController(
     private fun reattachAdapter() {
         libraryLayout = preferences.libraryLayout().get()
         setRecyclerLayout()
-        val position =
-            (binding.libraryGridRecycler.recycler.layoutManager as? LinearLayoutManager)?.findFirstVisibleItemPosition()
-                ?: (binding.libraryGridRecycler.recycler.layoutManager as? StaggeredGridLayoutManagerAccurateOffset)
-                    ?.findFirstVisibleItemPosition() ?: 0
+        val position = binding.libraryGridRecycler.recycler.findFirstVisibleItemPosition()
         binding.libraryGridRecycler.recycler.adapter = adapter
-
-        (binding.libraryGridRecycler.recycler.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
-            position,
-            0
-        )
-        (binding.libraryGridRecycler.recycler.layoutManager as? StaggeredGridLayoutManager)?.scrollToPositionWithOffset(
-            position,
-            0
-        )
+        binding.libraryGridRecycler.recycler.scrollToPositionWithOffset(position, 0)
     }
 
     fun search(query: String?): Boolean {

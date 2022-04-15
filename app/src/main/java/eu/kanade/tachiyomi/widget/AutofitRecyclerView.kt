@@ -5,13 +5,16 @@ import android.util.AttributeSet
 import android.widget.TextView
 import androidx.core.content.edit
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
+import androidx.core.view.doOnNextLayout
 import androidx.core.view.marginTop
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
+import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.pxToDp
 import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
 import kotlin.math.max
@@ -90,11 +93,40 @@ class AutofitRecyclerView @JvmOverloads constructor(context: Context, attrs: Att
                 1,
                 StaggeredGridLayoutManager.VERTICAL
             )
-            layoutManager = manager
+            setNewManager()
         } else if (!use && manager !is GridLayoutManagerAccurateOffset) {
             manager = GridLayoutManagerAccurateOffset(context, 1)
-            layoutManager = manager
+            setNewManager()
         }
+    }
+
+    private fun setNewManager() {
+        val firstPos = findFirstVisibleItemPosition().takeIf { it != NO_POSITION }
+        layoutManager = manager
+        if (firstPos != null) {
+            val insetsTop = rootWindowInsetsCompat?.getInsets(systemBars())?.top ?: 0
+            doOnNextLayout {
+                scrollToPositionWithOffset(firstPos, -paddingTop + 56.dpToPx + insetsTop)
+            }
+        }
+    }
+
+    fun scrollToPositionWithOffset(position: Int, offset: Int) {
+        layoutManager ?: return
+        return (layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(position, offset)
+            ?: (layoutManager as StaggeredGridLayoutManagerAccurateOffset).scrollToPositionWithOffset(position, offset)
+    }
+
+    fun findFirstVisibleItemPosition(): Int {
+        layoutManager ?: return 0
+        return (layoutManager as? LinearLayoutManager)?.findFirstVisibleItemPosition()
+            ?: (layoutManager as StaggeredGridLayoutManagerAccurateOffset).findFirstVisibleItemPosition()
+    }
+
+    fun findFirstCompletelyVisibleItemPosition(): Int {
+        layoutManager ?: return 0
+        return (layoutManager as? LinearLayoutManager)?.findFirstCompletelyVisibleItemPosition()
+            ?: (layoutManager as StaggeredGridLayoutManagerAccurateOffset).findFirstCompletelyVisibleItemPosition()
     }
 
     fun setGridSize(preferences: PreferencesHelper) {
