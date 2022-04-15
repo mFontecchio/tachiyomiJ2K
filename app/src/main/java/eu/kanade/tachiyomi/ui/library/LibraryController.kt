@@ -1157,7 +1157,7 @@ class LibraryController(
         if (headerPosition > -1) {
             val activityBinding = activityBinding ?: return
             binding.libraryGridRecycler.recycler.suppressLayout(true)
-            val appbarOffset = if (pos == 0) 0 else -bigToolbarHeight!! + activityBinding.cardFrame.height
+            val appbarOffset = if (pos <= 0) 0 else -bigToolbarHeight!! + activityBinding.cardFrame.height
             val previousHeader = adapter.getItem(adapter.indexOf(pos - 1)) as? LibraryHeaderItem
             (binding.libraryGridRecycler.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
                 headerPosition,
