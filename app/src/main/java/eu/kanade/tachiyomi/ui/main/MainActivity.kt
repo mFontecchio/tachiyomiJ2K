@@ -449,7 +449,8 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
     override fun onTitleChanged(title: CharSequence?, color: Int) {
         super.onTitleChanged(title, color)
         binding.cardToolbar.title = searchTitle
-        binding.appBar.setTitle(title)
+        val onSmallController = if (this::router.isInitialized) router.backstack.lastOrNull()?.controller !is SmallToolbarInterface else false
+        binding.appBar.setTitle(title, binding.appBar.useLargeToolbar && onSmallController)
     }
 
     var searchTitle: String?

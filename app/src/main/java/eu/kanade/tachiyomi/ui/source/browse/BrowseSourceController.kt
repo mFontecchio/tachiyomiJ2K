@@ -252,7 +252,6 @@ open class BrowseSourceController(bundle: Bundle) :
         // Initialize search menu
         val searchItem = activityBinding?.cardToolbar?.searchItem
         val searchView = activityBinding?.cardToolbar?.searchView
-//        activityBinding?.cardToolbar?.searchQueryHint = getSearchTitle()
 
         val query = presenter.query
         if (query.isNotBlank()) {
@@ -264,38 +263,10 @@ open class BrowseSourceController(bundle: Bundle) :
             searchView?.setQuery("", true)
         }
 
-//        val searchEventsObservable = searchView.queryTextChangeEvents()
-//            .skip(1)
-//            .filter { isControllerVisible }
-//            .share()
-//        val writingObservable = searchEventsObservable
-//            .filter { !it.isSubmitted }
-//            .debounce(1250, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
-//        val submitObservable = searchEventsObservable
-//            .filter { it.isSubmitted }
-//
-//        searchViewSubscription?.unsubscribe()
-//        searchViewSubscription = Observable.merge(writingObservable, submitObservable)
-//            .map { it.queryText().toString() }
-//            .subscribeUntilDestroy { searchWithQuery(it) }
-
         setOnQueryTextChangeListener(searchView, onlyOnSubmit = true, hideKbOnSubmit = true) {
             searchWithQuery(it ?: "")
             true
         }
-
-//        searchItem.fixExpand(
-//            onExpand = { invalidateMenuOnExpand() },
-//            onCollapse = {
-//                if (router.backstackSize >= 2 && router.backstack[router.backstackSize - 2].controller is GlobalSearchController) {
-//                    router.popController(this)
-//                } else {
-//                    searchWithQuery("")
-//                }
-//                true
-//            }
-//        )
-
         // Show next display mode
         menu.findItem(R.id.action_display_mode).apply {
             val icon = if (presenter.isListMode) {
@@ -305,7 +276,6 @@ open class BrowseSourceController(bundle: Bundle) :
             }
             setIcon(icon)
         }
-//        hideItemsIfExpanded(searchItem, menu)
     }
 
     override fun onActionViewCollapse(item: MenuItem?) {
