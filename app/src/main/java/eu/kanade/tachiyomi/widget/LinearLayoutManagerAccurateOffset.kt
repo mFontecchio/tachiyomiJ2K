@@ -12,9 +12,11 @@ class LinearLayoutManagerAccurateOffset(context: Context?) : LinearLayoutManager
     private val childTypeHeightMap = HashMap<Int, HashMap<Int, Int>>()
     private val childTypeEstimateMap = HashMap<Int, Int>()
     var rView: RecyclerView? = null
+    var computedRange: Int? = null
 
     override fun onLayoutCompleted(state: RecyclerView.State) {
         super.onLayoutCompleted(state)
+        computedRange = null
         for (i in 0 until childCount) {
             val child = getChildAt(i) ?: return
             val position = getPosition(child)
@@ -46,8 +48,11 @@ class LinearLayoutManagerAccurateOffset(context: Context?) : LinearLayoutManager
 
     override fun computeVerticalScrollRange(state: RecyclerView.State): Int {
         if (childCount == 0) return 0
+        computedRange?.let { return it }
         val childAvgHeightMap = HashMap<Int, Int>()
-        return (0 until itemCount).sumOf { getItemHeight(it, childAvgHeightMap) }
+        val computedRange = (0 until itemCount).sumOf { getItemHeight(it, childAvgHeightMap) }
+        this.computedRange = computedRange
+        return computedRange
     }
 
     override fun computeVerticalScrollOffset(state: RecyclerView.State): Int {

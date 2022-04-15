@@ -18,6 +18,7 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
     private val childTypeHeightMap = HashMap<Int, HashMap<Int, Int>>()
     private val childTypeMap = HashMap<Int, Int>()
     private val childTypeEstimateMap = HashMap<Int, Int>()
+    var computedRange: Int? = null
     var rView: RecyclerView? = null
 
     private val toolbarHeight by lazy {
@@ -30,6 +31,7 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
 
     override fun onLayoutCompleted(state: RecyclerView.State) {
         super.onLayoutCompleted(state)
+        computedRange = null
         for (i in 0 until childCount) {
             val child = getChildAt(i) ?: return
             val position = getPosition(child)
@@ -62,6 +64,9 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
 
     override fun computeVerticalScrollRange(state: RecyclerView.State): Int {
         if (childCount == 0) return 0
+        computedRange?.let {
+            return it
+        }
         rView ?: return super.computeVerticalScrollRange(state)
         var scrolledY = 0
         var spanC = 0
@@ -85,6 +90,7 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
                 }
             }
         }
+        computedRange = scrolledY
         return scrolledY
     }
 
