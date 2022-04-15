@@ -41,7 +41,13 @@ object MangaCoverRatios {
         )
     }
 
-    fun addCover(manga: Manga, ratio: Float) {
+    fun remove(manga: Manga) {
+        val id = manga.id ?: return
+        coverRatioMap.remove(id)
+        coverColorMap.remove(id)
+    }
+
+    fun addCoverRatio(manga: Manga, ratio: Float) {
         val id = manga.id ?: return
         coverRatioMap[id] = ratio
     }
@@ -53,14 +59,6 @@ object MangaCoverRatios {
 
     fun getColors(manga: Manga): Pair<Int, Int>? {
         return coverColorMap[manga.id]
-    }
-
-    fun getColor(manga: Manga): Int? {
-        return coverColorMap[manga.id]?.first
-    }
-
-    fun getTextColor(manga: Manga): Int? {
-        return coverColorMap[manga.id]?.second
     }
 
     fun getRatio(manga: Manga): Float? {

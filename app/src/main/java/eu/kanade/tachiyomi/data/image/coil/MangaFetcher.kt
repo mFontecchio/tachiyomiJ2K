@@ -115,6 +115,10 @@ class MangaFetcher : Fetcher<Manga> {
 
     private fun setRatios(manga: Manga, ogFile: File? = null, force: Boolean = false) {
         launchIO {
+            if (!manga.favorite) {
+                MangaCoverRatios.remove(manga)
+                return@launchIO
+            }
             // if (!force && MangaCoverRatios.getRatio(manga) != null) return@launchIO
             val file = ogFile ?: coverCache.getCustomCoverFile(manga).takeIf { it.exists() } ?: coverCache.getCoverFile(manga)
             // if the file exists and the there was still an error then the file is corrupted
@@ -123,7 +127,7 @@ class MangaFetcher : Fetcher<Manga> {
                 options.inJustDecodeBounds = true
                 BitmapFactory.decodeFile(file.path, options)
                 if (!(options.outWidth == -1 || options.outHeight == -1)) {
-                    MangaCoverRatios.addCover(manga, options.outWidth / options.outHeight.toFloat())
+                    MangaCoverRatios.addCoverRatio(manga, options.outWidth / options.outHeight.toFloat())
                 }
             }
         }
