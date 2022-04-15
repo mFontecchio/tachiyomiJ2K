@@ -137,8 +137,10 @@ class BigAppBarLayout@JvmOverloads constructor(context: Context, attrs: Attribut
         updateBigView(resources.configuration)
     }
 
-    fun setTitle(title: CharSequence?) {
-        bigTitleView?.text = title
+    fun setTitle(title: CharSequence?, setBigTitle: Boolean) {
+        if (setBigTitle) {
+            bigTitleView?.text = title
+        }
         mainToolbar?.title = title
     }
 
