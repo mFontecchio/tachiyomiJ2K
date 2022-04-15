@@ -55,21 +55,21 @@
                     app:layout_constraintStart_toStartOf="@id/cover_thumbnail"
                     tools:text="Sample name" />
 
-            <ImageView
-                android:id="@+id/cover_thumbnail"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                tools:alpha="0.5"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                tools:adjustViewBounds="true"
-                android:scaleType="centerCrop"
-                app:layout_constraintVertical_weight="1.0"
-                app:layout_constraintVertical_bias="0.0"
-                tools:ignore="ContentDescription"
-                tools:src="@mipmap/ic_launcher" />
+                <ImageView
+                    android:id="@+id/cover_thumbnail"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    tools:alpha="0.5"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    tools:adjustViewBounds="true"
+                    android:scaleType="centerCrop"
+                    app:layout_constraintVertical_weight="1.0"
+                    app:layout_constraintVertical_bias="0.0"
+                    tools:ignore="ContentDescription"
+                    tools:src="@mipmap/ic_launcher" />
 
                 <View
                     android:id="@+id/gradient"
