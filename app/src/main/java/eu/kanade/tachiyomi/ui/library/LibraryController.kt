@@ -974,7 +974,7 @@ class LibraryController(
                 staggeredBundle = null
             }
         } else {
-            setItem()
+            saveStaggeredState()
             updateFilterSheetY()
             closeTip()
             if (binding.filterBottomSheet.filterBottomSheet.sheetBehavior.isHidden()) {
@@ -1007,7 +1007,7 @@ class LibraryController(
         }
         displaySheet?.dismiss()
         displaySheet = null
-        setItem()
+        saveStaggeredState()
         super.onDestroyView(view)
     }
 
@@ -1343,13 +1343,13 @@ class LibraryController(
             toggleSelection(position)
             false
         } else {
-            setItem()
+            saveStaggeredState()
             openManga(item.manga)
             false
         }
     }
 
-    private fun setItem() {
+    private fun saveStaggeredState() {
         if (binding.libraryGridRecycler.recycler.manager is StaggeredGridLayoutManager) {
             staggeredBundle = binding.libraryGridRecycler.recycler.manager.onSaveInstanceState()
         }
