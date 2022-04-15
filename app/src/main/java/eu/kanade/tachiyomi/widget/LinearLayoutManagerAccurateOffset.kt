@@ -3,14 +3,14 @@ package eu.kanade.tachiyomi.widget
 import android.content.Context
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import kotlin.math.min
-import kotlin.math.roundToInt
 
 class LinearLayoutManagerAccurateOffset(context: Context?) : LinearLayoutManager(context) {
 
     // map of child adapter position to its height.
-    private val childSizesMap = mutableMapOf<Int, Int>()
-    private val childTypeMap = mutableMapOf<Int, MutableMap<Int, Int>>()
+    private val childSizesMap = HashMap<Int, Int>()
+    private val childTypeMap = HashMap<Int, Int>()
+    private val childTypeHeightMap = HashMap<Int, HashMap<Int, Int>>()
+    private val childTypeEstimateMap = HashMap<Int, Int>()
     var rView: RecyclerView? = null
 
     override fun onLayoutCompleted(state: RecyclerView.State) {
@@ -19,10 +19,17 @@ class LinearLayoutManagerAccurateOffset(context: Context?) : LinearLayoutManager
             val child = getChildAt(i) ?: return
             val position = getPosition(child)
             childSizesMap[position] = child.height
-            childTypeMap[getItemViewType(child)] = (
-                childTypeMap[getItemViewType(child)]?.also {
+            val type = getItemViewType(child)
+            childTypeMap[position] = type
+            if (childSizesMap[type] != null) {
+                childTypeHeightMap[type]!![position] = child.height
+            } else {
+                childTypeHeightMap[type] = hashMapOf(position to child.height)
+            }
+            childTypeHeightMap[type] = (
+                childTypeHeightMap[type]?.also {
                     it[position] = child.height
-                } ?: mutableMapOf(position to child.height)
+                } ?: hashMapOf(position to child.height)
                 )
         }
     }
@@ -38,57 +45,33 @@ class LinearLayoutManagerAccurateOffset(context: Context?) : LinearLayoutManager
     }
 
     override fun computeVerticalScrollRange(state: RecyclerView.State): Int {
-        if (childCount == 0) {
-            return 0
-        }
-        val childAvgHeightMap = mutableMapOf<Int, Int>()
-        var scrolledY = 0
-        for (i in 0 until itemCount) {
-            val height: Int = if (childSizesMap[i] != null) {
-                childSizesMap[i] ?: 0
-            } else {
-                val type = rView?.adapter?.getItemViewType(i) ?: 0
-                if (childAvgHeightMap[type] == null) {
-                    val array = (childTypeMap[type]?.values ?: mutableListOf(0)).toIntArray()
-                    childAvgHeightMap[type] = array
-                        .copyOfRange(0, min(array.size, 50))
-                        .average()
-                        .roundToInt()
-                }
-                childAvgHeightMap[type] ?: 0
-            }
-            scrolledY += height
-        }
-        return scrolledY
+        if (childCount == 0) return 0
+        val childAvgHeightMap = HashMap<Int, Int>()
+        return (0 until itemCount).sumOf { getItemHeight(it, childAvgHeightMap) }
     }
 
     override fun computeVerticalScrollOffset(state: RecyclerView.State): Int {
-        if (childCount == 0) {
-            return 0
-        }
+        if (childCount == 0) return 0
         val firstChild = getChildAt(0) ?: return 0
         val firstChildPosition = (0 to childCount).toList()
             .mapNotNull { getChildAt(it) }
             .mapNotNull { pos -> getPosition(pos).takeIf { it != RecyclerView.NO_POSITION } }
             .minOrNull() ?: 0
-        val childAvgHeightMap = mutableMapOf<Int, Int>()
-        var scrolledY: Int = -firstChild.y.toInt()
-        for (i in 0 until firstChildPosition) {
-            val height: Int = if (childSizesMap[i] != null) {
-                childSizesMap[i] ?: 0
-            } else {
-                val type = rView?.adapter?.getItemViewType(i) ?: 0
-                if (childAvgHeightMap[type] == null) {
-                    val array = (childTypeMap[type]?.values ?: mutableListOf(0)).toIntArray()
-                    childAvgHeightMap[type] = array
-                        .copyOfRange(0, min(array.size, 50))
-                        .average()
-                        .roundToInt()
-                }
-                childAvgHeightMap[type] ?: 0
-            }
-            scrolledY += height
-        }
+        val childAvgHeightMap = HashMap<Int, Int>()
+        val scrolledY: Int = -firstChild.y.toInt() +
+            (0 until firstChildPosition).sumOf { getItemHeight(it, childAvgHeightMap) }
         return scrolledY + paddingTop
+    }
+
+    private fun getItemHeight(pos: Int, childAvgHeightMap: HashMap<Int, Int>): Int {
+        return EstimatedItemHeight.itemOrEstimatedHeight(
+            pos,
+            rView?.adapter?.getItemViewType(pos),
+            childSizesMap,
+            childTypeMap,
+            childTypeHeightMap,
+            childTypeEstimateMap,
+            childAvgHeightMap
+        )
     }
 }
