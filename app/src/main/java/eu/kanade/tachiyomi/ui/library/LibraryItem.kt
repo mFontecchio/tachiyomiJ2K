@@ -67,13 +67,13 @@ class LibraryItem(
             } else {
                 view.apply {
                     val binding = MangaGridItemBinding.bind(this)
+                    binding.behindTitle.isVisible = libraryLayout == 3
                     if (libraryLayout == 1) {
                         binding.card.updateLayoutParams<ConstraintLayout.LayoutParams> {
                             bottomMargin = 6.dpToPx
                         }
                     } else if (libraryLayout >= 2) {
                         binding.textLayout.isVisible = libraryLayout == 2
-                        binding.behindTitle.isVisible = libraryLayout != 2
                         binding.constraintLayout.background = context.contextCompatDrawable(
                             R.drawable.library_comfortable_grid_selector
                         )
