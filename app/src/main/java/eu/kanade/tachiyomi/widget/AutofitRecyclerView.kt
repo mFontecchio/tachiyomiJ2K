@@ -77,7 +77,7 @@ class AutofitRecyclerView @JvmOverloads constructor(context: Context, attrs: Att
         useStaggered(
             preferences.useStaggeredGrid().get() &&
                 !preferences.uniformGrid().get() &&
-                preferences.libraryLayout().get() != 1
+                preferences.libraryLayout().get() != 0
         )
     }
 
