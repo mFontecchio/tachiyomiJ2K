@@ -476,9 +476,6 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         } else {
             binding.toolbar
         }
-        if (oldTB != currentToolbar) {
-//            setSupportActionBar(currentToolbar)
-        }
         binding.toolbar.isVisible = !(onSmallerController && onSearchController)
         binding.cardFrame.isVisible = (show || showSearchAnyway) && onSearchController
         val bgColor = binding.appBar.backgroundColor ?: Color.TRANSPARENT
