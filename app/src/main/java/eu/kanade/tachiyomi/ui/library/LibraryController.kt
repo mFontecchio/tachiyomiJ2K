@@ -1058,7 +1058,7 @@ class LibraryController(
                     scrollToHeader(activeC)
                     binding.libraryGridRecycler.recycler.post {
                         activityBinding?.appBar?.y = 0f
-                        activityBinding?.appBar?.updateViewsAfterY(binding.libraryGridRecycler.recycler)
+                        activityBinding?.appBar?.updateAppBarAfterY(binding.libraryGridRecycler.recycler)
                     }
                 }
             }

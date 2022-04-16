@@ -551,7 +551,7 @@ fun Controller.setItemAnimatorForAppBar(recycler: RecyclerView) {
         }
 
         override fun onAnimationFinished(viewHolder: RecyclerView.ViewHolder) {
-            activityBinding?.appBar?.updateViewsAfterY(recycler)
+            activityBinding?.appBar?.updateAppBarAfterY(recycler)
             super.onAnimationFinished(viewHolder)
         }
 
