@@ -67,8 +67,8 @@ class AutofitRecyclerView @JvmOverloads constructor(context: Context, attrs: Att
         return 3
     }
 
-    override fun onMeasure(widthSpec: Int, heightSpec: Int) {
-        super.onMeasure(widthSpec, heightSpec)
+    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        super.onLayout(changed, l, t, r, b)
         setSpan()
         lastMeasuredWidth = width
     }
@@ -153,7 +153,7 @@ class AutofitRecyclerView @JvmOverloads constructor(context: Context, attrs: Att
     }
 
     private fun setSpan(force: Boolean = false) {
-        if ((spanCount == 0 || force || (width != lastMeasuredWidth && lastMeasuredWidth == 0)) && columnWidth > 0) {
+        if ((spanCount == 0 || force || (width != lastMeasuredWidth)) && columnWidth > 0) {
             val dpWidth = (width.pxToDp / 100f).roundToInt()
             val count = max(1, (dpWidth / columnWidth).roundToInt())
             spanCount = count
