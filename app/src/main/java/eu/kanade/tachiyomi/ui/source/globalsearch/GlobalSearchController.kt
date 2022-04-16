@@ -263,7 +263,7 @@ open class GlobalSearchController(
                 customTitle = null
                 setTitle()
                 activity?.invalidateOptionsMenu()
-                activityBinding?.appBar?.updateViewsAfterY(binding.recycler)
+                activityBinding?.appBar?.updateAppBarAfterY(binding.recycler)
             }
         }
         adapter?.updateDataSet(searchResult)

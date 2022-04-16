@@ -601,7 +601,7 @@ class LibraryController(
                 if (lastUsedCategory > 0) {
                     activityBinding.appBar.y =
                         -bigToolbarHeight + activityBinding.cardFrame.height.toFloat()
-                    activityBinding.appBar.setToolbar(true)
+                    activityBinding.appBar.useSearchToolbarForMenu(true)
                 }
                 activityBinding.appBar.lockYPos = true
             }
@@ -1038,9 +1038,9 @@ class LibraryController(
             binding.libraryGridRecycler.recycler.post {
                 if (isControllerVisible) {
                     activityBinding?.appBar?.y = 0f
-                    activityBinding?.appBar?.updateViewsAfterY(binding.libraryGridRecycler.recycler)
+                    activityBinding?.appBar?.updateAppBarAfterY(binding.libraryGridRecycler.recycler)
                     if (activeC > 0) {
-                        activityBinding?.appBar?.setToolbar(true)
+                        activityBinding?.appBar?.useSearchToolbarForMenu(true)
                     }
                 }
             }
@@ -1177,7 +1177,7 @@ class LibraryController(
             binding.libraryGridRecycler.recycler.suppressLayout(false)
             binding.libraryGridRecycler.recycler.post {
                 activityBinding.appBar.y = 0f
-                activityBinding.appBar.updateViewsAfterY(binding.libraryGridRecycler.recycler)
+                activityBinding.appBar.updateAppBarAfterY(binding.libraryGridRecycler.recycler)
             }
         }
     }
@@ -1668,8 +1668,8 @@ class LibraryController(
         ) {
             showCategories(true)
             binding.libraryGridRecycler.recycler.post {
-                activityBinding?.appBar?.y = (activityBinding?.appBar?.recyclerOffset ?: 0).toFloat()
-                activityBinding?.appBar?.updateViewsAfterY(binding.libraryGridRecycler.recycler)
+                activityBinding?.appBar?.y = (activityBinding?.appBar?.yNeededForSmallToolbar ?: 0).toFloat()
+                activityBinding?.appBar?.updateAppBarAfterY(binding.libraryGridRecycler.recycler)
             }
         }
     }

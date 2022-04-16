@@ -564,7 +564,7 @@ class MangaDetailsController :
         super.onChangeStarted(handler, type)
         if (type.isEnter) {
             activityBinding?.appBar?.y = 0f
-            activityBinding?.appBar?.updateViewsAfterY(binding.recycler)
+            activityBinding?.appBar?.updateAppBarAfterY(binding.recycler)
             updateToolbarTitleAlpha(0f)
             setStatusBarAndToolbar()
 //            if (isTablet) {
