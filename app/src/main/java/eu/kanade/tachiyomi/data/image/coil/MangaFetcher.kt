@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.data.image.coil
 
 import android.graphics.BitmapFactory
 import android.webkit.MimeTypeMap
+import androidx.palette.graphics.Palette
 import coil.bitmap.BitmapPool
 import coil.decode.DataSource
 import coil.decode.Options
@@ -17,7 +18,10 @@ import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.manga.MangaCoverRatios
 import eu.kanade.tachiyomi.util.storage.DiskUtil
-import eu.kanade.tachiyomi.util.system.launchIO
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import okhttp3.CacheControl
 import okhttp3.Call
 import okhttp3.Request
@@ -43,6 +47,7 @@ class MangaFetcher : Fetcher<Manga> {
     private val coverCache: CoverCache by injectLazy()
     private val sourceManager: SourceManager by injectLazy()
     private val defaultClient = Injekt.get<NetworkHelper>().client
+    val fileScope = CoroutineScope(Job() + Dispatchers.IO)
 
     override fun key(data: Manga): String? {
         if (data.thumbnail_url.isNullOrBlank()) return null
@@ -114,19 +119,27 @@ class MangaFetcher : Fetcher<Manga> {
     }
 
     private fun setRatios(manga: Manga, ogFile: File? = null, force: Boolean = false) {
-        launchIO {
+        fileScope.launch {
             if (!manga.favorite) {
                 MangaCoverRatios.remove(manga)
-                return@launchIO
             }
-            // if (!force && MangaCoverRatios.getRatio(manga) != null) return@launchIO
+            if (manga.vibrantCoverColor != null && !manga.favorite) return@launch
             val file = ogFile ?: coverCache.getCustomCoverFile(manga).takeIf { it.exists() } ?: coverCache.getCoverFile(manga)
             // if the file exists and the there was still an error then the file is corrupted
             if (file.exists()) {
                 val options = BitmapFactory.Options()
-                options.inJustDecodeBounds = true
-                BitmapFactory.decodeFile(file.path, options)
-                if (!(options.outWidth == -1 || options.outHeight == -1)) {
+                val bitmap = BitmapFactory.decodeFile(file.path, options) ?: return@launch
+                Palette.from(bitmap).generate {
+                    if (it == null) return@generate
+                    if (manga.favorite) {
+                        it.dominantSwatch?.let { swatch ->
+                            manga.dominantCoverColors = swatch.rgb to swatch.titleTextColor
+                        }
+                    }
+                    val color = it.getBestColor() ?: return@generate
+                    manga.vibrantCoverColor = color
+                }
+                if (manga.favorite && !(options.outWidth == -1 || options.outHeight == -1)) {
                     MangaCoverRatios.addCoverRatio(manga, options.outWidth / options.outHeight.toFloat())
                 }
             }
