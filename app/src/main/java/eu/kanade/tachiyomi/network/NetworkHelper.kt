@@ -30,6 +30,7 @@ class NetworkHelper(val context: Context) {
                 .cookieJar(cookieManager)
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(30, TimeUnit.SECONDS)
+                .callTimeout(90, TimeUnit.SECONDS)
                 .addInterceptor(UserAgentInterceptor())
                 .apply {
                     if (BuildConfig.DEBUG) {
@@ -47,6 +48,7 @@ class NetworkHelper(val context: Context) {
                         PREF_DOH_CLOUDFLARE -> dohCloudflare()
                         PREF_DOH_GOOGLE -> dohGoogle()
                         PREF_DOH_ADGUARD -> dohAdGuard()
+                        PREF_DOH_QUAD9 -> dohQuad9()
                     }
                 }
 
