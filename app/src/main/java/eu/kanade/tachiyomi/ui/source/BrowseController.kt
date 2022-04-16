@@ -448,7 +448,7 @@ class BrowseController :
             if (type.isEnter) {
                 activityBinding?.appBar?.doOnNextLayout {
                     activityBinding?.appBar?.y = 0f
-                    activityBinding?.appBar?.updateViewsAfterY(binding.sourceRecycler)
+                    activityBinding?.appBar?.updateAppBarAfterY(binding.sourceRecycler)
                 }
                 updateSheetMenu()
             }

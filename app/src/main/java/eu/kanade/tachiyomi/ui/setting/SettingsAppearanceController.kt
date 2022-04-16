@@ -106,7 +106,7 @@ class SettingsAppearanceController : SettingsController() {
                             if (useLarge) {
                                 moveRecyclerViewUp(true)
                             } else {
-                                activityBinding?.appBar?.updateViewsAfterY(listView)
+                                activityBinding?.appBar?.updateAppBarAfterY(listView)
                             }
                         }
                     }

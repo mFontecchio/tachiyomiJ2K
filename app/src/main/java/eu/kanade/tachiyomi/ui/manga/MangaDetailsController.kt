@@ -564,17 +564,9 @@ class MangaDetailsController :
         super.onChangeStarted(handler, type)
         if (type.isEnter) {
             activityBinding?.appBar?.y = 0f
-            activityBinding?.appBar?.updateViewsAfterY(binding.recycler)
+            activityBinding?.appBar?.updateAppBarAfterY(binding.recycler)
             updateToolbarTitleAlpha(0f)
             setStatusBarAndToolbar()
-//            if (isTablet) {
-//                view?.post {
-//                    val toolbarTextView = activityBinding?.toolbar?.toolbarTitle ?: return@post
-//                    toolbarTextView.setTextColor(
-//                        ColorUtils.setAlphaComponent(toolbarTextView.currentTextColor, 0)
-//                    )
-//                }
-//            }
         } else {
             if (router.backstack.lastOrNull()?.controller is DialogController) {
                 return

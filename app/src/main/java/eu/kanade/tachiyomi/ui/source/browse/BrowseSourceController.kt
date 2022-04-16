@@ -240,7 +240,7 @@ open class BrowseSourceController(bundle: Bundle) :
         if (oldPosition != RecyclerView.NO_POSITION) {
             recycler.layoutManager?.scrollToPosition(oldPosition)
             if (oldPosition > 0 && (activity as? MainActivity)?.currentToolbar != activityBinding?.cardToolbar) {
-                activityBinding?.appBar?.setToolbar(true)
+                activityBinding?.appBar?.useSearchToolbarForMenu(true)
             }
         }
         this.recycler = recycler

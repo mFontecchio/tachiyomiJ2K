@@ -181,7 +181,7 @@ fun Controller.liftAppbarWith(recycler: RecyclerView, padView: Boolean = false) 
     activityBinding?.appBar?.setToolbarModeBy(this)
     activityBinding?.appBar?.hideBigView(true)
     activityBinding?.appBar?.y = 0f
-    activityBinding?.appBar?.updateViewsAfterY(recycler)
+    activityBinding?.appBar?.updateAppBarAfterY(recycler)
 
 //    colorToolbar(recycler.canScrollVertically(-1))
     setAppBarBG(0f, preferences)
@@ -338,7 +338,7 @@ fun Controller.scrollViewWith(
                         fakeBottomNavView = null
                     }
                     lastY = 0f
-                    activityBinding!!.appBar.updateViewsAfterY(recycler)
+                    activityBinding!!.appBar.updateAppBarAfterY(recycler)
                     activityBinding!!.toolbar.tag = randomTag
                     activityBinding!!.toolbar.setOnClickListener {
                         recycler.smoothScrollToTop()
@@ -387,7 +387,7 @@ fun Controller.scrollViewWith(
     colorToolbar(!atTopOfRecyclerView())
 
     recycler.post {
-        activityBinding!!.appBar.updateViewsAfterY(recycler)
+        activityBinding!!.appBar.updateAppBarAfterY(recycler)
         colorToolbar(!atTopOfRecyclerView())
     }
     recycler.addOnScrollListener(
@@ -404,7 +404,7 @@ fun Controller.scrollViewWith(
                             android.R.integer.config_shortAnimTime
                         ) ?: 0
                         activityBinding!!.appBar.y = 0f
-                        activityBinding!!.appBar.updateViewsAfterY(recycler)
+                        activityBinding!!.appBar.updateAppBarAfterY(recycler)
                         if (router.backstackSize == 1 && isInView) {
                             activityBinding!!.bottomNav?.let {
                                 val animator = it.animate()?.translationY(0f)
@@ -420,7 +420,7 @@ fun Controller.scrollViewWith(
                     } else {
 //                        if (!isTablet) {
                         activityBinding!!.appBar.y -= dy
-                        activityBinding!!.appBar.updateViewsAfterY(recycler)
+                        activityBinding!!.appBar.updateAppBarAfterY(recycler)
                         activityBinding!!.bottomNav?.let { bottomNav ->
                             if (bottomNav.isVisible && isInView) {
                                 if (preferences.hideBottomNavOnScroll().get()) {
@@ -530,7 +530,7 @@ fun Controller.setItemAnimatorForAppBar(recycler: RecyclerView) {
             val duration = (recycler.itemAnimator?.changeDuration ?: 250) * 2
             itemAppBarAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
                 addUpdateListener {
-                    activityBinding?.appBar?.updateViewsAfterY(recycler)
+                    activityBinding?.appBar?.updateAppBarAfterY(recycler)
                 }
             }
             itemAppBarAnimator?.duration = duration
@@ -585,24 +585,24 @@ fun Controller.moveRecyclerViewUp(allTheWayUp: Boolean = false, scrollUpAnyway: 
     if (activityBinding?.bigToolbar?.isVisible == false) return
     val recycler = mainRecyclerView ?: return
     val activityBinding = activityBinding ?: return
-    val appBarHeight = activityBinding.appBar.toolbarDistance
+    val appBarOffset = activityBinding.appBar.toolbarDistanceToTop
     if (allTheWayUp && recycler.computeVerticalScrollOffset() - recycler.paddingTop <= bigToolbarHeight ?: activityBinding.appBar.preLayoutHeight) {
         (recycler.layoutManager as? LinearLayoutManager)?.scrollToPosition(0)
         (recycler.layoutManager as? StaggeredGridLayoutManager)?.scrollToPosition(0)
         recycler.post {
-            activityBinding.appBar.updateViewsAfterY(recycler)
-            activityBinding.appBar.setToolbar(false)
+            activityBinding.appBar.updateAppBarAfterY(recycler)
+            activityBinding.appBar.useSearchToolbarForMenu(false)
         }
         return
     }
-    if (scrollUpAnyway || recycler.computeVerticalScrollOffset() - recycler.paddingTop <= 0 - appBarHeight) {
+    if (scrollUpAnyway || recycler.computeVerticalScrollOffset() - recycler.paddingTop <= 0 - appBarOffset) {
         (recycler.layoutManager as? LinearLayoutManager)
-            ?.scrollToPositionWithOffset(0, activityBinding.appBar.recyclerOffset)
+            ?.scrollToPositionWithOffset(0, activityBinding.appBar.yNeededForSmallToolbar)
         (recycler.layoutManager as? StaggeredGridLayoutManager)
-            ?.scrollToPositionWithOffset(0, activityBinding.appBar.recyclerOffset)
+            ?.scrollToPositionWithOffset(0, activityBinding.appBar.yNeededForSmallToolbar)
         recycler.post {
-            activityBinding.appBar.updateViewsAfterY(recycler)
-            activityBinding.appBar.setToolbar(recycler.computeVerticalScrollOffset() != 0)
+            activityBinding.appBar.updateAppBarAfterY(recycler)
+            activityBinding.appBar.useSearchToolbarForMenu(recycler.computeVerticalScrollOffset() != 0)
         }
     }
 }
