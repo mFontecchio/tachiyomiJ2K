@@ -158,6 +158,9 @@ open class BrowseSourceController(bundle: Bundle) :
         binding.fab.isVisible = presenter.sourceFilters.isNotEmpty()
         binding.fab.setOnClickListener { showFilters() }
         binding.progress.isVisible = true
+        activityBinding?.appBar?.y = 0f
+        activityBinding?.appBar?.updateAppBarAfterY(recycler)
+        activityBinding?.appBar?.lockYPos = true
         requestFilePermissionsSafe(301, preferences, presenter.source is LocalSource)
     }
 
@@ -203,6 +206,7 @@ open class BrowseSourceController(bundle: Bundle) :
         recycler.setHasFixedSize(true)
         recycler.adapter = adapter
 
+        binding.catalogueView.addView(recycler, 1)
         scrollViewWith(
             recycler,
             true,
@@ -236,7 +240,6 @@ open class BrowseSourceController(bundle: Bundle) :
             }
         )
 
-        binding.catalogueView.addView(recycler, 1)
         if (oldPosition != RecyclerView.NO_POSITION) {
             recycler.layoutManager?.scrollToPosition(oldPosition)
             if (oldPosition > 0 && (activity as? MainActivity)?.currentToolbar != activityBinding?.cardToolbar) {
@@ -477,6 +480,9 @@ open class BrowseSourceController(bundle: Bundle) :
             resetProgressItem()
         }
         adapter.onLoadMoreComplete(mangas)
+        if (isControllerVisible) {
+            activityBinding?.appBar?.lockYPos = false
+        }
     }
 
     override fun onActivityResumed(activity: Activity) {
@@ -542,6 +548,9 @@ open class BrowseSourceController(bundle: Bundle) :
             snack = binding.sourceLayout.snack(message, Snackbar.LENGTH_INDEFINITE) {
                 setAction(R.string.retry, retryAction)
             }
+        }
+        if (isControllerVisible) {
+            activityBinding?.appBar?.lockYPos = false
         }
     }
 

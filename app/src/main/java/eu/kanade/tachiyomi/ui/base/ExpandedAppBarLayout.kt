@@ -70,7 +70,7 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
     /**
      * used to ignore updates to y
      *
-     * use only on controller.onViewCreated (usually root controllers only need)
+     * use only on controller.onViewCreated that asynchronously loads the first set of items
      * and make false once the recycler has items
      */
     var lockYPos = false
@@ -233,12 +233,12 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
         }
     }
 
-    fun updateAppBarAfterY(recyclerView: RecyclerView, cancelAnim: Boolean = true) {
+    fun updateAppBarAfterY(recyclerView: RecyclerView?, cancelAnim: Boolean = true) {
         if (cancelAnim) {
             yAnimator?.cancel()
         }
         if (lockYPos) return
-        val offset = recyclerView.computeVerticalScrollOffset()
+        val offset = recyclerView?.computeVerticalScrollOffset() ?: 0
         val bigHeight = bigView?.height ?: 0
         val realHeight = preLayoutHeight + paddingTop
         val tabHeight = if (tabsFrameLayout?.isVisible == true) 48.dpToPx else 0
@@ -289,7 +289,8 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
         )
         val mainActivity = mainActivity ?: return
         val useSearchToolbar = mainToolbar?.alpha ?: 0f <= 0f
-        if (if (useSearchToolbar) (-y >= height || recyclerView.scrollState <= RecyclerView.SCROLL_STATE_IDLE)
+        val idle = RecyclerView.SCROLL_STATE_IDLE
+        if (if (useSearchToolbar) (-y >= height || recyclerView?.scrollState ?: idle <= idle)
             else (mainActivity.currentToolbar == cardToolbar)
         ) {
             useSearchToolbarForMenu(useSearchToolbar)
