@@ -17,6 +17,7 @@ import android.graphics.Point
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.PowerManager
 import android.view.Gravity
@@ -75,6 +76,7 @@ import eu.kanade.tachiyomi.util.system.pxToDp
 import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
 import eu.kanade.tachiyomi.widget.AutofitRecyclerView
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -506,6 +508,19 @@ fun Dialog.blurBehindWindow(
 
 fun TextView.setTextColorAlpha(alpha: Int) {
     setTextColor(ColorUtils.setAlphaComponent(currentTextColor, alpha))
+}
+
+fun View.updateGradiantBGRadius(ogRadius: Float, deviceRadius: Float, progress: Float, vararg updateOtherViews: View) {
+    (background as? GradientDrawable)?.let { drawable ->
+        val lerp = min(ogRadius, deviceRadius) * (1 - progress) +
+            max(ogRadius, deviceRadius) * progress
+        drawable.shape = GradientDrawable.RECTANGLE
+        drawable.cornerRadii = floatArrayOf(lerp, lerp, lerp, lerp, 0f, 0f, 0f, 0f)
+        background = drawable
+        updateOtherViews.forEach {
+            it.background = drawable
+        }
+    }
 }
 
 @RequiresApi(31)
