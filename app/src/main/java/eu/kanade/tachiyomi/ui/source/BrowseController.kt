@@ -99,7 +99,6 @@ class BrowseController :
         private set
 
     var headerHeight = 0
-    var smallHeaderHeight = 0
 
     var showingExtensions = false
 
@@ -118,9 +117,7 @@ class BrowseController :
         setHasOptionsMenu(true)
     }
 
-    override fun getTitle(): String? {
-        return view?.context?.getString(R.string.browse)
-    }
+    override fun getTitle(): String? = view?.context?.getString(R.string.browse)
 
     override fun getSearchTitle(): String? {
         return searchTitle(view?.context?.getString(R.string.sources)?.lowercase(Locale.ROOT))
@@ -147,7 +144,6 @@ class BrowseController :
         scrollViewWith(
             binding.sourceRecycler,
             afterInsets = {
-                smallHeaderHeight = it.getInsets(systemBars()).top + appBarHeight
                 headerHeight = binding.sourceRecycler.paddingTop
                 binding.sourceRecycler.updatePaddingRelative(
                     bottom = (activityBinding?.bottomNav?.height ?: it.getBottomGestureInsets()) + 58.spToPx
@@ -588,13 +584,11 @@ class BrowseController :
         // Change hint to show global search.
         activityBinding?.cardToolbar?.searchQueryHint = view?.context?.getString(R.string.global_search)
 
-//        searchItem.fixExpandInvalidate()
         // Create query listener which opens the global search view.
         setOnQueryTextChangeListener(searchView, true) {
             if (!it.isNullOrBlank()) performGlobalSearch(it)
             true
         }
-//        hideItemsIfExpanded(searchItem, menu)
     }
 
     private fun performGlobalSearch(query: String) {
