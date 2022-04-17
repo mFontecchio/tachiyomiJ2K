@@ -19,7 +19,6 @@ import eu.kanade.tachiyomi.data.database.models.LibraryManga
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.databinding.MangaGridItemBinding
 import eu.kanade.tachiyomi.source.SourceManager
-import eu.kanade.tachiyomi.util.manga.MangaCoverMetadata
 import eu.kanade.tachiyomi.util.system.contextCompatDrawable
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.widget.AutofitRecyclerView
@@ -100,30 +99,6 @@ class LibraryItem(
                         binding.coverThumbnail.updateLayoutParams<ConstraintLayout.LayoutParams> {
                             height = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT
                             dimensionRatio = "15:22"
-                        }
-                    } else {
-                        val ratio = MangaCoverMetadata.getRatio(manga)
-                        if (ratio != null) {
-                            binding.coverThumbnail.adjustViewBounds = false
-                            binding.coverThumbnail.maxHeight = Int.MAX_VALUE
-                            binding.coverThumbnail.minimumHeight = 0
-                            binding.constraintLayout.minHeight = 0
-                        } else {
-                            val coverHeight = (parent.itemWidth / 3f * 4f).toInt()
-                            binding.constraintLayout.minHeight = coverHeight / 2
-                            binding.coverThumbnail.minimumHeight =
-                                (parent.itemWidth / 3f * 3.6f).toInt()
-                            binding.coverThumbnail.maxHeight = (parent.itemWidth / 3f * 6f).toInt()
-                            binding.coverThumbnail.adjustViewBounds = true
-                        }
-                        binding.coverThumbnail.updateLayoutParams<ConstraintLayout.LayoutParams> {
-                            if (ratio != null) {
-                                height = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT
-                                dimensionRatio = "W,1:$ratio"
-                            } else {
-                                height = ViewGroup.LayoutParams.WRAP_CONTENT
-                                dimensionRatio = null
-                            }
                         }
                     }
                 }
