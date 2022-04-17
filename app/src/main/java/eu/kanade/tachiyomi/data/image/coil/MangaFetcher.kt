@@ -73,7 +73,7 @@ class MangaFetcher : Fetcher<Manga> {
         if (!shouldFetchRemotely) {
             val customCoverFile = coverCache.getCustomCoverFile(manga)
             if (customCoverFile.exists() && options.parameters.value(realCover) != true) {
-                setRatios(manga, customCoverFile)
+                setRatioAndColorsInScope(manga, customCoverFile)
                 return fileLoader(customCoverFile)
             }
         }
@@ -82,7 +82,7 @@ class MangaFetcher : Fetcher<Manga> {
             if (!manga.favorite) {
                 coverFile.setLastModified(Date().time)
             }
-            setRatios(manga, coverFile)
+            setRatioAndColorsInScope(manga, coverFile)
             return fileLoader(coverFile)
         }
         val (response, body) = awaitGetCall(
@@ -114,34 +114,38 @@ class MangaFetcher : Fetcher<Manga> {
                 coverCache.deleteCachedCovers()
             }
         }
-        setRatios(manga, coverFile, true)
+        setRatioAndColorsInScope(manga, coverFile)
         return fileLoader(coverFile)
     }
 
-    private fun setRatios(manga: Manga, ogFile: File? = null, force: Boolean = false) {
+    private fun setRatioAndColorsInScope(manga: Manga, ogFile: File? = null) {
         fileScope.launch {
-            if (!manga.favorite) {
-                MangaCoverRatios.remove(manga)
-            }
-            if (manga.vibrantCoverColor != null && !manga.favorite) return@launch
-            val file = ogFile ?: coverCache.getCustomCoverFile(manga).takeIf { it.exists() } ?: coverCache.getCoverFile(manga)
-            // if the file exists and the there was still an error then the file is corrupted
-            if (file.exists()) {
-                val options = BitmapFactory.Options()
-                val bitmap = BitmapFactory.decodeFile(file.path, options) ?: return@launch
-                Palette.from(bitmap).generate {
-                    if (it == null) return@generate
-                    if (manga.favorite) {
-                        it.dominantSwatch?.let { swatch ->
-                            manga.dominantCoverColors = swatch.rgb to swatch.titleTextColor
-                        }
+            setRatioAndColors(manga, ogFile)
+        }
+    }
+
+    fun setRatioAndColors(manga: Manga, ogFile: File? = null) {
+        if (!manga.favorite) {
+            MangaCoverRatios.remove(manga)
+        }
+        if (manga.vibrantCoverColor != null && !manga.favorite) return
+        val file = ogFile ?: coverCache.getCustomCoverFile(manga).takeIf { it.exists() } ?: coverCache.getCoverFile(manga)
+        // if the file exists and the there was still an error then the file is corrupted
+        if (file.exists()) {
+            val options = BitmapFactory.Options()
+            val bitmap = BitmapFactory.decodeFile(file.path, options) ?: return
+            Palette.from(bitmap).generate {
+                if (it == null) return@generate
+                if (manga.favorite) {
+                    it.dominantSwatch?.let { swatch ->
+                        manga.dominantCoverColors = swatch.rgb to swatch.titleTextColor
                     }
-                    val color = it.getBestColor() ?: return@generate
-                    manga.vibrantCoverColor = color
                 }
-                if (manga.favorite && !(options.outWidth == -1 || options.outHeight == -1)) {
-                    MangaCoverRatios.addCoverRatio(manga, options.outWidth / options.outHeight.toFloat())
-                }
+                val color = it.getBestColor() ?: return@generate
+                manga.vibrantCoverColor = color
+            }
+            if (manga.favorite && !(options.outWidth == -1 || options.outHeight == -1)) {
+                MangaCoverRatios.addCoverRatio(manga, options.outWidth / options.outHeight.toFloat())
             }
         }
     }
