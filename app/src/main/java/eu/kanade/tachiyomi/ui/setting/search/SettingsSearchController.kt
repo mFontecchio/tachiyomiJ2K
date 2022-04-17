@@ -71,19 +71,6 @@ class SettingsSearchController :
         searchItem?.expandActionView()
         setItems(getResultSet())
 
-//        searchItem.setOnActionExpandListener(
-//            object : MenuItem.OnActionExpandListener {
-//                override fun onMenuItemActionExpand(item: MenuItem?): Boolean {
-//                    return true
-//                }
-//
-//                override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
-//                    router.popCurrentController()
-//                    return false
-//                }
-//            }
-//        )
-
         searchView?.setOnQueryTextListener(
             object : SearchView.OnQueryTextListener {
                 override fun onQueryTextSubmit(query: String?): Boolean {
