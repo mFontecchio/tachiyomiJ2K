@@ -504,6 +504,10 @@ fun Dialog.blurBehindWindow(
     }
 }
 
+fun TextView.setTextColorAlpha(alpha: Int) {
+    setTextColor(ColorUtils.setAlphaComponent(currentTextColor, alpha))
+}
+
 @RequiresApi(31)
 fun View.animateBlur(
     @FloatRange(from = 0.1) from: Float,

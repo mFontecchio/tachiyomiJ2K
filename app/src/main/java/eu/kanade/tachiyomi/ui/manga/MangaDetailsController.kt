@@ -103,6 +103,7 @@ import eu.kanade.tachiyomi.util.view.requestFilePermissionsSafe
 import eu.kanade.tachiyomi.util.view.scrollViewWith
 import eu.kanade.tachiyomi.util.view.setOnQueryTextChangeListener
 import eu.kanade.tachiyomi.util.view.setStyle
+import eu.kanade.tachiyomi.util.view.setTextColorAlpha
 import eu.kanade.tachiyomi.util.view.snack
 import eu.kanade.tachiyomi.util.view.toolbarHeight
 import eu.kanade.tachiyomi.util.view.withFadeTransaction
@@ -1121,27 +1122,23 @@ class MangaDetailsController :
         ) return
         val scrolledList = binding.recycler
         val toolbarTextView = activityBinding?.toolbar?.toolbarTitle ?: return
-        toolbarTextView.setTextColor(
-            ColorUtils.setAlphaComponent(
-                toolbarTextView.currentTextColor,
-                if (isTablet) 0 else {
-                    (
-                        when {
-                            // Specific alpha provided
-                            alpha != null -> alpha
+        val tbAlpha = if (isTablet) 0 else {
+            (
+                when {
+                    // Specific alpha provided
+                    alpha != null -> alpha
 
-                            // First item isn't in view, full opacity
-                            ((scrolledList.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition() > 0) -> 1f
-                            ((scrolledList.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition() == 0) -> 0f
+                    // First item isn't in view, full opacity
+                    ((scrolledList.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition() > 0) -> 1f
+                    ((scrolledList.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition() == 0) -> 0f
 
-                            // Based on scroll amount when first item is in view
-                            else -> (scrolledList.computeVerticalScrollOffset() - (20.dpToPx))
-                                .coerceIn(0, 255) / 255f
-                        } * 255
-                        ).roundToInt()
-                }
-            )
-        )
+                    // Based on scroll amount when first item is in view
+                    else -> (scrolledList.computeVerticalScrollOffset() - (20.dpToPx))
+                        .coerceIn(0, 255) / 255f
+                } * 255
+                ).roundToInt()
+        }
+        toolbarTextView.setTextColorAlpha(tbAlpha)
     }
 
     private fun downloadChapters(choice: Int) {

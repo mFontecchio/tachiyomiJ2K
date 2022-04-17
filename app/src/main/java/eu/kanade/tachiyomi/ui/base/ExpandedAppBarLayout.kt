@@ -8,7 +8,6 @@ import android.view.ViewPropertyAnimator
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.graphics.ColorUtils
 import androidx.core.math.MathUtils
 import androidx.core.view.isGone
 import androidx.core.view.isInvisible
@@ -27,6 +26,7 @@ import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.getResourceColor
 import eu.kanade.tachiyomi.util.system.isTablet
 import eu.kanade.tachiyomi.util.view.backgroundColor
+import eu.kanade.tachiyomi.util.view.setTextColorAlpha
 import uy.kohesive.injekt.injectLazy
 import kotlin.math.abs
 import kotlin.math.max
@@ -153,11 +153,8 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
         bigView?.isGone = useSmallAnyway
         if (useSmallAnyway) {
             mainToolbar?.backgroundColor = null
-            val toolbarTextView = mainToolbar?.toolbarTitle ?: return
             if (!setTitleAlpha) return
-            toolbarTextView.setTextColor(
-                ColorUtils.setAlphaComponent(toolbarTextView.currentTextColor, 255)
-            )
+            mainToolbar?.toolbarTitle?.setTextColorAlpha(255)
         }
     }
 
@@ -278,18 +275,12 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
             (bigHeight + newY * 2) / (bigHeight) + 0.45f // (realHeight.toFloat() + newY * 5) / realHeight.toFloat() + .33f
         bigView?.alpha = MathUtils.clamp(if (alpha.isNaN()) 1f else alpha, 0f, 1f)
         val toolbarTextView = mainToolbar?.toolbarTitle ?: return
-        toolbarTextView.setTextColor(
-            ColorUtils.setAlphaComponent(
-                toolbarTextView.currentTextColor,
-                (
-                    MathUtils.clamp(
-                        (1 - ((if (alpha.isNaN()) 1f else alpha) + 0.95f)) * 2,
-                        0f,
-                        1f
-                    ) * 255
-                    )
-                    .roundToInt()
-            )
+        toolbarTextView.setTextColorAlpha(
+            (
+                MathUtils.clamp(
+                    (1 - ((if (alpha.isNaN()) 1f else alpha) + 0.95f)) * 2, 0f, 1f
+                ) * 255
+                ).roundToInt()
         )
         mainToolbar?.alpha = MathUtils.clamp(
             (y + (mainToolbar?.y ?: 0f)) / paddingTop,
