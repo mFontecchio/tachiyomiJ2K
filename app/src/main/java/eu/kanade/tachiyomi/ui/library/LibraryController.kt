@@ -96,6 +96,7 @@ import eu.kanade.tachiyomi.util.view.collapse
 import eu.kanade.tachiyomi.util.view.expand
 import eu.kanade.tachiyomi.util.view.fullAppBarHeight
 import eu.kanade.tachiyomi.util.view.getItemView
+import eu.kanade.tachiyomi.util.view.getText
 import eu.kanade.tachiyomi.util.view.hide
 import eu.kanade.tachiyomi.util.view.isControllerVisible
 import eu.kanade.tachiyomi.util.view.isExpanded
@@ -1318,6 +1319,12 @@ class LibraryController(
     private fun toggleSelection(position: Int) {
         val item = adapter.getItem(position) as? LibraryItem ?: return
         if (item.manga.isBlank()) return
+        if (snack != null && libraryLayout == LibraryItem.LAYOUT_COVER_ONLY_GRID &&
+            adapter.isSelected(position) && snack?.getText() == item.manga.title
+        ) {
+            snack?.dismiss()
+            snack = null
+        }
         setSelection(item.manga, !adapter.isSelected(position))
         invalidateActionMode()
     }
@@ -1361,7 +1368,15 @@ class LibraryController(
      * @param position the position of the element clicked.
      */
     override fun onItemLongClick(position: Int) {
-        if (adapter.getItem(position) !is LibraryItem) return
+        val item = adapter.getItem(position)
+        if (item !is LibraryItem) return
+        if (libraryLayout == LibraryItem.LAYOUT_COVER_ONLY_GRID && actionMode == null) {
+            snack?.dismiss()
+            snack = view?.snack(item.manga.title) {
+                anchorView = activityBinding?.bottomNav
+                view.elevation = 15f.dpToPx
+            }
+        }
         createActionModeIfNeeded()
         when {
             lastClickPosition == -1 -> setSelection(position)
