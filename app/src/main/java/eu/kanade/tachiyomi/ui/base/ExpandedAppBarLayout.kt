@@ -53,9 +53,9 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
     private var toolbarMode = ToolbarState.EXPANDED
         set(value) {
             field = value
-            if (value == ToolbarState.SEARCH) {
+            if (value == ToolbarState.SEARCH_ONLY) {
                 mainToolbar?.isGone = true
-            } else if (value == ToolbarState.MAIN) {
+            } else if (value == ToolbarState.COMPACT) {
                 mainToolbar?.alpha = 1f
                 mainToolbar?.isVisible = true
             }
@@ -124,23 +124,23 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
 
     enum class ToolbarState {
         EXPANDED,
-        MAIN,
-        SEARCH,
+        COMPACT,
+        SEARCH_ONLY,
     }
 
     fun setToolbarModeBy(controller: Controller?, useSmall: Boolean? = null) {
         toolbarMode = if (useSmall ?: !useLargeToolbar) {
             when (controller) {
-                is FloatingSearchInterface -> ToolbarState.SEARCH
-                else -> ToolbarState.MAIN
+                is FloatingSearchInterface -> ToolbarState.SEARCH_ONLY
+                else -> ToolbarState.COMPACT
             }
         } else {
             when (controller) {
                 is SmallToolbarInterface -> {
                     if (controller is FloatingSearchInterface) {
-                        ToolbarState.SEARCH
+                        ToolbarState.SEARCH_ONLY
                     } else {
-                        ToolbarState.MAIN
+                        ToolbarState.COMPACT
                     }
                 }
                 else -> ToolbarState.EXPANDED
@@ -341,7 +341,7 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
     fun useSearchToolbarForMenu(showCardTB: Boolean) {
         val mainActivity = mainActivity ?: return
         if (lockYPos) return
-        if ((showCardTB || toolbarMode == ToolbarState.SEARCH) && cardFrame?.isVisible == true) {
+        if ((showCardTB || toolbarMode == ToolbarState.SEARCH_ONLY) && cardFrame?.isVisible == true) {
             if (mainActivity.currentToolbar != cardToolbar) {
                 mainActivity.setFloatingToolbar(true, showSearchAnyway = true)
             }
