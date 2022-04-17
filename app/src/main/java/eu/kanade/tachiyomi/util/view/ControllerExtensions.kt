@@ -182,7 +182,6 @@ fun Controller.liftAppbarWith(recycler: RecyclerView, padView: Boolean = false) 
     activityBinding?.appBar?.y = 0f
     activityBinding?.appBar?.updateAppBarAfterY(recycler)
 
-//    colorToolbar(recycler.canScrollVertically(-1))
     setAppBarBG(0f, preferences)
     recycler.addOnScrollListener(
         object : RecyclerView.OnScrollListener() {
@@ -471,7 +470,6 @@ fun Controller.scrollViewWith(
                         lastY = 0f
                         if (isToolbarColor) colorToolbar(false)
                     } else {
-//                        if (!isTablet) {
                         activityBinding!!.appBar.y -= dy
                         activityBinding!!.appBar.updateAppBarAfterY(recycler)
                         activityBinding!!.bottomNav?.let { bottomNav ->
@@ -501,7 +499,6 @@ fun Controller.scrollViewWith(
                         ) {
                             colorToolbar(true)
                         }
-//                        }
                         val notAtTop = !atTopOfRecyclerView()
                         if (notAtTop != isToolbarColor) colorToolbar(notAtTop)
                         lastY = activityBinding!!.appBar.y
@@ -518,9 +515,6 @@ fun Controller.scrollViewWith(
                 if (newState == RecyclerView.SCROLL_STATE_IDLE &&
                     (this@scrollViewWith as? BaseController<*>)?.isDragging != true
                 ) {
-//                    if (isTablet) {
-//                        return
-//                    }
                     if (router?.backstack?.lastOrNull()
                         ?.controller == this@scrollViewWith && statusBarHeight > -1 &&
                         activity != null && activityBinding!!.appBar.height > 0 &&
