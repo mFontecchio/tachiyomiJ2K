@@ -257,6 +257,10 @@ object PreferenceKeys {
 
     const val useStaggeredGrid = "use_staggered_grid"
 
+    const val coverRatios = "cover_ratio"
+
+    const val coverColors = "cover_colors"
+
     const val hideChapterTitles = "hide_chapter_titles"
 
     const val chaptersDescAsDefault = "chapters_desc_as_default"
