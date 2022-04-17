@@ -92,9 +92,9 @@ import eu.kanade.tachiyomi.util.system.materialAlertDialog
 import eu.kanade.tachiyomi.util.system.openInBrowser
 import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
 import eu.kanade.tachiyomi.util.view.activityBinding
-import eu.kanade.tachiyomi.util.view.bigToolbarHeight
 import eu.kanade.tachiyomi.util.view.collapse
 import eu.kanade.tachiyomi.util.view.expand
+import eu.kanade.tachiyomi.util.view.fullAppBarHeight
 import eu.kanade.tachiyomi.util.view.getItemView
 import eu.kanade.tachiyomi.util.view.hide
 import eu.kanade.tachiyomi.util.view.isControllerVisible
@@ -115,7 +115,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.util.ArrayList
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.max
@@ -586,7 +585,7 @@ class LibraryController(
             presenter.restoreLibrary()
             if (justStarted) {
                 val activityBinding = activityBinding ?: return
-                val bigToolbarHeight = bigToolbarHeight ?: return
+                val bigToolbarHeight = fullAppBarHeight ?: return
                 if (lastUsedCategory > 0) {
                     activityBinding.appBar.y =
                         -bigToolbarHeight + activityBinding.cardFrame.height.toFloat()
@@ -601,7 +600,7 @@ class LibraryController(
 
     private fun updateSmallerViewsTopMargins() {
         val activityBinding = activityBinding ?: return
-        val bigToolbarHeight = bigToolbarHeight ?: return
+        val bigToolbarHeight = fullAppBarHeight ?: return
         val value = max(
             0,
             bigToolbarHeight + activityBinding.appBar.y.roundToInt()
@@ -1175,7 +1174,7 @@ class LibraryController(
         if (headerPosition > -1) {
             val activityBinding = activityBinding ?: return
             binding.libraryGridRecycler.recycler.suppressLayout(true)
-            val appbarOffset = if (pos <= 0) 0 else -bigToolbarHeight!! + activityBinding.cardFrame.height
+            val appbarOffset = if (pos <= 0) 0 else -fullAppBarHeight!! + activityBinding.cardFrame.height
             val previousHeader = adapter.getItem(adapter.indexOf(pos - 1)) as? LibraryHeaderItem
             binding.libraryGridRecycler.recycler.scrollToPositionWithOffset(
                 headerPosition,
@@ -1785,12 +1784,22 @@ class LibraryController(
                 presenter.downloadUnread(selectedMangas.toList())
             }
             R.id.action_mark_as_read -> {
-                presenter.markReadStatus(selectedMangas.toList(), true)
-                destroyActionModeIfNeeded()
+                activity!!.materialAlertDialog()
+                    .setMessage(R.string.mark_all_chapters_as_read)
+                    .setPositiveButton(R.string.mark_as_read) { _, _ ->
+                        markReadStatus(R.string.marked_as_read, true)
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
             }
             R.id.action_mark_as_unread -> {
-                presenter.markReadStatus(selectedMangas.toList(), false)
-                destroyActionModeIfNeeded()
+                activity!!.materialAlertDialog()
+                    .setMessage(R.string.mark_all_chapters_as_unread)
+                    .setPositiveButton(R.string.mark_as_unread) { _, _ ->
+                        markReadStatus(R.string.marked_as_unread, false)
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
             }
             R.id.action_migrate -> {
                 val skipPre = preferences.skipPreMigration().get()
@@ -1804,6 +1813,35 @@ class LibraryController(
             else -> return false
         }
         return true
+    }
+
+    private fun markReadStatus(resource: Int, markRead: Boolean) {
+        val mapMangaChapters = presenter.markReadStatus(selectedMangas.toList(), markRead)
+        destroyActionModeIfNeeded()
+        snack?.dismiss()
+        snack = view?.snack(resource, Snackbar.LENGTH_INDEFINITE) {
+            anchorView = anchorView()
+            view.elevation = 15f.dpToPx
+            var undoing = false
+            setAction(R.string.undo) {
+                presenter.undoMarkReadStatus(mapMangaChapters)
+                undoing = true
+            }
+            addCallback(
+                object : BaseTransientBottomBar.BaseCallback<Snackbar>() {
+                    override fun onDismissed(
+                        transientBottomBar: Snackbar?,
+                        event: Int
+                    ) {
+                        super.onDismissed(transientBottomBar, event)
+                        if (!undoing) presenter.confirmMarkReadStatus(
+                            mapMangaChapters, markRead
+                        )
+                    }
+                }
+            )
+        }
+        (activity as? MainActivity)?.setUndoSnackBar(snack)
     }
 
     private fun shareManga() {

@@ -342,7 +342,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
 
             override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
                 val controller = router.backstack.lastOrNull()?.controller
-                setupCardMenu(binding.toolbar.menu, true)
+                setupSearchTBMenu(binding.toolbar.menu, true)
                 (controller as? BaseController<*>)?.onActionViewCollapse(item)
                 (controller as? SettingsController)?.onActionViewCollapse(item)
                 return true
@@ -389,7 +389,6 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                     container: ViewGroup,
                     handler: ControllerChangeHandler
                 ) {
-//                    binding.appBar.y = 0f
                     nav.translationY = 0f
                     showDLQueueTutorial()
                     if (router.backstackSize == 1) {
@@ -485,7 +484,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 if (show && !solidBG) Color.TRANSPARENT else getResourceColor(R.attr.colorSurface)
             )
         }
-        setupCardMenu(binding.toolbar.menu)
+        setupSearchTBMenu(binding.toolbar.menu)
         if (currentToolbar != binding.cardToolbar) {
             binding.cardToolbar.menu?.children?.toList()?.forEach {
                 it.isVisible = false
@@ -852,18 +851,19 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         if (router.backstack.lastOrNull()?.controller is FloatingSearchInterface) {
             searchItem?.isVisible = false
         }
+        // Using post since controller's onPrepareOptionsMenu will call after this method
         binding.root.post {
-            setupCardMenu(binding.toolbar.menu)
+            setupSearchTBMenu(binding.toolbar.menu)
         }
         return super.onPrepareOptionsMenu(menu)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        setupCardMenu(menu)
+        setupSearchTBMenu(menu)
         return super.onCreateOptionsMenu(menu)
     }
 
-    private fun setupCardMenu(menu: Menu?, showAnyway: Boolean = false) {
+    private fun setupSearchTBMenu(menu: Menu?, showAnyway: Boolean = false) {
         val toolbar = binding.cardToolbar
         val oldItemsId = toolbar.menu.children.toList().map { it.itemId }
         oldItemsId.forEach {
@@ -897,7 +897,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                         }
 
                         override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
-                            setupCardMenu(binding.toolbar.menu, true)
+                            setupSearchTBMenu(binding.toolbar.menu, true)
                             return true
                         }
                     })

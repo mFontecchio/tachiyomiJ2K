@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.ui.source
 
 import android.app.Activity
-import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Parcelable
 import android.view.LayoutInflater
@@ -13,7 +12,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
 import androidx.core.graphics.ColorUtils
-import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.doOnNextLayout
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
@@ -63,6 +61,7 @@ import eu.kanade.tachiyomi.util.view.scrollViewWith
 import eu.kanade.tachiyomi.util.view.setOnQueryTextChangeListener
 import eu.kanade.tachiyomi.util.view.snack
 import eu.kanade.tachiyomi.util.view.toolbarHeight
+import eu.kanade.tachiyomi.util.view.updateGradiantBGRadius
 import eu.kanade.tachiyomi.util.view.withFadeTransaction
 import eu.kanade.tachiyomi.widget.LinearLayoutManagerAccurateOffset
 import kotlinx.parcelize.Parcelize
@@ -71,7 +70,6 @@ import uy.kohesive.injekt.api.get
 import java.util.Date
 import java.util.Locale
 import kotlin.math.max
-import kotlin.math.min
 
 /**
  * This controller shows and manages the different catalogues enabled by the user.
@@ -100,7 +98,6 @@ class BrowseController :
         private set
 
     var headerHeight = 0
-    var smallHeaderHeight = 0
 
     var showingExtensions = false
 
@@ -119,9 +116,7 @@ class BrowseController :
         setHasOptionsMenu(true)
     }
 
-    override fun getTitle(): String? {
-        return view?.context?.getString(R.string.browse)
-    }
+    override fun getTitle(): String? = view?.context?.getString(R.string.browse)
 
     override fun getSearchTitle(): String? {
         return searchTitle(view?.context?.getString(R.string.sources)?.lowercase(Locale.ROOT))
@@ -148,7 +143,6 @@ class BrowseController :
         scrollViewWith(
             binding.sourceRecycler,
             afterInsets = {
-                smallHeaderHeight = it.getInsets(systemBars()).top + appBarHeight
                 headerHeight = binding.sourceRecycler.paddingTop
                 binding.sourceRecycler.updatePaddingRelative(
                     bottom = (activityBinding?.bottomNav?.height ?: it.getBottomGestureInsets()) + 58.spToPx
@@ -338,14 +332,12 @@ class BrowseController :
             activityBinding?.appBar?.alpha = (1 - progress * 3) + 0.5f
         }
 
-        (binding.bottomSheet.root.background as? GradientDrawable)?.let { drawable ->
-            val lerp = min(ogRadius, deviceRadius) * (1 - progress) +
-                max(ogRadius, deviceRadius) * progress
-            drawable.shape = GradientDrawable.RECTANGLE
-            drawable.cornerRadii = floatArrayOf(lerp, lerp, lerp, lerp, 0f, 0f, 0f, 0f)
-            binding.bottomSheet.root.background = drawable
-            binding.bottomSheet.sheetLayout.background = drawable
-        }
+        binding.bottomSheet.root.updateGradiantBGRadius(
+            ogRadius,
+            deviceRadius,
+            progress,
+            binding.bottomSheet.sheetLayout
+        )
 
         val selectedColor = ColorUtils.setAlphaComponent(
             bottomSheet.context.getResourceColor(R.attr.tabBarIconColor),
@@ -591,13 +583,11 @@ class BrowseController :
         // Change hint to show global search.
         activityBinding?.cardToolbar?.searchQueryHint = view?.context?.getString(R.string.global_search)
 
-//        searchItem.fixExpandInvalidate()
         // Create query listener which opens the global search view.
         setOnQueryTextChangeListener(searchView, true) {
             if (!it.isNullOrBlank()) performGlobalSearch(it)
             true
         }
-//        hideItemsIfExpanded(searchItem, menu)
     }
 
     private fun performGlobalSearch(query: String) {
