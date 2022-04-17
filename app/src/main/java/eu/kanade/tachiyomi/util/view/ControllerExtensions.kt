@@ -572,6 +572,7 @@ fun Controller.setItemAnimatorForAppBar(recycler: RecyclerView) {
         }
     }
 }
+
 val Controller.mainRecyclerView: RecyclerView?
     get() = (this as? SettingsController)?.listView ?: (this as? BaseController<*>)?.mainRecycler
 
