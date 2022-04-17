@@ -894,19 +894,17 @@ class LibraryController(
                     end = 5.dpToPx
                 )
             }
-            (manager as? GridLayoutManager)?.spanSizeLookup = (
-                object : GridLayoutManager.SpanSizeLookup() {
-                    override fun getSpanSize(position: Int): Int {
-                        if (libraryLayout == 0) return managerSpanCount
-                        val item = this@LibraryController.adapter.getItem(position)
-                        return if (item is LibraryHeaderItem || item is SearchGlobalItem || (item is LibraryItem && item.manga.isBlank())) {
-                            managerSpanCount
-                        } else {
-                            1
-                        }
+            (manager as? GridLayoutManager)?.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+                override fun getSpanSize(position: Int): Int {
+                    if (libraryLayout == 0) return managerSpanCount
+                    val item = this@LibraryController.adapter.getItem(position)
+                    return if (item is LibraryHeaderItem || item is SearchGlobalItem || (item is LibraryItem && item.manga.isBlank())) {
+                        managerSpanCount
+                    } else {
+                        1
                     }
                 }
-                )
+            }
         }
     }
 
@@ -1354,11 +1352,7 @@ class LibraryController(
     }
 
     private fun openManga(manga: Manga) {
-        router.pushController(
-            MangaDetailsController(
-                manga
-            ).withFadeTransaction()
-        )
+        router.pushController(MangaDetailsController(manga).withFadeTransaction())
     }
 
     /**
