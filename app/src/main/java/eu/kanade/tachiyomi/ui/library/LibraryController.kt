@@ -881,7 +881,7 @@ class LibraryController(
                 )
             }
             useStaggered(preferences)
-            if (libraryLayout == 0) {
+            if (libraryLayout == LibraryItem.LAYOUT_LIST) {
                 spanCount = 1
                 updatePaddingRelative(
                     start = 0,
@@ -896,7 +896,7 @@ class LibraryController(
             }
             (manager as? GridLayoutManager)?.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
                 override fun getSpanSize(position: Int): Int {
-                    if (libraryLayout == 0) return managerSpanCount
+                    if (libraryLayout == LibraryItem.LAYOUT_LIST) return managerSpanCount
                     val item = this@LibraryController.adapter.getItem(position)
                     return if (item is LibraryHeaderItem || item is SearchGlobalItem || (item is LibraryItem && item.manga.isBlank())) {
                         managerSpanCount

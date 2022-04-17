@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
+import eu.kanade.tachiyomi.ui.library.LibraryItem
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.pxToDp
 import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
@@ -77,7 +78,7 @@ class AutofitRecyclerView @JvmOverloads constructor(context: Context, attrs: Att
         useStaggered(
             preferences.useStaggeredGrid().get() &&
                 !preferences.uniformGrid().get() &&
-                preferences.libraryLayout().get() != 0
+                preferences.libraryLayout().get() != LibraryItem.LAYOUT_LIST
         )
     }
 

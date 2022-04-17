@@ -21,6 +21,7 @@ import eu.kanade.tachiyomi.databinding.MangaGridItemBinding
 import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.util.system.contextCompatDrawable
 import eu.kanade.tachiyomi.util.system.dpToPx
+import eu.kanade.tachiyomi.util.view.compatToolTipText
 import eu.kanade.tachiyomi.widget.AutofitRecyclerView
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -49,7 +50,7 @@ class LibraryItem(
         get() = preferences.hideStartReadingButton().get()
 
     override fun getLayoutRes(): Int {
-        return if (libraryLayout == 0 || manga.isBlank()) {
+        return if (libraryLayout == LAYOUT_LIST || manga.isBlank()) {
             R.layout.manga_list_item
         } else {
             R.layout.manga_grid_item
@@ -61,18 +62,18 @@ class LibraryItem(
         return if (parent is AutofitRecyclerView) {
             val libraryLayout = libraryLayout
             val isFixedSize = uniformSize
-            if (libraryLayout == 0 || manga.isBlank()) {
+            if (libraryLayout == LAYOUT_LIST || manga.isBlank()) {
                 LibraryListHolder(view, adapter as LibraryCategoryAdapter)
             } else {
                 view.apply {
                     val binding = MangaGridItemBinding.bind(this)
-                    binding.behindTitle.isVisible = libraryLayout == 3
-                    if (libraryLayout == 1) {
+                    binding.behindTitle.isVisible = libraryLayout == LAYOUT_COVER_ONLY_GRID
+                    if (libraryLayout == LAYOUT_COMPACT_GRID) {
                         binding.card.updateLayoutParams<ConstraintLayout.LayoutParams> {
                             bottomMargin = 6.dpToPx
                         }
-                    } else if (libraryLayout >= 2) {
-                        binding.textLayout.isVisible = libraryLayout == 2
+                    } else if (libraryLayout >= LAYOUT_COMFORTABLE_GRID) {
+                        binding.textLayout.isVisible = libraryLayout == LAYOUT_COMFORTABLE_GRID
                         binding.constraintLayout.background = context.contextCompatDrawable(
                             R.drawable.library_comfortable_grid_selector
                         )
@@ -105,7 +106,7 @@ class LibraryItem(
                 val gridHolder = LibraryGridHolder(
                     view,
                     adapter as LibraryCategoryAdapter,
-                    libraryLayout == 1,
+                    libraryLayout == LAYOUT_COMPACT_GRID,
                     isFixedSize
                 )
                 if (!isFixedSize) {
@@ -131,6 +132,9 @@ class LibraryItem(
         (holder as? LibraryGridHolder)?.setSelected(adapter.isSelected(position))
         val layoutParams = holder.itemView.layoutParams as? StaggeredGridLayoutManager.LayoutParams
         layoutParams?.isFullSpan = manga.isBlank()
+        if (libraryLayout == LAYOUT_COVER_ONLY_GRID) {
+            holder.itemView.compatToolTipText = manga.title
+        }
     }
 
     /**
@@ -196,5 +200,12 @@ class LibraryItem(
         var result = manga.id!!.hashCode()
         result = 31 * result + (header?.hashCode() ?: 0)
         return result
+    }
+
+    companion object {
+        const val LAYOUT_LIST = 0
+        const val LAYOUT_COMPACT_GRID = 1
+        const val LAYOUT_COMFORTABLE_GRID = 2
+        const val LAYOUT_COVER_ONLY_GRID = 3
     }
 }
