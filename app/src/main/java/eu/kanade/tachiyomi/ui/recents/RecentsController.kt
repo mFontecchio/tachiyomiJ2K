@@ -60,10 +60,10 @@ import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
 import eu.kanade.tachiyomi.util.system.spToPx
 import eu.kanade.tachiyomi.util.system.toInt
 import eu.kanade.tachiyomi.util.view.activityBinding
-import eu.kanade.tachiyomi.util.view.bigToolbarHeight
 import eu.kanade.tachiyomi.util.view.collapse
 import eu.kanade.tachiyomi.util.view.compatToolTipText
 import eu.kanade.tachiyomi.util.view.expand
+import eu.kanade.tachiyomi.util.view.fullAppBarHeight
 import eu.kanade.tachiyomi.util.view.hide
 import eu.kanade.tachiyomi.util.view.isCollapsed
 import eu.kanade.tachiyomi.util.view.isControllerVisible
@@ -186,7 +186,7 @@ class RecentsController(bundle: Bundle? = null) :
                 binding.downloadBottomSheet.sheetLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                     height = appBarHeight + it.getInsets(systemBars()).top
                 }
-                val bigToolbarHeight = bigToolbarHeight ?: 0
+                val bigToolbarHeight = fullAppBarHeight ?: 0
 
                 binding.recentsEmptyView.updatePadding(
                     top = bigToolbarHeight + it.getInsets(systemBars()).top,

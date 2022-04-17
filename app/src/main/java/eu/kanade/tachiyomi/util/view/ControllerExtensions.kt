@@ -114,13 +114,13 @@ fun Controller.liftAppbarWith(recycler: RecyclerView, padView: Boolean = false) 
         val attrsArray = intArrayOf(R.attr.mainActionBarSize)
         val array = recycler.context.obtainStyledAttributes(attrsArray)
         var appBarHeight = (
-            if (bigToolbarHeight ?: 0 > 0) bigToolbarHeight!!
+            if (fullAppBarHeight ?: 0 > 0) fullAppBarHeight!!
             else array.getDimensionPixelSize(0, 0)
             )
         array.recycle()
         activityBinding!!.toolbar.post {
-            if (bigToolbarHeight!! > 0) {
-                appBarHeight = bigToolbarHeight!!
+            if (fullAppBarHeight!! > 0) {
+                appBarHeight = fullAppBarHeight!!
                 recycler.requestApplyInsets()
             }
         }
@@ -219,15 +219,15 @@ fun Controller.scrollViewWith(
     val attrsArray = intArrayOf(R.attr.mainActionBarSize)
     val array = recycler.context.obtainStyledAttributes(attrsArray)
     var appBarHeight = (
-        if (bigToolbarHeight ?: 0 > 0) bigToolbarHeight!!
+        if (fullAppBarHeight ?: 0 > 0) fullAppBarHeight!!
         else activityBinding?.appBar?.preLayoutHeight ?: array.getDimensionPixelSize(0, 0)
         )
     array.recycle()
     swipeRefreshLayout?.setDistanceToTriggerSync(150.dpToPx)
     val swipeCircle = swipeRefreshLayout?.findChild<ImageView>()
     activityBinding!!.appBar.doOnLayout {
-        if (bigToolbarHeight!! > 0) {
-            appBarHeight = bigToolbarHeight!!
+        if (fullAppBarHeight!! > 0) {
+            appBarHeight = fullAppBarHeight!!
             recycler.requestApplyInsets()
         }
     }
@@ -318,7 +318,7 @@ fun Controller.scrollViewWith(
             activityBinding.toolbar.height - if (includeTabView) tabBarHeight else 0
     }
     recycler.doOnApplyWindowInsetsCompat { view, insets, _ ->
-        appBarHeight = bigToolbarHeight!!
+        appBarHeight = fullAppBarHeight!!
         val headerHeight = insets.getInsets(systemBars()).top + appBarHeight
         if (!customPadding) view.updatePaddingRelative(
             top = headerHeight,
@@ -582,7 +582,7 @@ fun Controller.moveRecyclerViewUp(allTheWayUp: Boolean = false, scrollUpAnyway: 
     val recycler = mainRecyclerView ?: return
     val activityBinding = activityBinding ?: return
     val appBarOffset = activityBinding.appBar.toolbarDistanceToTop
-    if (allTheWayUp && recycler.computeVerticalScrollOffset() - recycler.paddingTop <= bigToolbarHeight ?: activityBinding.appBar.preLayoutHeight) {
+    if (allTheWayUp && recycler.computeVerticalScrollOffset() - recycler.paddingTop <= fullAppBarHeight ?: activityBinding.appBar.preLayoutHeight) {
         (recycler.layoutManager as? LinearLayoutManager)?.scrollToPosition(0)
         recycler.post {
             activityBinding.appBar.updateAppBarAfterY(recycler)
@@ -713,7 +713,8 @@ val Controller.activityBinding: MainActivityBinding?
 val Controller.toolbarHeight: Int?
     get() = (activity as? MainActivity)?.toolbarHeight
 
-val Controller.bigToolbarHeight: Int?
+/** Returns the expected height of the app bar - top insets, based on what the controller needs */
+val Controller.fullAppBarHeight: Int?
     get() = (activity as? MainActivity)?.bigToolbarHeight(
         (this as? FloatingSearchInterface)?.showFloatingBar() == true,
         this is TabbedInterface,

@@ -45,7 +45,7 @@ import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.openInBrowser
 import eu.kanade.tachiyomi.util.view.activityBinding
 import eu.kanade.tachiyomi.util.view.applyBottomAnimatedInsets
-import eu.kanade.tachiyomi.util.view.bigToolbarHeight
+import eu.kanade.tachiyomi.util.view.fullAppBarHeight
 import eu.kanade.tachiyomi.util.view.inflate
 import eu.kanade.tachiyomi.util.view.isControllerVisible
 import eu.kanade.tachiyomi.util.view.requestFilePermissionsSafe
@@ -212,7 +212,7 @@ open class BrowseSourceController(bundle: Bundle) :
                         bottomMargin = insets.getInsets(systemBars() or ime()).bottom + 16.dpToPx
                     }
                 }
-                val bigToolbarHeight = bigToolbarHeight ?: 0
+                val bigToolbarHeight = fullAppBarHeight ?: 0
                 binding.progress.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                     topMargin = (bigToolbarHeight + insets.getInsets(systemBars()).top) / 2
                 }

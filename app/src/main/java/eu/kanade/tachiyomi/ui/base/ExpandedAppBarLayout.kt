@@ -97,7 +97,7 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
         )
 
     /** Small toolbar height + top system insets, same size as a collapsed appbar */
-    private val toolbarHeight: Float
+    private val compactAppBarHeight: Float
         get() {
             val appBarHeight = if (mainToolbar?.height ?: 0 > 0) {
                 mainToolbar?.height ?: 0
@@ -245,8 +245,8 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
         val bigHeight = bigView?.height ?: 0
         val realHeight = preLayoutHeight + paddingTop
         val tabHeight = if (tabsFrameLayout?.isVisible == true) 48.dpToPx else 0
-        val smallHeight = -realHeight + toolbarHeight + tabHeight
-        val newY = if (offset < realHeight - toolbarHeight - tabHeight) {
+        val smallHeight = -realHeight + compactAppBarHeight + tabHeight
+        val newY = if (offset < realHeight - compactAppBarHeight - tabHeight) {
             -offset.toFloat()
         } else {
             MathUtils.clamp(
@@ -254,7 +254,7 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
                 -realHeight.toFloat() + top + minTabletHeight,
                 max(
                     smallHeight,
-                    if (offset > realHeight - toolbarHeight - tabHeight) smallHeight else min(
+                    if (offset > realHeight - compactAppBarHeight - tabHeight) smallHeight else min(
                         -offset.toFloat(),
                         0f
                     )
@@ -271,7 +271,7 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
             }
         }
         if (toolbarMode != ToolbarState.EXPANDED) {
-            useSearchToolbarForMenu(offset > realHeight - toolbarHeight - tabHeight)
+            useSearchToolbarForMenu(offset > realHeight - compactAppBarHeight - tabHeight)
             return
         }
         val alpha =
@@ -307,7 +307,7 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
 
     fun snapAppBarY(recyclerView: RecyclerView, callback: (() -> Unit)?): Float {
         yAnimator?.cancel()
-        val halfWay = toolbarHeight / 2
+        val halfWay = compactAppBarHeight / 2
         val shortAnimationDuration = resources?.getInteger(
             android.R.integer.config_longAnimTime
         ) ?: 0
@@ -317,10 +317,10 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
         val lastY = if (closerToTop && !atTop) {
             -height.toFloat()
         } else {
-            toolbarHeight
+            compactAppBarHeight
         }
 
-        val onFirstItem = recyclerView.computeVerticalScrollOffset() < realHeight - toolbarHeight
+        val onFirstItem = recyclerView.computeVerticalScrollOffset() < realHeight - compactAppBarHeight
 
         return if (!onFirstItem) {
             yAnimator = animate().y(lastY)

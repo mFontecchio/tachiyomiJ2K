@@ -91,9 +91,9 @@ import eu.kanade.tachiyomi.util.system.materialAlertDialog
 import eu.kanade.tachiyomi.util.system.openInBrowser
 import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
 import eu.kanade.tachiyomi.util.view.activityBinding
-import eu.kanade.tachiyomi.util.view.bigToolbarHeight
 import eu.kanade.tachiyomi.util.view.collapse
 import eu.kanade.tachiyomi.util.view.expand
+import eu.kanade.tachiyomi.util.view.fullAppBarHeight
 import eu.kanade.tachiyomi.util.view.getItemView
 import eu.kanade.tachiyomi.util.view.hide
 import eu.kanade.tachiyomi.util.view.isControllerVisible
@@ -596,7 +596,7 @@ class LibraryController(
             presenter.restoreLibrary()
             if (justStarted) {
                 val activityBinding = activityBinding ?: return
-                val bigToolbarHeight = bigToolbarHeight ?: return
+                val bigToolbarHeight = fullAppBarHeight ?: return
                 if (lastUsedCategory > 0) {
                     activityBinding.appBar.y =
                         -bigToolbarHeight + activityBinding.cardFrame.height.toFloat()
@@ -611,7 +611,7 @@ class LibraryController(
 
     private fun updateSmallerViewsTopMargins() {
         val activityBinding = activityBinding ?: return
-        val bigToolbarHeight = bigToolbarHeight ?: return
+        val bigToolbarHeight = fullAppBarHeight ?: return
         val value = max(
             0,
             bigToolbarHeight + activityBinding.appBar.y.roundToInt()
@@ -1156,7 +1156,7 @@ class LibraryController(
         if (headerPosition > -1) {
             val activityBinding = activityBinding ?: return
             binding.libraryGridRecycler.recycler.suppressLayout(true)
-            val appbarOffset = if (pos <= 0) 0 else -bigToolbarHeight!! + activityBinding.cardFrame.height
+            val appbarOffset = if (pos <= 0) 0 else -fullAppBarHeight!! + activityBinding.cardFrame.height
             val previousHeader = adapter.getItem(adapter.indexOf(pos - 1)) as? LibraryHeaderItem
             (binding.libraryGridRecycler.recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
                 headerPosition,
