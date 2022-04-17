@@ -161,12 +161,12 @@ fun Controller.liftAppbarWith(recycler: RecyclerView, padView: Boolean = false) 
             activity!!.getResourceColor(R.attr.colorPrimaryVariant)
         )
         if (floatingBar) {
-            setAppBarBG(0f, preferences)
+            setAppBarBG(0f)
             return@f
         }
         toolbarColorAnim = ValueAnimator.ofFloat(percent, isColored.toInt().toFloat())
         toolbarColorAnim?.addUpdateListener { valueAnimator ->
-            setAppBarBG(valueAnimator.animatedValue as Float, preferences)
+            setAppBarBG(valueAnimator.animatedValue as Float)
         }
         toolbarColorAnim?.start()
     }
@@ -174,7 +174,7 @@ fun Controller.liftAppbarWith(recycler: RecyclerView, padView: Boolean = false) 
     val floatingBar =
         !(activityBinding?.toolbar?.isVisible == true || activityBinding?.tabsFrameLayout?.isVisible == true)
     if (floatingBar) {
-        setAppBarBG(0f, preferences)
+        setAppBarBG(0f)
     }
 
     activityBinding?.appBar?.setToolbarModeBy(this)
@@ -182,7 +182,7 @@ fun Controller.liftAppbarWith(recycler: RecyclerView, padView: Boolean = false) 
     activityBinding?.appBar?.y = 0f
     activityBinding?.appBar?.updateAppBarAfterY(recycler)
 
-    setAppBarBG(0f, preferences)
+    setAppBarBG(0f)
     recycler.addOnScrollListener(
         object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -290,7 +290,7 @@ fun Controller.scrollViewWith(
             val floatingBar =
                 (this as? FloatingSearchInterface)?.showFloatingBar() == true && !includeTabView
             if (floatingBar) {
-                setAppBarBG(isColored.toInt().toFloat(), preferences, includeTabView)
+                setAppBarBG(isColored.toInt().toFloat(), includeTabView)
                 return@f
             }
             val percent = ImageUtil.getPercentOfColor(
@@ -300,13 +300,13 @@ fun Controller.scrollViewWith(
             )
             toolbarColorAnim = ValueAnimator.ofFloat(percent, isColored.toInt().toFloat())
             toolbarColorAnim?.addUpdateListener { valueAnimator ->
-                setAppBarBG(valueAnimator.animatedValue as Float, preferences, includeTabView)
+                setAppBarBG(valueAnimator.animatedValue as Float, includeTabView)
             }
             toolbarColorAnim?.start()
         }
     }
     if ((this as? FloatingSearchInterface)?.showFloatingBar() == true && !includeTabView) {
-        setAppBarBG(0f, preferences, includeTabView)
+        setAppBarBG(0f, includeTabView)
     }
     addLifecycleListener(
         object : Controller.LifecycleListener() {
@@ -598,7 +598,7 @@ fun Controller.moveRecyclerViewUp(allTheWayUp: Boolean = false, scrollUpAnyway: 
     }
 }
 
-fun Controller.setAppBarBG(value: Float, preferences: PreferencesHelper, includeTabView: Boolean = false) {
+fun Controller.setAppBarBG(value: Float, includeTabView: Boolean = false) {
     val context = view?.context ?: return
     val floatingBar =
         (this as? FloatingSearchInterface)?.showFloatingBar() == true && !includeTabView
