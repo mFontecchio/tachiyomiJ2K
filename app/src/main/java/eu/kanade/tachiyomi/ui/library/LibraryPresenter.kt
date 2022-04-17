@@ -36,7 +36,7 @@ import eu.kanade.tachiyomi.util.chapter.ChapterSort
 import eu.kanade.tachiyomi.util.lang.capitalizeWords
 import eu.kanade.tachiyomi.util.lang.chopByWords
 import eu.kanade.tachiyomi.util.lang.removeArticles
-import eu.kanade.tachiyomi.util.manga.MangaCoverRatios
+import eu.kanade.tachiyomi.util.manga.MangaCoverMetadata
 import eu.kanade.tachiyomi.util.system.executeOnIO
 import eu.kanade.tachiyomi.util.system.launchIO
 import eu.kanade.tachiyomi.util.system.withUIContext
@@ -1224,7 +1224,7 @@ class LibraryPresenter(
             libraryManga.forEach { manga ->
                 mangaFetcher.setRatioAndColors(manga)
             }
-            MangaCoverRatios.savePrefs()
+            MangaCoverMetadata.savePrefs()
         }
 
         fun updateCustoms() {

@@ -16,7 +16,7 @@ import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.image.coil.loadManga
 import eu.kanade.tachiyomi.databinding.MangaGridItemBinding
 import eu.kanade.tachiyomi.util.lang.highlightText
-import eu.kanade.tachiyomi.util.manga.MangaCoverRatios
+import eu.kanade.tachiyomi.util.manga.MangaCoverMetadata
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.getResourceColor
 import eu.kanade.tachiyomi.util.view.backgroundColor
@@ -129,7 +129,7 @@ class LibraryGridHolder(
             }
             listener(
                 onSuccess = { _, _ ->
-                    if (!fixedSize && !hasRatio && MangaCoverRatios.getRatio(manga) != null) {
+                    if (!fixedSize && !hasRatio && MangaCoverMetadata.getRatio(manga) != null) {
                         setCoverRatio(manga)
                     }
                 }
@@ -138,7 +138,7 @@ class LibraryGridHolder(
     }
 
     fun setCoverRatio(manga: Manga, parent: AutofitRecyclerView? = null) {
-        val ratio = MangaCoverRatios.getRatio(manga)
+        val ratio = MangaCoverMetadata.getRatio(manga)
         val itemWidth = parent?.itemWidth ?: itemView.width
         if (ratio != null) {
             binding.coverThumbnail.adjustViewBounds = false

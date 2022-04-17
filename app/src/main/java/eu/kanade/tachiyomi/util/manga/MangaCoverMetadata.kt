@@ -6,7 +6,8 @@ import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import uy.kohesive.injekt.injectLazy
 import java.util.concurrent.ConcurrentHashMap
 
-object MangaCoverRatios {
+/** Object that holds info about a covers size ratio + dominant colors */
+object MangaCoverMetadata {
     private var coverRatioMap = ConcurrentHashMap<Long, Float>()
     private var coverColorMap = ConcurrentHashMap<Long, Pair<Int, Int>>()
     val preferences by injectLazy<PreferencesHelper>()

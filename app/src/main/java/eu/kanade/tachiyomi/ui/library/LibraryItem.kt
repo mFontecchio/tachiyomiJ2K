@@ -19,7 +19,7 @@ import eu.kanade.tachiyomi.data.database.models.LibraryManga
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.databinding.MangaGridItemBinding
 import eu.kanade.tachiyomi.source.SourceManager
-import eu.kanade.tachiyomi.util.manga.MangaCoverRatios
+import eu.kanade.tachiyomi.util.manga.MangaCoverMetadata
 import eu.kanade.tachiyomi.util.system.contextCompatDrawable
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.widget.AutofitRecyclerView
@@ -102,7 +102,7 @@ class LibraryItem(
                             dimensionRatio = "15:22"
                         }
                     } else {
-                        val ratio = MangaCoverRatios.getRatio(manga)
+                        val ratio = MangaCoverMetadata.getRatio(manga)
                         if (ratio != null) {
                             binding.coverThumbnail.adjustViewBounds = false
                             binding.coverThumbnail.maxHeight = Int.MAX_VALUE

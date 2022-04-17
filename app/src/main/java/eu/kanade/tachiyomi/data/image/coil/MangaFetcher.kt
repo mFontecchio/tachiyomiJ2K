@@ -16,7 +16,7 @@ import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.source.online.HttpSource
-import eu.kanade.tachiyomi.util.manga.MangaCoverRatios
+import eu.kanade.tachiyomi.util.manga.MangaCoverMetadata
 import eu.kanade.tachiyomi.util.storage.DiskUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -126,7 +126,7 @@ class MangaFetcher : Fetcher<Manga> {
 
     fun setRatioAndColors(manga: Manga, ogFile: File? = null) {
         if (!manga.favorite) {
-            MangaCoverRatios.remove(manga)
+            MangaCoverMetadata.remove(manga)
         }
         if (manga.vibrantCoverColor != null && !manga.favorite) return
         val file = ogFile ?: coverCache.getCustomCoverFile(manga).takeIf { it.exists() } ?: coverCache.getCoverFile(manga)
@@ -145,7 +145,7 @@ class MangaFetcher : Fetcher<Manga> {
                 manga.vibrantCoverColor = color
             }
             if (manga.favorite && !(options.outWidth == -1 || options.outHeight == -1)) {
-                MangaCoverRatios.addCoverRatio(manga, options.outWidth / options.outHeight.toFloat())
+                MangaCoverMetadata.addCoverRatio(manga, options.outWidth / options.outHeight.toFloat())
             }
         }
     }
