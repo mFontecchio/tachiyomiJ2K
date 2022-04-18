@@ -880,41 +880,9 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         menu?.children?.toList()?.let { menuItems ->
             val searchActive = toolbar.isSearchExpanded
             menuItems.forEach { oldMenuItem ->
-                if (oldMenuItem.itemId == R.id.action_search) {
-                    return@forEach
-                }
+                if (oldMenuItem.itemId == R.id.action_search) return@forEach
                 val isVisible = oldMenuItem.isVisible && currentToolbar == toolbar && (!searchActive || showAnyway)
-                if (currentItemsId.contains(oldMenuItem.itemId)) {
-                    val newItem = toolbar.menu.findItem(oldMenuItem.itemId) ?: return@forEach
-                    if (newItem.icon != oldMenuItem.icon) {
-                        newItem.icon = oldMenuItem.icon
-                    }
-                    if (newItem.isVisible != isVisible) {
-                        newItem.isVisible = isVisible
-                    }
-                    updateSubMenu(oldMenuItem, newItem)
-                    return@forEach
-                }
-                val menuItem = if (oldMenuItem.hasSubMenu()) {
-                    toolbar.menu.addSubMenu(
-                        oldMenuItem.groupId,
-                        oldMenuItem.itemId,
-                        oldMenuItem.order,
-                        oldMenuItem.title
-                    ).item
-                } else {
-                    toolbar.menu.add(
-                        oldMenuItem.groupId,
-                        oldMenuItem.itemId,
-                        oldMenuItem.order,
-                        oldMenuItem.title
-                    )
-                }
-                menuItem.isVisible = isVisible
-                menuItem.actionView = oldMenuItem.actionView
-                menuItem.icon = oldMenuItem.icon
-                updateSubMenu(oldMenuItem, menuItem)
-                menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
+                addOrUpdateMenuItem(oldMenuItem, toolbar.menu, isVisible, currentItemsId)
             }
         }
         toolbar.menu.children.toList().forEach {
@@ -943,34 +911,65 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         }
     }
 
+    private fun addOrUpdateMenuItem(oldMenuItem: MenuItem, menu: Menu, isVisible: Boolean, currentItemsId: List<Int>) {
+        if (currentItemsId.contains(oldMenuItem.itemId)) {
+            val newItem = menu.findItem(oldMenuItem.itemId) ?: return
+            if (newItem.icon != oldMenuItem.icon) {
+                newItem.icon = oldMenuItem.icon
+            }
+            if (newItem.isVisible != isVisible) {
+                newItem.isVisible = isVisible
+            }
+            updateSubMenu(oldMenuItem, newItem)
+            return
+        }
+        val menuItem = if (oldMenuItem.hasSubMenu()) {
+            menu.addSubMenu(
+                oldMenuItem.groupId,
+                oldMenuItem.itemId,
+                oldMenuItem.order,
+                oldMenuItem.title
+            ).item
+        } else {
+            menu.add(
+                oldMenuItem.groupId,
+                oldMenuItem.itemId,
+                oldMenuItem.order,
+                oldMenuItem.title
+            )
+        }
+        menuItem.isVisible = isVisible
+        menuItem.actionView = oldMenuItem.actionView
+        menuItem.icon = oldMenuItem.icon
+        menuItem.isChecked = oldMenuItem.isChecked
+        updateSubMenu(oldMenuItem, menuItem)
+        menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
+    }
+
     @SuppressLint("RestrictedApi")
     private fun updateSubMenu(oldMenuItem: MenuItem, menuItem: MenuItem) {
         if (oldMenuItem.hasSubMenu()) {
-            menuItem.subMenu.clear()
             val oldSubMenu = oldMenuItem.subMenu
+            val newMenuIds = oldSubMenu.children.toList().map { it.itemId }
+            val currentItemsId = menuItem.subMenu.children.toList().map { it.itemId }
             var isExclusiveCheckable = false
             var isCheckable = false
             oldSubMenu.children.toList().forEach { oldSubMenuItem ->
                 val isSubVisible = oldSubMenuItem.isVisible
-                val subMenuItem = menuItem.subMenu.add(
-                    oldSubMenuItem.groupId,
-                    oldSubMenuItem.itemId,
-                    oldSubMenuItem.order,
-                    oldSubMenuItem.title
-                )
-                subMenuItem.isVisible = isSubVisible
-                subMenuItem.actionView = oldSubMenuItem.actionView
-                subMenuItem.icon = oldSubMenuItem.icon
-                subMenuItem.isChecked = oldSubMenuItem.isChecked
+                addOrUpdateMenuItem(oldSubMenuItem, menuItem.subMenu, isSubVisible, currentItemsId)
                 if (!isExclusiveCheckable) {
                     isExclusiveCheckable = (oldSubMenuItem as? MenuItemImpl)?.isExclusiveCheckable ?: false
                 }
                 if (!isCheckable) {
                     isCheckable = oldSubMenuItem.isCheckable
                 }
-                subMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
             }
             menuItem.subMenu.setGroupCheckable(oldSubMenu.children.first().groupId, isCheckable, isExclusiveCheckable)
+            menuItem.subMenu.children.toList().forEach {
+                if (!newMenuIds.contains(it.itemId)) {
+                    menuItem.subMenu.removeItem(it.itemId)
+                }
+            }
         }
     }
 
