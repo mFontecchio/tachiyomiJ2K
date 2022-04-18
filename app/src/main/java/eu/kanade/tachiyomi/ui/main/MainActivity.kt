@@ -466,7 +466,6 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         }
 
     open fun setFloatingToolbar(show: Boolean, solidBG: Boolean = false, changeBG: Boolean = true, showSearchAnyway: Boolean = false) {
-        val oldTB = currentToolbar
         val controller = if (this::router.isInitialized) router.backstack.lastOrNull()?.controller else null
         val useLargeTB = binding.appBar.useLargeToolbar
         val onSearchController = canShowFloatingToolbar(controller)
@@ -863,20 +862,24 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         return super.onCreateOptionsMenu(menu)
     }
 
+    fun setSearchTBMenuIfInvalid() = setupSearchTBMenu(binding.toolbar.menu)
+
     private fun setupSearchTBMenu(menu: Menu?, showAnyway: Boolean = false) {
         val toolbar = binding.cardToolbar
-        val oldItemsId = toolbar.menu.children.toList().map { it.itemId }
-        oldItemsId.forEach {
-            if (it != R.id.action_search) {
-                toolbar.menu.removeItem(it)
-            }
-        }
+        val currentItemsId = toolbar.menu.children.toList().map { it.itemId }
+        val newMenuIds = menu?.children?.toList()?.map { it.itemId }.orEmpty()
         menu?.children?.toList()?.let { menuItems ->
-            val searchActive = toolbar.menu.findItem(R.id.action_search)?.isActionViewExpanded == true
+            val searchActive = toolbar.isSearchExpanded
             menuItems.forEach { oldMenuItem ->
-                if (oldMenuItem.itemId == R.id.action_search &&
-                    toolbar.menu.findItem(R.id.action_search) != null
-                ) {
+                if (oldMenuItem.itemId == R.id.action_search) {
+                    return@forEach
+                }
+                val isVisible = oldMenuItem.isVisible && currentToolbar == toolbar && (!searchActive || showAnyway)
+                if (currentItemsId.contains(oldMenuItem.itemId)) {
+                    val newItem = toolbar.menu.findItem(oldMenuItem.itemId)
+                    if (newItem?.isVisible != isVisible) {
+                        newItem?.isVisible = isVisible
+                    }
                     return@forEach
                 }
                 val menuItem = toolbar.menu.add(
@@ -885,24 +888,15 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                     oldMenuItem.order,
                     oldMenuItem.title
                 )
-                menuItem.isVisible = oldMenuItem.isVisible && currentToolbar == toolbar && (!searchActive || showAnyway)
+                menuItem.isVisible = isVisible
                 menuItem.actionView = oldMenuItem.actionView
                 menuItem.icon = oldMenuItem.icon
-                if (oldMenuItem.itemId == R.id.action_search) {
-                    menuItem.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
-                        override fun onMenuItemActionExpand(item: MenuItem?): Boolean {
-                            router.backstack.lastOrNull()?.controller?.moveRecyclerViewUp()
-                            toolbar.menu.forEach { it.isVisible = false }
-                            return true
-                        }
-
-                        override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
-                            setupSearchTBMenu(binding.toolbar.menu, true)
-                            return true
-                        }
-                    })
-                }
-                menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM or MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW)
+                menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
+            }
+        }
+        toolbar.menu.children.toList().forEach {
+            if (it.itemId != R.id.action_search && !newMenuIds.contains(it.itemId)) {
+                toolbar.menu.removeItem(it.itemId)
             }
         }
         val controller = if (this::router.isInitialized) router.backstack.lastOrNull()?.controller else null
