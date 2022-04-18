@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.ui.main
 
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.app.Dialog
 import android.app.assist.AssistContent
 import android.content.Context
@@ -21,6 +22,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.annotation.IdRes
+import androidx.appcompat.view.menu.MenuItemImpl
+import androidx.appcompat.widget.ActionMenuView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.graphics.ColorUtils
 import androidx.core.net.toUri
@@ -90,6 +93,7 @@ import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.tachiyomi.util.view.backgroundColor
 import eu.kanade.tachiyomi.util.view.blurBehindWindow
 import eu.kanade.tachiyomi.util.view.doOnApplyWindowInsetsCompat
+import eu.kanade.tachiyomi.util.view.findChild
 import eu.kanade.tachiyomi.util.view.getItemView
 import eu.kanade.tachiyomi.util.view.moveRecyclerViewUp
 import eu.kanade.tachiyomi.util.view.snack
@@ -448,8 +452,8 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
     override fun onTitleChanged(title: CharSequence?, color: Int) {
         super.onTitleChanged(title, color)
         binding.cardToolbar.title = searchTitle
-        val onSmallController = if (this::router.isInitialized) router.backstack.lastOrNull()?.controller !is SmallToolbarInterface else false
-        binding.appBar.setTitle(title, binding.appBar.useLargeToolbar && onSmallController)
+        val onExpandedController = if (this::router.isInitialized) router.backstack.lastOrNull()?.controller !is SmallToolbarInterface else false
+        binding.appBar.setTitle(title, onExpandedController)
     }
 
     var searchTitle: String?
@@ -846,20 +850,31 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        val searchItem = menu?.findItem(R.id.action_search)
-        if (router.backstack.lastOrNull()?.controller is FloatingSearchInterface) {
-            searchItem?.isVisible = false
-        }
-        // Using post since controller's onPrepareOptionsMenu will call after this method
-        binding.root.post {
-            setupSearchTBMenu(binding.toolbar.menu)
-        }
-        return super.onPrepareOptionsMenu(menu)
+        val prepare = super.onPrepareOptionsMenu(menu)
+        setupSearchTBMenu(menu)
+        return prepare
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        val create = super.onCreateOptionsMenu(menu)
         setupSearchTBMenu(menu)
-        return super.onCreateOptionsMenu(menu)
+        return create
+    }
+
+    override fun onCreatePanelMenu(featureId: Int, menu: Menu): Boolean {
+        val create = super.onCreatePanelMenu(featureId, menu)
+        if (canShowFloatingToolbar(router.backstack.lastOrNull()?.controller)) {
+            val searchItem = menu.findItem(R.id.action_search)
+            searchItem?.isVisible = false
+        }
+        setupSearchTBMenu(menu)
+        return create
+    }
+
+    override fun onPreparePanel(featureId: Int, view: View?, menu: Menu): Boolean {
+        val prepare = super.onPreparePanel(featureId, view, menu)
+        setupSearchTBMenu(menu)
+        return prepare
     }
 
     fun setSearchTBMenuIfInvalid() = setupSearchTBMenu(binding.toolbar.menu)
@@ -876,21 +891,35 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 }
                 val isVisible = oldMenuItem.isVisible && currentToolbar == toolbar && (!searchActive || showAnyway)
                 if (currentItemsId.contains(oldMenuItem.itemId)) {
-                    val newItem = toolbar.menu.findItem(oldMenuItem.itemId)
-                    if (newItem?.isVisible != isVisible) {
-                        newItem?.isVisible = isVisible
+                    val newItem = toolbar.menu.findItem(oldMenuItem.itemId) ?: return@forEach
+                    if (newItem.icon != oldMenuItem.icon) {
+                        newItem.icon = oldMenuItem.icon
                     }
+                    if (newItem.isVisible != isVisible) {
+                        newItem.isVisible = isVisible
+                    }
+                    updateSubMenu(oldMenuItem, newItem)
                     return@forEach
                 }
-                val menuItem = toolbar.menu.add(
-                    oldMenuItem.groupId,
-                    oldMenuItem.itemId,
-                    oldMenuItem.order,
-                    oldMenuItem.title
-                )
+                val menuItem = if (oldMenuItem.hasSubMenu()) {
+                    toolbar.menu.addSubMenu(
+                        oldMenuItem.groupId,
+                        oldMenuItem.itemId,
+                        oldMenuItem.order,
+                        oldMenuItem.title
+                    ).item
+                } else {
+                    toolbar.menu.add(
+                        oldMenuItem.groupId,
+                        oldMenuItem.itemId,
+                        oldMenuItem.order,
+                        oldMenuItem.title
+                    )
+                }
                 menuItem.isVisible = isVisible
                 menuItem.actionView = oldMenuItem.actionView
                 menuItem.icon = oldMenuItem.icon
+                updateSubMenu(oldMenuItem, menuItem)
                 menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
             }
         }
@@ -899,9 +928,55 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 toolbar.menu.removeItem(it.itemId)
             }
         }
+
+        // Done because sometimes ActionMenuItemViews have a width/height of 0 and never update
+        val actionMenuView = toolbar.findChild<ActionMenuView>()
+        if (binding.appBar.isVisible && toolbar.isVisible &&
+            toolbar.width > 0 && actionMenuView?.children?.any { it.width == 0 } == true
+        ) {
+            toolbar.menu.children.toList().forEach {
+                if (it.itemId != R.id.action_search) {
+                    val isVis = it.isVisible
+                    it.isVisible = false
+                    it.isVisible = isVis
+                }
+            }
+        }
+
         val controller = if (this::router.isInitialized) router.backstack.lastOrNull()?.controller else null
-        if (controller is FloatingSearchInterface) {
+        if (canShowFloatingToolbar(controller)) {
             binding.toolbar.menu.removeItem(R.id.action_search)
+        }
+    }
+
+    @SuppressLint("RestrictedApi")
+    private fun updateSubMenu(oldMenuItem: MenuItem, menuItem: MenuItem) {
+        if (oldMenuItem.hasSubMenu()) {
+            menuItem.subMenu.clear()
+            val oldSubMenu = oldMenuItem.subMenu
+            var isExclusiveCheckable = false
+            var isCheckable = false
+            oldSubMenu.children.toList().forEach { oldSubMenuItem ->
+                val isSubVisible = oldSubMenuItem.isVisible
+                val subMenuItem = menuItem.subMenu.add(
+                    oldSubMenuItem.groupId,
+                    oldSubMenuItem.itemId,
+                    oldSubMenuItem.order,
+                    oldSubMenuItem.title
+                )
+                subMenuItem.isVisible = isSubVisible
+                subMenuItem.actionView = oldSubMenuItem.actionView
+                subMenuItem.icon = oldSubMenuItem.icon
+                subMenuItem.isChecked = oldSubMenuItem.isChecked
+                if (!isExclusiveCheckable) {
+                    isExclusiveCheckable = (oldSubMenuItem as? MenuItemImpl)?.isExclusiveCheckable ?: false
+                }
+                if (!isCheckable) {
+                    isCheckable = oldSubMenuItem.isCheckable
+                }
+                subMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
+            }
+            menuItem.subMenu.setGroupCheckable(oldSubMenu.children.first().groupId, isCheckable, isExclusiveCheckable)
         }
     }
 

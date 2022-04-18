@@ -1225,7 +1225,6 @@ class LibraryController(
     }
 
     private fun onRefresh() {
-        activity?.invalidateOptionsMenu()
         showCategories(false)
         presenter.getLibrary()
         destroyActionModeIfNeeded()
@@ -1235,7 +1234,6 @@ class LibraryController(
      * Called when a filter is changed.
      */
     private fun onFilterChanged() {
-        activity?.invalidateOptionsMenu()
         presenter.requestFilterUpdate()
         destroyActionModeIfNeeded()
     }

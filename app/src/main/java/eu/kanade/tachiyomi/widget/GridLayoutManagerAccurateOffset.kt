@@ -1,13 +1,9 @@
 package eu.kanade.tachiyomi.widget
 
 import android.content.Context
-import android.widget.TextView
-import androidx.core.view.WindowInsetsCompat.Type.systemBars
-import androidx.core.view.marginTop
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import eu.kanade.tachiyomi.R
-import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
 import kotlin.math.max
 
 class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridLayoutManager(context, spanCount) {
@@ -138,23 +134,10 @@ class GridLayoutManagerAccurateOffset(context: Context?, spanCount: Int) : GridL
     }
 
     override fun findFirstVisibleItemPosition(): Int {
-        return getFirstPos()
+        return getFirstPos(rView, toolbarHeight)
     }
 
     override fun findFirstCompletelyVisibleItemPosition(): Int {
-        return getFirstPos()
-    }
-
-    private fun getFirstPos(): Int {
-        val inset = rView?.rootWindowInsetsCompat?.getInsets(systemBars())?.top ?: 0
-        return (0 until childCount)
-            .mapNotNull { getChildAt(it) }
-            .filter {
-                val isLibraryHeader = getItemViewType(it) == R.layout.library_category_header_item
-                val marginTop = if (isLibraryHeader) it.findViewById<TextView>(R.id.category_title)?.marginTop ?: 0 else 0
-                it.y >= inset + toolbarHeight - marginTop
-            }
-            .mapNotNull { pos -> getPosition(pos).takeIf { it != RecyclerView.NO_POSITION } }
-            .minOrNull() ?: RecyclerView.NO_POSITION
+        return getFirstCompletePos(rView, toolbarHeight)
     }
 }
