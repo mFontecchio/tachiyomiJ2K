@@ -130,14 +130,16 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
 
     fun setToolbarModeBy(controller: Controller?, useSmall: Boolean? = null) {
         toolbarMode = if (useSmall ?: !useLargeToolbar) {
-            when (controller) {
-                is FloatingSearchInterface -> ToolbarState.SEARCH_ONLY
+            when {
+                controller is FloatingSearchInterface && controller.showFloatingBar() -> {
+                    ToolbarState.SEARCH_ONLY
+                }
                 else -> ToolbarState.COMPACT
             }
         } else {
             when (controller) {
                 is SmallToolbarInterface -> {
-                    if (controller is FloatingSearchInterface) {
+                    if (controller is FloatingSearchInterface && controller.showFloatingBar()) {
                         ToolbarState.SEARCH_ONLY
                     } else {
                         ToolbarState.COMPACT

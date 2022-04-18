@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.ui.main
 
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.app.Dialog
 import android.app.assist.AssistContent
 import android.content.Context
@@ -21,6 +22,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.annotation.IdRes
+import androidx.appcompat.view.menu.MenuItemImpl
 import androidx.appcompat.widget.ActionMenuView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.graphics.ColorUtils
@@ -842,10 +844,6 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        val searchItem = menu?.findItem(R.id.action_search)
-        if (router.backstack.lastOrNull()?.controller is FloatingSearchInterface) {
-            searchItem?.isVisible = false
-        }
         val prepare = super.onPrepareOptionsMenu(menu)
         setupSearchTBMenu(menu)
         return prepare
@@ -859,6 +857,10 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
 
     override fun onCreatePanelMenu(featureId: Int, menu: Menu): Boolean {
         val create = super.onCreatePanelMenu(featureId, menu)
+        if (canShowFloatingToolbar(router.backstack.lastOrNull()?.controller)) {
+            val searchItem = menu.findItem(R.id.action_search)
+            searchItem?.isVisible = false
+        }
         setupSearchTBMenu(menu)
         return create
     }
@@ -883,24 +885,35 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 }
                 val isVisible = oldMenuItem.isVisible && currentToolbar == toolbar && (!searchActive || showAnyway)
                 if (currentItemsId.contains(oldMenuItem.itemId)) {
-                    val newItem = toolbar.menu.findItem(oldMenuItem.itemId)
-                    if (newItem?.icon != oldMenuItem.icon) {
-                        newItem?.icon = oldMenuItem.icon
+                    val newItem = toolbar.menu.findItem(oldMenuItem.itemId) ?: return@forEach
+                    if (newItem.icon != oldMenuItem.icon) {
+                        newItem.icon = oldMenuItem.icon
                     }
-                    if (newItem?.isVisible != isVisible) {
-                        newItem?.isVisible = isVisible
+                    if (newItem.isVisible != isVisible) {
+                        newItem.isVisible = isVisible
                     }
+                    updateSubMenu(oldMenuItem, newItem)
                     return@forEach
                 }
-                val menuItem = toolbar.menu.add(
-                    oldMenuItem.groupId,
-                    oldMenuItem.itemId,
-                    oldMenuItem.order,
-                    oldMenuItem.title
-                )
+                val menuItem = if (oldMenuItem.hasSubMenu()) {
+                    toolbar.menu.addSubMenu(
+                        oldMenuItem.groupId,
+                        oldMenuItem.itemId,
+                        oldMenuItem.order,
+                        oldMenuItem.title
+                    ).item
+                } else {
+                    toolbar.menu.add(
+                        oldMenuItem.groupId,
+                        oldMenuItem.itemId,
+                        oldMenuItem.order,
+                        oldMenuItem.title
+                    )
+                }
                 menuItem.isVisible = isVisible
                 menuItem.actionView = oldMenuItem.actionView
                 menuItem.icon = oldMenuItem.icon
+                updateSubMenu(oldMenuItem, menuItem)
                 menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
             }
         }
@@ -925,8 +938,39 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         }
 
         val controller = if (this::router.isInitialized) router.backstack.lastOrNull()?.controller else null
-        if (controller is FloatingSearchInterface) {
+        if (canShowFloatingToolbar(controller)) {
             binding.toolbar.menu.removeItem(R.id.action_search)
+        }
+    }
+
+    @SuppressLint("RestrictedApi")
+    private fun updateSubMenu(oldMenuItem: MenuItem, menuItem: MenuItem) {
+        if (oldMenuItem.hasSubMenu()) {
+            menuItem.subMenu.clear()
+            val oldSubMenu = oldMenuItem.subMenu
+            var isExclusiveCheckable = false
+            var isCheckable = false
+            oldSubMenu.children.toList().forEach { oldSubMenuItem ->
+                val isSubVisible = oldSubMenuItem.isVisible
+                val subMenuItem = menuItem.subMenu.add(
+                    oldSubMenuItem.groupId,
+                    oldSubMenuItem.itemId,
+                    oldSubMenuItem.order,
+                    oldSubMenuItem.title
+                )
+                subMenuItem.isVisible = isSubVisible
+                subMenuItem.actionView = oldSubMenuItem.actionView
+                subMenuItem.icon = oldSubMenuItem.icon
+                subMenuItem.isChecked = oldSubMenuItem.isChecked
+                if (!isExclusiveCheckable) {
+                    isExclusiveCheckable = (oldSubMenuItem as? MenuItemImpl)?.isExclusiveCheckable ?: false
+                }
+                if (!isCheckable) {
+                    isCheckable = oldSubMenuItem.isCheckable
+                }
+                subMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
+            }
+            menuItem.subMenu.setGroupCheckable(oldSubMenu.children.first().groupId, isCheckable, isExclusiveCheckable)
         }
     }
 
