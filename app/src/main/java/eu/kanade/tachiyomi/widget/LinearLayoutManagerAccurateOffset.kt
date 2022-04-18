@@ -2,7 +2,7 @@ package eu.kanade.tachiyomi.widget
 
 import android.content.Context
 import android.widget.TextView
-import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.marginTop
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -89,23 +89,36 @@ class LinearLayoutManagerAccurateOffset(context: Context?) : LinearLayoutManager
     }
 
     override fun findFirstVisibleItemPosition(): Int {
-        return getFirstPos()
+        return getFirstPos(rView, toolbarHeight)
     }
 
     override fun findFirstCompletelyVisibleItemPosition(): Int {
-        return getFirstPos()
+        return getFirstCompletePos(rView, toolbarHeight)
     }
+}
 
-    private fun getFirstPos(): Int {
-        val inset = rView?.rootWindowInsetsCompat?.getInsets(WindowInsetsCompat.Type.systemBars())?.top ?: 0
-        return (0 until childCount)
-            .mapNotNull { getChildAt(it) }
-            .filter {
-                val isLibraryHeader = getItemViewType(it) == R.layout.library_category_header_item
-                val marginTop = if (isLibraryHeader) it.findViewById<TextView>(R.id.category_title)?.marginTop ?: 0 else 0
-                it.y >= inset + toolbarHeight - marginTop
-            }
-            .mapNotNull { pos -> getPosition(pos).takeIf { it != RecyclerView.NO_POSITION } }
-            .minOrNull() ?: RecyclerView.NO_POSITION
-    }
+fun RecyclerView.LayoutManager.getFirstPos(recyclerView: RecyclerView?, toolbarHeight: Int): Int {
+    val inset = recyclerView?.rootWindowInsetsCompat?.getInsets(systemBars())?.top ?: 0
+    return (0 until childCount)
+        .mapNotNull { getChildAt(it) }
+        .filter {
+            val isLibraryHeader = getItemViewType(it) == R.layout.library_category_header_item
+            val marginTop = if (isLibraryHeader) it.findViewById<TextView>(R.id.category_title)?.marginTop ?: 0 else 0
+            it.bottom >= inset + toolbarHeight - marginTop
+        }
+        .mapNotNull { pos -> getPosition(pos).takeIf { it != RecyclerView.NO_POSITION } }
+        .minOrNull() ?: RecyclerView.NO_POSITION
+}
+
+fun RecyclerView.LayoutManager.getFirstCompletePos(recyclerView: RecyclerView?, toolbarHeight: Int): Int {
+    val inset = recyclerView?.rootWindowInsetsCompat?.getInsets(systemBars())?.top ?: 0
+    return (0 until childCount)
+        .mapNotNull { getChildAt(it) }
+        .filter {
+            val isLibraryHeader = getItemViewType(it) == R.layout.library_category_header_item
+            val marginTop = if (isLibraryHeader) it.findViewById<TextView>(R.id.category_title)?.marginTop ?: 0 else 0
+            it.y >= inset + toolbarHeight - marginTop
+        }
+        .mapNotNull { pos -> getPosition(pos).takeIf { it != RecyclerView.NO_POSITION } }
+        .minOrNull() ?: RecyclerView.NO_POSITION
 }
