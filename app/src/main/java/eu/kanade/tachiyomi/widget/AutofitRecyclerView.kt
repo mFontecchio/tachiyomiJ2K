@@ -62,7 +62,7 @@ class AutofitRecyclerView @JvmOverloads constructor(context: Context, attrs: Att
 
     private fun getTempSpan(): Int {
         if (spanCount == 0 && columnWidth > 0) {
-            val dpWidth = (width.pxToDp / 100f).roundToInt()
+            val dpWidth = (measuredWidth.pxToDp / 100f).roundToInt()
             return max(1, (dpWidth / columnWidth).roundToInt())
         }
         return 3
