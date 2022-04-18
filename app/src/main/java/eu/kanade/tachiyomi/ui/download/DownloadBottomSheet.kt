@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.ui.download
 import android.app.Activity
 import android.content.Context
 import android.util.AttributeSet
-import android.view.Menu
 import android.view.MenuItem
 import android.widget.LinearLayout
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
@@ -108,7 +107,7 @@ class DownloadBottomSheet @JvmOverloads constructor(
         presenter.getItems()
         onQueueStatusChange(!presenter.downloadManager.isPaused())
         binding.downloadFab.isInvisible = presenter.downloadQueue.isEmpty()
-        prepareMenu(binding.sheetToolbar.menu)
+        prepareMenu()
     }
 
     private fun updateDLTitle() {
@@ -131,7 +130,7 @@ class DownloadBottomSheet @JvmOverloads constructor(
         binding.downloadFab.isInvisible = presenter.downloadQueue.isEmpty()
         updateFab()
         if (oldRunning != running) {
-            activity?.invalidateOptionsMenu()
+            prepareMenu()
 
             // Check if download queue is empty and update information accordingly.
             setInformationView()
@@ -144,7 +143,7 @@ class DownloadBottomSheet @JvmOverloads constructor(
      * @param downloads the downloads from the queue.
      */
     fun onNextDownloads(downloads: List<DownloadItem>) {
-        activity?.invalidateOptionsMenu()
+        prepareMenu()
         setInformationView()
         adapter?.updateDataSet(downloads)
         setBottomSheet()
@@ -194,7 +193,8 @@ class DownloadBottomSheet @JvmOverloads constructor(
         }
     }
 
-    fun prepareMenu(menu: Menu) {
+    private fun prepareMenu() {
+        val menu = binding.sheetToolbar.menu
         updateFab()
         // Set clear button visibility.
         menu.findItem(R.id.clear_queue)?.isVisible = !presenter.downloadQueue.isEmpty()

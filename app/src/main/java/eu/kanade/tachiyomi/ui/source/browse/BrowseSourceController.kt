@@ -613,8 +613,9 @@ open class BrowseSourceController(bundle: Bundle) :
 
         presenter.swapDisplayMode()
         val isListMode = presenter.isListMode
-        activity?.invalidateOptionsMenu()
         val offset = recycler?.computeVerticalScrollOffset() ?: 0
+        updateDisplayMenuItem(activityBinding?.toolbar?.menu, isListMode)
+        updateDisplayMenuItem(activityBinding?.cardToolbar?.menu, isListMode)
         setupRecycler(view)
         view.postOnAnimation {
             if (offset + (toolbarHeight ?: 0) > activityBinding?.appBar?.height ?: 0) {
