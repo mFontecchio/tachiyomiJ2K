@@ -20,6 +20,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewPropertyAnimator
+import android.view.ViewTreeObserver
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
@@ -229,6 +230,7 @@ class LibraryController(
     override val mainRecycler: RecyclerView
         get() = binding.libraryGridRecycler.recycler
     var staggeredBundle: Parcelable? = null
+    private var staggeredObserver: ViewTreeObserver.OnGlobalLayoutListener? = null
 
     override fun getTitle(): String? {
         setSubtitle()
@@ -320,6 +322,18 @@ class LibraryController(
                     updateHopperPosition()
                 }
             }
+            if (newState != RecyclerView.SCROLL_STATE_IDLE) {
+                removeStaggeredObserver()
+            }
+        }
+    }
+
+    private fun removeStaggeredObserver() {
+        if (staggeredObserver != null) {
+            binding.libraryGridRecycler.recycler.viewTreeObserver.removeOnGlobalLayoutListener(
+                staggeredObserver
+            )
+            staggeredObserver = null
         }
     }
 
@@ -1051,12 +1065,22 @@ class LibraryController(
             }
 
             if (binding.libraryGridRecycler.recycler.manager is StaggeredGridLayoutManager) {
-                viewScope.launchUI {
-                    delay(250)
-                    scrollToHeader(activeC)
-                    binding.libraryGridRecycler.recycler.post {
+                staggeredObserver = ViewTreeObserver.OnGlobalLayoutListener {
+                    binding.libraryGridRecycler.recycler.postOnAnimation {
+                        scrollToHeader(activeC, false)
                         activityBinding?.appBar?.y = 0f
                         activityBinding?.appBar?.updateAppBarAfterY(binding.libraryGridRecycler.recycler)
+                        if (activeC > 0) {
+                            activityBinding?.appBar?.useSearchToolbarForMenu(true)
+                        }
+                    }
+                }
+                binding.libraryGridRecycler.recycler.viewTreeObserver.addOnGlobalLayoutListener(staggeredObserver)
+                viewScope.launchUI {
+                    delay(500)
+                    removeStaggeredObserver()
+                    if (activeC > 0) {
+                        activityBinding?.appBar?.useSearchToolbarForMenu(true)
                     }
                 }
             }
@@ -1161,7 +1185,10 @@ class LibraryController(
         }
     }
 
-    private fun scrollToHeader(pos: Int) {
+    private fun scrollToHeader(pos: Int, removeObserver: Boolean = true) {
+        if (removeObserver) {
+            removeStaggeredObserver()
+        }
         if (!presenter.showAllCategories) {
             presenter.switchSection(pos)
             activeCategory = pos
