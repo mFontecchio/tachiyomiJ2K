@@ -52,11 +52,14 @@ import eu.kanade.tachiyomi.util.view.requestFilePermissionsSafe
 import eu.kanade.tachiyomi.util.view.scrollViewWith
 import eu.kanade.tachiyomi.util.view.setOnQueryTextChangeListener
 import eu.kanade.tachiyomi.util.view.snack
+import eu.kanade.tachiyomi.util.view.toolbarHeight
 import eu.kanade.tachiyomi.util.view.withFadeTransaction
 import eu.kanade.tachiyomi.widget.AutofitRecyclerView
 import eu.kanade.tachiyomi.widget.EmptyView
+import eu.kanade.tachiyomi.widget.LinearLayoutManagerAccurateOffset
 import timber.log.Timber
 import uy.kohesive.injekt.injectLazy
+import kotlin.math.roundToInt
 
 /**
  * Controller to manage the catalogues available in the app.
@@ -173,9 +176,11 @@ open class BrowseSourceController(bundle: Bundle) :
 
     private fun setupRecycler(view: View) {
         var oldPosition = RecyclerView.NO_POSITION
+        var oldOffset = 0f
         val oldRecycler = binding.catalogueView.getChildAt(1)
         if (oldRecycler is RecyclerView) {
             oldPosition = (oldRecycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+            oldOffset = oldRecycler.layoutManager?.findViewByPosition(oldPosition)?.y?.minus(oldRecycler.paddingTop) ?: 0f
             oldRecycler.adapter = null
 
             binding.catalogueView.removeView(oldRecycler)
@@ -184,7 +189,7 @@ open class BrowseSourceController(bundle: Bundle) :
         val recycler = if (presenter.isListMode) {
             RecyclerView(view.context).apply {
                 id = R.id.recycler
-                layoutManager = LinearLayoutManager(context)
+                layoutManager = LinearLayoutManagerAccurateOffset(context)
                 layoutParams = RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
                 addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
             }
@@ -241,7 +246,7 @@ open class BrowseSourceController(bundle: Bundle) :
         )
 
         if (oldPosition != RecyclerView.NO_POSITION) {
-            recycler.layoutManager?.scrollToPosition(oldPosition)
+            (recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(oldPosition, oldOffset.roundToInt())
             if (oldPosition > 0 && (activity as? MainActivity)?.currentToolbar != activityBinding?.cardToolbar) {
                 activityBinding?.appBar?.useSearchToolbarForMenu(true)
             }
@@ -602,14 +607,20 @@ open class BrowseSourceController(bundle: Bundle) :
     /**
      * Swaps the current display mode.
      */
-    fun swapDisplayMode() {
+    private fun swapDisplayMode() {
         val view = view ?: return
         val adapter = adapter ?: return
 
         presenter.swapDisplayMode()
         val isListMode = presenter.isListMode
         activity?.invalidateOptionsMenu()
+        val offset = recycler?.computeVerticalScrollOffset() ?: 0
         setupRecycler(view)
+        view.postOnAnimation {
+            if (offset + (toolbarHeight ?: 0) > activityBinding?.appBar?.height ?: 0) {
+                activityBinding?.appBar?.useSearchToolbarForMenu(true)
+            }
+        }
         if (!isListMode || !view.context.connectivityManager.isActiveNetworkMetered) {
             // Initialize mangas if going to grid view or if over wifi when going to list view
             val mangas = (0 until adapter.itemCount).mapNotNull {

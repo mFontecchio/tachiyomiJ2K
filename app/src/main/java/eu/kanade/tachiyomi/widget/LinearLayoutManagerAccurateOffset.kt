@@ -1,8 +1,13 @@
 package eu.kanade.tachiyomi.widget
 
 import android.content.Context
+import android.widget.TextView
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.marginTop
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import eu.kanade.tachiyomi.R
+import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
 
 class LinearLayoutManagerAccurateOffset(context: Context?) : LinearLayoutManager(context) {
 
@@ -13,6 +18,14 @@ class LinearLayoutManagerAccurateOffset(context: Context?) : LinearLayoutManager
     private val childTypeEstimateMap = HashMap<Int, Int>()
     var rView: RecyclerView? = null
     var computedRange: Int? = null
+
+    private val toolbarHeight by lazy {
+        val attrsArray = intArrayOf(R.attr.mainActionBarSize)
+        val array = (context ?: rView?.context)?.obtainStyledAttributes(attrsArray)
+        val height = array?.getDimensionPixelSize(0, 0) ?: 0
+        array?.recycle()
+        height
+    }
 
     override fun onLayoutCompleted(state: RecyclerView.State) {
         super.onLayoutCompleted(state)
@@ -73,5 +86,26 @@ class LinearLayoutManagerAccurateOffset(context: Context?) : LinearLayoutManager
             childTypeEstimateMap,
             childAvgHeightMap
         )
+    }
+
+    override fun findFirstVisibleItemPosition(): Int {
+        return getFirstPos()
+    }
+
+    override fun findFirstCompletelyVisibleItemPosition(): Int {
+        return getFirstPos()
+    }
+
+    private fun getFirstPos(): Int {
+        val inset = rView?.rootWindowInsetsCompat?.getInsets(WindowInsetsCompat.Type.systemBars())?.top ?: 0
+        return (0 until childCount)
+            .mapNotNull { getChildAt(it) }
+            .filter {
+                val isLibraryHeader = getItemViewType(it) == R.layout.library_category_header_item
+                val marginTop = if (isLibraryHeader) it.findViewById<TextView>(R.id.category_title)?.marginTop ?: 0 else 0
+                it.y >= inset + toolbarHeight - marginTop
+            }
+            .mapNotNull { pos -> getPosition(pos).takeIf { it != RecyclerView.NO_POSITION } }
+            .minOrNull() ?: RecyclerView.NO_POSITION
     }
 }

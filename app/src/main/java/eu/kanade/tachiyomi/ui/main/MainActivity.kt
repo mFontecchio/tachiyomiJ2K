@@ -844,16 +844,27 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         if (router.backstack.lastOrNull()?.controller is FloatingSearchInterface) {
             searchItem?.isVisible = false
         }
-        // Using post since controller's onPrepareOptionsMenu will call after this method
-        binding.root.post {
-            setupSearchTBMenu(binding.toolbar.menu)
-        }
-        return super.onPrepareOptionsMenu(menu)
+        val prepare = super.onPrepareOptionsMenu(menu)
+        setupSearchTBMenu(menu)
+        return prepare
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        val create = super.onCreateOptionsMenu(menu)
         setupSearchTBMenu(menu)
-        return super.onCreateOptionsMenu(menu)
+        return create
+    }
+
+    override fun onCreatePanelMenu(featureId: Int, menu: Menu): Boolean {
+        val create = super.onCreatePanelMenu(featureId, menu)
+        setupSearchTBMenu(menu)
+        return create
+    }
+
+    override fun onPreparePanel(featureId: Int, view: View?, menu: Menu): Boolean {
+        val prepare = super.onPreparePanel(featureId, view, menu)
+        setupSearchTBMenu(menu)
+        return prepare
     }
 
     fun setSearchTBMenuIfInvalid() = setupSearchTBMenu(binding.toolbar.menu)
@@ -871,6 +882,9 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 val isVisible = oldMenuItem.isVisible && currentToolbar == toolbar && (!searchActive || showAnyway)
                 if (currentItemsId.contains(oldMenuItem.itemId)) {
                     val newItem = toolbar.menu.findItem(oldMenuItem.itemId)
+                    if (newItem?.icon != oldMenuItem.icon) {
+                        newItem?.icon = oldMenuItem.icon
+                    }
                     if (newItem?.isVisible != isVisible) {
                         newItem?.isVisible = isVisible
                     }
