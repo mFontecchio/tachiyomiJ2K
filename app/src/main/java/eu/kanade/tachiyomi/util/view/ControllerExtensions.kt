@@ -28,6 +28,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.ime
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.doOnLayout
+import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.updatePaddingRelative
 import androidx.recyclerview.widget.DefaultItemAnimator
@@ -616,7 +617,10 @@ fun Controller.setAppBarBG(value: Float, includeTabView: Boolean = false) {
         } else {
             activityBinding?.appBar?.backgroundColor = Color.TRANSPARENT
         }
-        activity?.window?.statusBarColor = context.getResourceColor(android.R.attr.statusBarColor)
+        if (activityBinding?.appBar?.isInvisible != true) {
+            activity?.window?.statusBarColor =
+                context.getResourceColor(android.R.attr.statusBarColor)
+        }
     } else {
         val color = ColorUtils.blendARGB(
             context.getResourceColor(R.attr.colorSurface),
@@ -624,8 +628,10 @@ fun Controller.setAppBarBG(value: Float, includeTabView: Boolean = false) {
             value
         )
         activityBinding?.appBar?.setBackgroundColor(color)
-        activity?.window?.statusBarColor =
-            ColorUtils.setAlphaComponent(color, (0.87f * 255).roundToInt())
+        if (activityBinding?.appBar?.isInvisible != true) {
+            activity?.window?.statusBarColor =
+                ColorUtils.setAlphaComponent(color, (0.87f * 255).roundToInt())
+        }
         if ((this as? FloatingSearchInterface)?.showFloatingBar() == true) {
             val invColor = ColorUtils.blendARGB(
                 context.getResourceColor(R.attr.colorSurface),

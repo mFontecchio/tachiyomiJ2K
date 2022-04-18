@@ -400,8 +400,8 @@ class RecentsController(bundle: Bundle? = null) :
     fun updateTitleAndMenu() {
         if (isControllerVisible) {
             val activity = (activity as? MainActivity) ?: return
-            (activity as? MainActivity)?.setStatusBarColorTransparent(showingDownloads)
             activityBinding?.appBar?.isInvisible = showingDownloads
+            (activity as? MainActivity)?.setStatusBarColorTransparent(showingDownloads)
             setTitle()
         }
     }
