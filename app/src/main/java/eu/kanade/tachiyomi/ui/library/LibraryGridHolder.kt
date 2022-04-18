@@ -130,38 +130,15 @@ class LibraryGridHolder(
             listener(
                 onSuccess = { _, _ ->
                     if (!fixedSize && !hasRatio && MangaCoverMetadata.getRatio(manga) != null) {
-                        setCoverRatio(manga)
+                        setFreeformCoverRatio(manga)
                     }
                 }
             )
         }
     }
 
-    fun setCoverRatio(manga: Manga, parent: AutofitRecyclerView? = null) {
-        val ratio = MangaCoverMetadata.getRatio(manga)
-        val itemWidth = parent?.itemWidth ?: itemView.width
-        if (ratio != null) {
-            binding.coverThumbnail.adjustViewBounds = false
-            binding.coverThumbnail.maxHeight = Int.MAX_VALUE
-            binding.coverThumbnail.minimumHeight = 56.dpToPx
-            binding.constraintLayout.minHeight = 56.dpToPx
-        } else {
-            val coverHeight = (itemWidth / 3f * 4f).toInt()
-            binding.constraintLayout.minHeight = coverHeight / 2
-            binding.coverThumbnail.minimumHeight =
-                (itemWidth / 3f * 3.6f).toInt()
-            binding.coverThumbnail.maxHeight = (itemWidth / 3f * 6f).toInt()
-            binding.coverThumbnail.adjustViewBounds = true
-        }
-        binding.coverThumbnail.updateLayoutParams<ConstraintLayout.LayoutParams> {
-            if (ratio != null) {
-                height = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT
-                dimensionRatio = "W,1:$ratio"
-            } else {
-                height = ViewGroup.LayoutParams.WRAP_CONTENT
-                dimensionRatio = null
-            }
-        }
+    fun setFreeformCoverRatio(manga: Manga, parent: AutofitRecyclerView? = null) {
+        binding.setFreeformCoverRatio(manga, parent)
     }
 
     private fun playButtonClicked() {
@@ -180,5 +157,32 @@ class LibraryGridHolder(
         super.onItemReleased(position)
         binding.card.isDragged = false
         binding.unreadDownloadBadge.badgeView.isDragged = false
+    }
+}
+
+fun MangaGridItemBinding.setFreeformCoverRatio(manga: Manga?, parent: AutofitRecyclerView? = null) {
+    val ratio = manga?.let { MangaCoverMetadata.getRatio(it) }
+    val itemWidth = parent?.itemWidth ?: root.width
+    if (ratio != null) {
+        coverThumbnail.adjustViewBounds = false
+        coverThumbnail.maxHeight = Int.MAX_VALUE
+        coverThumbnail.minimumHeight = 56.dpToPx
+        constraintLayout.minHeight = 56.dpToPx
+    } else {
+        val coverHeight = (itemWidth / 3f * 4f).toInt()
+        constraintLayout.minHeight = coverHeight / 2
+        coverThumbnail.minimumHeight =
+            (itemWidth / 3f * 3.6f).toInt()
+        coverThumbnail.maxHeight = (itemWidth / 3f * 6f).toInt()
+        coverThumbnail.adjustViewBounds = true
+    }
+    coverThumbnail.updateLayoutParams<ConstraintLayout.LayoutParams> {
+        if (ratio != null) {
+            height = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT
+            dimensionRatio = "W,1:$ratio"
+        } else {
+            height = ViewGroup.LayoutParams.WRAP_CONTENT
+            dimensionRatio = null
+        }
     }
 }

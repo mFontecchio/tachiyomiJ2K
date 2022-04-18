@@ -110,7 +110,7 @@ class LibraryItem(
                     isFixedSize
                 )
                 if (!isFixedSize) {
-                    gridHolder.setCoverRatio(manga, parent)
+                    gridHolder.setFreeformCoverRatio(manga, parent)
                 }
                 gridHolder
             }
@@ -126,7 +126,7 @@ class LibraryItem(
         payloads: MutableList<Any?>?
     ) {
         if (holder is LibraryGridHolder && !holder.fixedSize) {
-            holder.setCoverRatio(manga, adapter.recyclerView as? AutofitRecyclerView)
+            holder.setFreeformCoverRatio(manga, adapter.recyclerView as? AutofitRecyclerView)
         }
         holder.onSetValues(this)
         (holder as? LibraryGridHolder)?.setSelected(adapter.isSelected(position))
