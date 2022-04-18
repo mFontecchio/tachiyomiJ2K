@@ -1116,7 +1116,7 @@ class LibraryController(
         binding.recyclerCover.isClickable = show
         binding.recyclerCover.isFocusable = show
         if (closeSearch) {
-            activityBinding?.cardToolbar?.menu?.findItem(R.id.action_search)?.collapseActionView()
+            activityBinding?.cardToolbar?.searchItem?.collapseActionView()
         }
         val full = binding.categoryRecycler.height.toFloat() + binding.categoryRecycler.marginTop
         val translateY = if (show) full else 0f
@@ -1647,7 +1647,7 @@ class LibraryController(
                 searchView?.setQuery(query, false)
             }
             search(query)
-        } else {
+        } else if (activityBinding?.cardToolbar?.isSearchExpanded == true) {
             searchItem?.collapseActionView()
         }
 
