@@ -290,8 +290,8 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
         val mainActivity = mainActivity ?: return
         val useSearchToolbar = mainToolbar?.alpha ?: 0f <= 0f
         val idle = RecyclerView.SCROLL_STATE_IDLE
-        if (if (useSearchToolbar) (-y >= height || recyclerView?.scrollState ?: idle <= idle)
-            else (mainActivity.currentToolbar == cardToolbar)
+        if (if (useSearchToolbar) -y >= height || recyclerView?.scrollState ?: idle <= idle
+            else mainActivity.currentToolbar == cardToolbar
         ) {
             useSearchToolbarForMenu(useSearchToolbar)
         }
@@ -336,6 +336,8 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
         if ((showCardTB || toolbarMode == ToolbarState.SEARCH_ONLY) && cardFrame?.isVisible == true) {
             if (mainActivity.currentToolbar != cardToolbar) {
                 mainActivity.setFloatingToolbar(true, showSearchAnyway = true)
+            } else {
+                mainActivity.setSearchTBMenuIfInvalid()
             }
             if (mainActivity.currentToolbar == cardToolbar) {
                 if (toolbarMode == ToolbarState.EXPANDED) {
