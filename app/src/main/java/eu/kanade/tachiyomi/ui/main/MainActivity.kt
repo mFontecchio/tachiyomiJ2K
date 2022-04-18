@@ -21,6 +21,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.annotation.IdRes
+import androidx.appcompat.widget.ActionMenuView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.graphics.ColorUtils
 import androidx.core.net.toUri
@@ -89,6 +90,7 @@ import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.tachiyomi.util.view.backgroundColor
 import eu.kanade.tachiyomi.util.view.blurBehindWindow
 import eu.kanade.tachiyomi.util.view.doOnApplyWindowInsetsCompat
+import eu.kanade.tachiyomi.util.view.findChild
 import eu.kanade.tachiyomi.util.view.getItemView
 import eu.kanade.tachiyomi.util.view.moveRecyclerViewUp
 import eu.kanade.tachiyomi.util.view.snack
@@ -907,6 +909,21 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 toolbar.menu.removeItem(it.itemId)
             }
         }
+
+        // Done because sometimes ActionMenuItemViews have a width/height of 0 and never update
+        val actionMenuView = toolbar.findChild<ActionMenuView>()
+        if (binding.appBar.isVisible && toolbar.isVisible &&
+            toolbar.width > 0 && actionMenuView?.children?.any { it.width == 0 } == true
+        ) {
+            toolbar.menu.children.toList().forEach {
+                if (it.itemId != R.id.action_search) {
+                    val isVis = it.isVisible
+                    it.isVisible = false
+                    it.isVisible = isVis
+                }
+            }
+        }
+
         val controller = if (this::router.isInitialized) router.backstack.lastOrNull()?.controller else null
         if (controller is FloatingSearchInterface) {
             binding.toolbar.menu.removeItem(R.id.action_search)

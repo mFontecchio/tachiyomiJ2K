@@ -52,7 +52,6 @@ import eu.kanade.tachiyomi.util.view.requestFilePermissionsSafe
 import eu.kanade.tachiyomi.util.view.scrollViewWith
 import eu.kanade.tachiyomi.util.view.setOnQueryTextChangeListener
 import eu.kanade.tachiyomi.util.view.snack
-import eu.kanade.tachiyomi.util.view.toolbarHeight
 import eu.kanade.tachiyomi.util.view.withFadeTransaction
 import eu.kanade.tachiyomi.widget.AutofitRecyclerView
 import eu.kanade.tachiyomi.widget.EmptyView
@@ -179,7 +178,9 @@ open class BrowseSourceController(bundle: Bundle) :
         var oldOffset = 0f
         val oldRecycler = binding.catalogueView.getChildAt(1)
         if (oldRecycler is RecyclerView) {
-            oldPosition = (oldRecycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+            oldPosition = (oldRecycler.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()
+                .takeIf { it != RecyclerView.NO_POSITION }
+                ?: (oldRecycler.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
             oldOffset = oldRecycler.layoutManager?.findViewByPosition(oldPosition)?.y?.minus(oldRecycler.paddingTop) ?: 0f
             oldRecycler.adapter = null
 
@@ -276,8 +277,12 @@ open class BrowseSourceController(bundle: Bundle) :
             true
         }
         // Show next display mode
-        menu.findItem(R.id.action_display_mode).apply {
-            val icon = if (presenter.isListMode) {
+        updateDisplayMenuItem(menu)
+    }
+
+    private fun updateDisplayMenuItem(menu: Menu?, isListMode: Boolean? = null) {
+        menu?.findItem(R.id.action_display_mode)?.apply {
+            val icon = if (isListMode ?: presenter.isListMode) {
                 R.drawable.ic_view_module_24dp
             } else {
                 R.drawable.ic_view_list_24dp
@@ -613,15 +618,9 @@ open class BrowseSourceController(bundle: Bundle) :
 
         presenter.swapDisplayMode()
         val isListMode = presenter.isListMode
-        val offset = recycler?.computeVerticalScrollOffset() ?: 0
         updateDisplayMenuItem(activityBinding?.toolbar?.menu, isListMode)
         updateDisplayMenuItem(activityBinding?.cardToolbar?.menu, isListMode)
         setupRecycler(view)
-        view.postOnAnimation {
-            if (offset + (toolbarHeight ?: 0) > activityBinding?.appBar?.height ?: 0) {
-                activityBinding?.appBar?.useSearchToolbarForMenu(true)
-            }
-        }
         if (!isListMode || !view.context.connectivityManager.isActiveNetworkMetered) {
             // Initialize mangas if going to grid view or if over wifi when going to list view
             val mangas = (0 until adapter.itemCount).mapNotNull {
