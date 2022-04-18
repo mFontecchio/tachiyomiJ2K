@@ -68,6 +68,14 @@ class AutofitRecyclerView @JvmOverloads constructor(context: Context, attrs: Att
         return 3
     }
 
+    override fun onMeasure(widthSpec: Int, heightSpec: Int) {
+        super.onMeasure(widthSpec, heightSpec)
+        setSpan()
+        if (width == 0) {
+            spanCount = getTempSpan()
+        }
+    }
+
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         super.onLayout(changed, l, t, r, b)
         setSpan()
