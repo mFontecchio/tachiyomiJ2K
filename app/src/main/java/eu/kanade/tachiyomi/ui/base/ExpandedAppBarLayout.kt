@@ -310,7 +310,8 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
         yAnimator?.cancel()
         val halfWay = compactAppBarHeight / 2
         val shortAnimationDuration = resources?.getInteger(
-            android.R.integer.config_longAnimTime
+            if (toolbarMode != ToolbarState.EXPANDED) android.R.integer.config_shortAnimTime
+            else android.R.integer.config_longAnimTime
         ) ?: 0
         val realHeight = preLayoutHeight + paddingTop
         val closerToTop = abs(y) > realHeight - halfWay
