@@ -843,30 +843,24 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         router.setRoot(controller.withFadeInTransaction().tag(id.toString()))
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        val prepare = super.onPrepareOptionsMenu(menu)
-        setupSearchTBMenu(menu)
-        return prepare
-    }
+//    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+//        val prepare = super.onPrepareOptionsMenu(menu)
+//        setupSearchTBMenu(menu)
+//        return prepare
+//    }
+//
+//    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+//        val create = super.onCreateOptionsMenu(menu)
+//        setupSearchTBMenu(menu)
+//        return create
+//    }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        val create = super.onCreateOptionsMenu(menu)
-        setupSearchTBMenu(menu)
-        return create
-    }
-
-    override fun onCreatePanelMenu(featureId: Int, menu: Menu): Boolean {
-        val create = super.onCreatePanelMenu(featureId, menu)
+    override fun onPreparePanel(featureId: Int, view: View?, menu: Menu): Boolean {
+        val prepare = super.onPreparePanel(featureId, view, menu)
         if (canShowFloatingToolbar(router.backstack.lastOrNull()?.controller)) {
             val searchItem = menu.findItem(R.id.action_search)
             searchItem?.isVisible = false
         }
-        setupSearchTBMenu(menu)
-        return create
-    }
-
-    override fun onPreparePanel(featureId: Int, view: View?, menu: Menu): Boolean {
-        val prepare = super.onPreparePanel(featureId, view, menu)
         setupSearchTBMenu(menu)
         return prepare
     }
@@ -879,10 +873,11 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         val newMenuIds = menu?.children?.toList()?.map { it.itemId }.orEmpty()
         menu?.children?.toList()?.let { menuItems ->
             val searchActive = toolbar.isSearchExpanded
-            menuItems.forEach { oldMenuItem ->
-                if (oldMenuItem.itemId == R.id.action_search) return@forEach
-                val isVisible = oldMenuItem.isVisible && currentToolbar == toolbar && (!searchActive || showAnyway)
-                addOrUpdateMenuItem(oldMenuItem, toolbar.menu, isVisible, currentItemsId)
+            menuItems.forEachIndexed { index, oldMenuItem ->
+                if (oldMenuItem.itemId == R.id.action_search) return@forEachIndexed
+                val isVisible = oldMenuItem.isVisible &&
+                    (currentToolbar == toolbar || !binding.appBar.useLargeToolbar) && (!searchActive || showAnyway)
+                addOrUpdateMenuItem(oldMenuItem, toolbar.menu, isVisible, currentItemsId, index)
             }
         }
         toolbar.menu.children.toList().forEach {
@@ -911,7 +906,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         }
     }
 
-    private fun addOrUpdateMenuItem(oldMenuItem: MenuItem, menu: Menu, isVisible: Boolean, currentItemsId: List<Int>) {
+    private fun addOrUpdateMenuItem(oldMenuItem: MenuItem, menu: Menu, isVisible: Boolean, currentItemsId: List<Int>, index: Int) {
         if (currentItemsId.contains(oldMenuItem.itemId)) {
             val newItem = menu.findItem(oldMenuItem.itemId) ?: return
             if (newItem.icon != oldMenuItem.icon) {
@@ -927,14 +922,14 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
             menu.addSubMenu(
                 oldMenuItem.groupId,
                 oldMenuItem.itemId,
-                oldMenuItem.order,
+                index,
                 oldMenuItem.title
             ).item
         } else {
             menu.add(
                 oldMenuItem.groupId,
                 oldMenuItem.itemId,
-                oldMenuItem.order,
+                index,
                 oldMenuItem.title
             )
         }
@@ -954,9 +949,9 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
             val currentItemsId = menuItem.subMenu.children.toList().map { it.itemId }
             var isExclusiveCheckable = false
             var isCheckable = false
-            oldSubMenu.children.toList().forEach { oldSubMenuItem ->
+            oldSubMenu.children.toList().forEachIndexed { index, oldSubMenuItem ->
                 val isSubVisible = oldSubMenuItem.isVisible
-                addOrUpdateMenuItem(oldSubMenuItem, menuItem.subMenu, isSubVisible, currentItemsId)
+                addOrUpdateMenuItem(oldSubMenuItem, menuItem.subMenu, isSubVisible, currentItemsId, index)
                 if (!isExclusiveCheckable) {
                     isExclusiveCheckable = (oldSubMenuItem as? MenuItemImpl)?.isExclusiveCheckable ?: false
                 }
