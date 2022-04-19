@@ -244,21 +244,28 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
         val bigHeight = bigView?.height ?: 0
         val realHeight = preLayoutHeight + paddingTop
         val tabHeight = if (tabsFrameLayout?.isVisible == true) 48.dpToPx else 0
-        val smallHeight = -realHeight + compactAppBarHeight + tabHeight
-        val newY = if (offset < realHeight - compactAppBarHeight - tabHeight) {
-            -offset.toFloat()
-        } else {
-            MathUtils.clamp(
-                translationY,
-                -realHeight.toFloat() + top + minTabletHeight,
-                max(
-                    smallHeight,
-                    if (offset > realHeight - compactAppBarHeight - tabHeight) smallHeight else min(
-                        -offset.toFloat(),
-                        0f
-                    )
-                ) + top.toFloat()
-            )
+        val shortH = if (toolbarMode != ToolbarState.EXPANDED) 0f else compactAppBarHeight
+        val smallHeight = -realHeight + shortH + tabHeight
+        val newY = when {
+            toolbarMode != ToolbarState.EXPANDED -> {
+                translationY
+            }
+            offset < realHeight - shortH - tabHeight -> {
+                -offset.toFloat()
+            }
+            else -> {
+                MathUtils.clamp(
+                    translationY,
+                    -realHeight.toFloat() + top + minTabletHeight,
+                    max(
+                        smallHeight,
+                        if (offset > realHeight - shortH - tabHeight) smallHeight else min(
+                            -offset.toFloat(),
+                            0f
+                        )
+                    ) + top.toFloat()
+                )
+            }
         }
 
         translationY = newY
@@ -270,7 +277,7 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
             }
         }
         if (toolbarMode != ToolbarState.EXPANDED) {
-            useSearchToolbarForMenu(offset > realHeight - compactAppBarHeight - tabHeight)
+            useSearchToolbarForMenu(offset > realHeight - shortH - tabHeight)
             return
         }
         val alpha =
@@ -308,13 +315,14 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
         val realHeight = preLayoutHeight + paddingTop
         val closerToTop = abs(y) > realHeight - halfWay
         val atTop = !recyclerView.canScrollVertically(-1)
+        val shortH = if (toolbarMode != ToolbarState.EXPANDED) 0f else compactAppBarHeight
         val lastY = if (closerToTop && !atTop) {
             -height.toFloat()
         } else {
-            compactAppBarHeight
+            shortH
         }
 
-        val onFirstItem = recyclerView.computeVerticalScrollOffset() < realHeight - compactAppBarHeight
+        val onFirstItem = recyclerView.computeVerticalScrollOffset() < realHeight - shortH
 
         return if (!onFirstItem) {
             yAnimator = animate().y(lastY)
