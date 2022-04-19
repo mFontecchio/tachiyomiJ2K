@@ -209,7 +209,7 @@ class RecentsController(bundle: Bundle? = null) :
         )
 
         viewScope.launchUI {
-            if (!isReturning) {
+            if (!isReturning && adapter.itemCount == 0) {
                 activityBinding?.appBar?.y = 0f
                 activityBinding?.appBar?.lockYPos = true
             }
