@@ -843,18 +843,6 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         router.setRoot(controller.withFadeInTransaction().tag(id.toString()))
     }
 
-//    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-//        val prepare = super.onPrepareOptionsMenu(menu)
-//        setupSearchTBMenu(menu)
-//        return prepare
-//    }
-//
-//    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-//        val create = super.onCreateOptionsMenu(menu)
-//        setupSearchTBMenu(menu)
-//        return create
-//    }
-
     override fun onPreparePanel(featureId: Int, view: View?, menu: Menu): Boolean {
         val prepare = super.onPreparePanel(featureId, view, menu)
         if (canShowFloatingToolbar(router.backstack.lastOrNull()?.controller)) {
