@@ -114,17 +114,17 @@ class MangaFetcher : Fetcher<Manga> {
                 coverCache.deleteCachedCovers()
             }
         }
-        setRatioAndColorsInScope(manga, coverFile)
+        setRatioAndColorsInScope(manga, coverFile, true)
         return fileLoader(coverFile)
     }
 
-    private fun setRatioAndColorsInScope(manga: Manga, ogFile: File? = null) {
+    private fun setRatioAndColorsInScope(manga: Manga, ogFile: File? = null, force: Boolean = false) {
         fileScope.launch {
-            setRatioAndColors(manga, ogFile)
+            setRatioAndColors(manga, ogFile, force)
         }
     }
 
-    fun setRatioAndColors(manga: Manga, ogFile: File? = null) {
+    fun setRatioAndColors(manga: Manga, ogFile: File? = null, force: Boolean = false) {
         if (!manga.favorite) {
             MangaCoverMetadata.remove(manga)
         }
@@ -133,16 +133,24 @@ class MangaFetcher : Fetcher<Manga> {
         // if the file exists and the there was still an error then the file is corrupted
         if (file.exists()) {
             val options = BitmapFactory.Options()
+            val hasVibrantColor = if (manga.favorite) manga.vibrantCoverColor != null else true
+            if (manga.dominantCoverColors != null && hasVibrantColor && !force) {
+                options.inJustDecodeBounds = true
+            } else {
+                options.inSampleSize = 4
+            }
             val bitmap = BitmapFactory.decodeFile(file.path, options) ?: return
-            Palette.from(bitmap).generate {
-                if (it == null) return@generate
-                if (manga.favorite) {
-                    it.dominantSwatch?.let { swatch ->
-                        manga.dominantCoverColors = swatch.rgb to swatch.titleTextColor
+            if (!options.inJustDecodeBounds) {
+                Palette.from(bitmap).generate {
+                    if (it == null) return@generate
+                    if (manga.favorite) {
+                        it.dominantSwatch?.let { swatch ->
+                            manga.dominantCoverColors = swatch.rgb to swatch.titleTextColor
+                        }
                     }
+                    val color = it.getBestColor() ?: return@generate
+                    manga.vibrantCoverColor = color
                 }
-                val color = it.getBestColor() ?: return@generate
-                manga.vibrantCoverColor = color
             }
             if (manga.favorite && !(options.outWidth == -1 || options.outHeight == -1)) {
                 MangaCoverMetadata.addCoverRatio(manga, options.outWidth / options.outHeight.toFloat())
