@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.ui.library.LibraryItem
 import eu.kanade.tachiyomi.util.system.dpToPx
 import eu.kanade.tachiyomi.util.system.pxToDp
 import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -162,7 +163,13 @@ class AutofitRecyclerView @JvmOverloads constructor(context: Context, attrs: Att
     }
 
     private fun setSpan(force: Boolean = false) {
-        if ((spanCount == 0 || force || (width != lastMeasuredWidth)) && columnWidth > 0) {
+        if ((
+            spanCount == 0 || force ||
+                // Add 100dp check to make sure we dont update span for sidenav changes
+                (width != lastMeasuredWidth && abs(width - lastMeasuredWidth) > 100.dpToPx)
+            ) &&
+            columnWidth > 0
+        ) {
             val dpWidth = (width.pxToDp / 100f).roundToInt()
             val count = max(1, (dpWidth / columnWidth).roundToInt())
             spanCount = count
