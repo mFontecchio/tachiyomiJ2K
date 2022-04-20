@@ -291,15 +291,16 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
                 ) * 255
                 ).roundToInt()
         )
-        mainToolbar?.alpha = MathUtils.clamp(
-            (y + (mainToolbar?.y ?: 0f)) / paddingTop,
+        val mainToolbar = mainToolbar ?: return
+        mainToolbar.alpha = MathUtils.clamp(
+            (mainToolbar.bottom + mainToolbar.translationY + y - paddingTop) / mainToolbar.height,
             0f,
             1f
         )
         val mainActivity = mainActivity ?: return
-        val useSearchToolbar = mainToolbar?.alpha ?: 0f <= 0f
+        val useSearchToolbar = mainToolbar.alpha <= 0.025f
         val idle = RecyclerView.SCROLL_STATE_IDLE
-        if (if (useSearchToolbar) -y >= height || recyclerView?.scrollState ?: idle <= idle
+        if (if (useSearchToolbar) -y >= height || recyclerView?.scrollState ?: idle <= idle || context.isTablet()
             else mainActivity.currentToolbar == cardToolbar
         ) {
             useSearchToolbarForMenu(useSearchToolbar)
