@@ -24,7 +24,6 @@ import eu.kanade.tachiyomi.util.view.setOnQueryTextChangeListener
 import eu.kanade.tachiyomi.widget.preference.SwitchPreferenceCategory
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.util.Locale
 import java.util.TreeMap
 
 class SettingsSourcesController : SettingsController(), FloatingSearchInterface {
@@ -42,7 +41,7 @@ class SettingsSourcesController : SettingsController(), FloatingSearchInterface 
     private var sorting = SourcesSort.Alpha
 
     override fun getSearchTitle(): String? {
-        return searchTitle(view?.context?.getString(R.string.sources)?.lowercase(Locale.ROOT))
+        return view?.context?.getString(R.string.search)
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) = screen.apply {

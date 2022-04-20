@@ -209,7 +209,7 @@ class RecentsController(bundle: Bundle? = null) :
         )
 
         viewScope.launchUI {
-            if (!isReturning) {
+            if (!isReturning && adapter.itemCount == 0) {
                 activityBinding?.appBar?.y = 0f
                 activityBinding?.appBar?.lockYPos = true
             }
@@ -400,8 +400,8 @@ class RecentsController(bundle: Bundle? = null) :
     fun updateTitleAndMenu() {
         if (isControllerVisible) {
             val activity = (activity as? MainActivity) ?: return
-            (activity as? MainActivity)?.setStatusBarColorTransparent(showingDownloads)
             activityBinding?.appBar?.isInvisible = showingDownloads
+            (activity as? MainActivity)?.setStatusBarColorTransparent(showingDownloads)
             setTitle()
         }
     }

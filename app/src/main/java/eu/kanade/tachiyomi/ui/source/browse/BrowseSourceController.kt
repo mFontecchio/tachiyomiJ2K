@@ -262,12 +262,13 @@ open class BrowseSourceController(bundle: Bundle) :
         val searchItem = activityBinding?.cardToolbar?.searchItem
         val searchView = activityBinding?.cardToolbar?.searchView
 
+        activityBinding?.cardToolbar?.setQueryHint("", !isBehindGlobalSearch && presenter.query.isBlank())
         val query = presenter.query
         if (query.isNotBlank()) {
             searchItem?.expandActionView()
             searchView?.setQuery(query, true)
             searchView?.clearFocus()
-        } else {
+        } else if (activityBinding?.cardToolbar?.isSearchExpanded == true) {
             searchItem?.collapseActionView()
             searchView?.setQuery("", true)
         }
@@ -301,8 +302,6 @@ open class BrowseSourceController(bundle: Bundle) :
 
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
-
-        activityBinding?.cardToolbar?.setQueryHint("", !isBehindGlobalSearch && presenter.query.isBlank())
 
         val isHttpSource = presenter.source is HttpSource
         menu.findItem(R.id.action_open_in_web_view).isVisible = isHttpSource
@@ -343,7 +342,7 @@ open class BrowseSourceController(bundle: Bundle) :
         sheet.onSearchClicked = {
             var matches = true
             for (i in presenter.sourceFilters.indices) {
-                val filter = oldFilters[i]
+                val filter = oldFilters.getOrNull(i)
                 if (filter is List<*>) {
                     for (j in filter.indices) {
                         if (filter[j] !=
@@ -356,7 +355,7 @@ open class BrowseSourceController(bundle: Bundle) :
                             break
                         }
                     }
-                } else if (oldFilters[i] != presenter.sourceFilters[i].state) {
+                } else if (filter != presenter.sourceFilters[i].state) {
                     matches = false
                     break
                 }

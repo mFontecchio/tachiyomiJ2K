@@ -4,6 +4,9 @@ import android.app.Dialog
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.text.method.LinkMovementMethod
+import android.view.View
+import android.widget.TextView
 import androidx.core.net.toUri
 import androidx.preference.PreferenceScreen
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
@@ -14,12 +17,14 @@ import eu.kanade.tachiyomi.data.updater.AppUpdateChecker
 import eu.kanade.tachiyomi.data.updater.AppUpdateNotifier
 import eu.kanade.tachiyomi.data.updater.AppUpdateResult
 import eu.kanade.tachiyomi.data.updater.AppUpdateService
+import eu.kanade.tachiyomi.data.updater.RELEASE_URL
 import eu.kanade.tachiyomi.ui.base.controller.DialogController
 import eu.kanade.tachiyomi.util.lang.toTimestampString
 import eu.kanade.tachiyomi.util.system.isOnline
 import eu.kanade.tachiyomi.util.system.materialAlertDialog
 import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.tachiyomi.util.view.openInBrowser
+import io.noties.markwon.Markwon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,7 +41,7 @@ class AboutController : SettingsController() {
     /**
      * Checks for new releases
      */
-    private val updateChecker by lazy { AppUpdateChecker.getUpdateChecker() }
+    private val updateChecker by lazy { AppUpdateChecker() }
 
     private val userPreferences: PreferencesHelper by injectLazy()
 
@@ -58,7 +63,7 @@ class AboutController : SettingsController() {
                     if (BuildConfig.DEBUG) {
                         "https://github.com/Jays2Kings/tachiyomiJ2K/commits/master"
                     } else {
-                        "https://github.com/Jays2Kings/tachiyomiJ2K/releases/tag/v${BuildConfig.VERSION_NAME}"
+                        RELEASE_URL
                     }.toUri()
                 )
                 startActivity(intent)
@@ -165,32 +170,33 @@ class AboutController : SettingsController() {
      * Checks version and shows a user prompt if an update is available.
      */
     private fun checkVersion() {
-        if (activity == null) return
+        val activity = activity ?: return
 
-        activity?.toast(R.string.searching_for_updates)
+        activity.toast(R.string.searching_for_updates)
         viewScope.launch {
             val result = try {
-                updateChecker.checkForUpdate()
+                updateChecker.checkForUpdate(activity, true)
             } catch (error: Exception) {
                 withContext(Dispatchers.Main) {
-                    activity?.toast(error.message)
+                    activity.toast(error.message)
                     Timber.e(error)
                 }
             }
             when (result) {
-                is AppUpdateResult.NewUpdate<*> -> {
+                is AppUpdateResult.NewUpdate -> {
                     val body = result.release.info
                     val url = result.release.downloadLink
+                    val isBeta = result.release.preRelease == true
 
                     // Create confirmation window
                     withContext(Dispatchers.Main) {
                         AppUpdateNotifier.releasePageUrl = result.release.releaseLink
-                        NewUpdateDialogController(body, url).showDialog(router)
+                        NewUpdateDialogController(body, url, isBeta).showDialog(router)
                     }
                 }
                 is AppUpdateResult.NoNewUpdate -> {
                     withContext(Dispatchers.Main) {
-                        activity?.toast(R.string.no_new_updates_available)
+                        activity.toast(R.string.no_new_updates_available)
                     }
                 }
             }
@@ -199,18 +205,30 @@ class AboutController : SettingsController() {
 
     class NewUpdateDialogController(bundle: Bundle? = null) : DialogController(bundle) {
 
-        constructor(body: String, url: String) : this(
+        constructor(body: String, url: String, isBeta: Boolean?) : this(
             Bundle().apply {
                 putString(BODY_KEY, body)
                 putString(URL_KEY, url)
+                putBoolean(IS_BETA, isBeta == true)
             }
         )
 
         override fun onCreateDialog(savedViewState: Bundle?): Dialog {
+            val releaseBody = (args.getString(BODY_KEY) ?: "")
+                .replace("""---(\R|.)*Checksums(\R|.)*""".toRegex(), "")
+            val info = Markwon.create(activity!!).toMarkdown(releaseBody)
+
             val isOnA12 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+            val isBeta = args.getBoolean(IS_BETA, false)
             return activity!!.materialAlertDialog()
-                .setTitle(R.string.new_version_available)
-                .setMessage(args.getString(BODY_KEY) ?: "")
+                .setTitle(
+                    if (isBeta) {
+                        R.string.new_beta_version_available
+                    } else {
+                        R.string.new_version_available
+                    }
+                )
+                .setMessage(info)
                 .setPositiveButton(if (isOnA12) R.string.update else R.string.download) { _, _ ->
                     val appContext = applicationContext
                     if (appContext != null) {
@@ -223,9 +241,16 @@ class AboutController : SettingsController() {
                 .create()
         }
 
+        override fun onAttach(view: View) {
+            super.onAttach(view)
+            (dialog?.findViewById(android.R.id.message) as? TextView)?.movementMethod =
+                LinkMovementMethod.getInstance()
+        }
+
         companion object {
             const val BODY_KEY = "NewUpdateDialogController.body"
             const val URL_KEY = "NewUpdateDialogController.key"
+            const val IS_BETA = "NewUpdateDialogController.is_beta"
         }
     }
 

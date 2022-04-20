@@ -59,6 +59,7 @@ import eu.kanade.tachiyomi.data.preference.asImmediateFlowIn
 import eu.kanade.tachiyomi.data.updater.AppUpdateChecker
 import eu.kanade.tachiyomi.data.updater.AppUpdateNotifier
 import eu.kanade.tachiyomi.data.updater.AppUpdateResult
+import eu.kanade.tachiyomi.data.updater.RELEASE_TAG
 import eu.kanade.tachiyomi.databinding.MainActivityBinding
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.extension.api.ExtensionGithubApi
@@ -86,6 +87,7 @@ import eu.kanade.tachiyomi.util.system.getResourceColor
 import eu.kanade.tachiyomi.util.system.hasSideNavBar
 import eu.kanade.tachiyomi.util.system.isBottomTappable
 import eu.kanade.tachiyomi.util.system.isInNightMode
+import eu.kanade.tachiyomi.util.system.launchIO
 import eu.kanade.tachiyomi.util.system.launchUI
 import eu.kanade.tachiyomi.util.system.prepareSideNavContext
 import eu.kanade.tachiyomi.util.system.rootWindowInsetsCompat
@@ -131,7 +133,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
     private val hideBottomNav
         get() = router.backstackSize > 1 && router.backstack[1].controller !is DialogController
 
-    private val updateChecker by lazy { AppUpdateChecker.getUpdateChecker() }
+    private val updateChecker by lazy { AppUpdateChecker() }
     private val isUpdaterEnabled = BuildConfig.INCLUDE_UPDATER
     private var tabAnimation: ValueAnimator? = null
     private var overflowDialog: Dialog? = null
@@ -580,7 +582,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
 
     override fun onResume() {
         super.onResume()
-        getAppUpdates()
+        checkForAppUpdates()
         getExtensionUpdates(false)
         setExtensionsBadge()
         DownloadService.callListeners()
@@ -631,22 +633,20 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         MangaCoverMetadata.savePrefs()
     }
 
-    private fun getAppUpdates() {
-        if (isUpdaterEnabled &&
-            Date().time >= preferences.lastAppCheck().get() + TimeUnit.DAYS.toMillis(1)
-        ) {
-            lifecycleScope.launch(Dispatchers.IO) {
+    private fun checkForAppUpdates() {
+        if (isUpdaterEnabled) {
+            lifecycleScope.launchIO {
                 try {
-                    val result = updateChecker.checkForUpdate()
-                    preferences.lastAppCheck().set(Date().time)
-                    if (result is AppUpdateResult.NewUpdate<*>) {
+                    val result = updateChecker.checkForUpdate(this@MainActivity)
+                    if (result is AppUpdateResult.NewUpdate) {
                         val body = result.release.info
                         val url = result.release.downloadLink
+                        val isBeta = result.release.preRelease == true
 
                         // Create confirmation window
                         withContext(Dispatchers.Main) {
                             AppUpdateNotifier.releasePageUrl = result.release.releaseLink
-                            AboutController.NewUpdateDialogController(body, url).showDialog(router)
+                            AboutController.NewUpdateDialogController(body, url, isBeta).showDialog(router)
                         }
                     }
                 } catch (error: Exception) {
@@ -849,30 +849,12 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         router.setRoot(controller.withFadeInTransaction().tag(id.toString()))
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        val prepare = super.onPrepareOptionsMenu(menu)
-        setupSearchTBMenu(menu)
-        return prepare
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        val create = super.onCreateOptionsMenu(menu)
-        setupSearchTBMenu(menu)
-        return create
-    }
-
-    override fun onCreatePanelMenu(featureId: Int, menu: Menu): Boolean {
-        val create = super.onCreatePanelMenu(featureId, menu)
+    override fun onPreparePanel(featureId: Int, view: View?, menu: Menu): Boolean {
+        val prepare = super.onPreparePanel(featureId, view, menu)
         if (canShowFloatingToolbar(router.backstack.lastOrNull()?.controller)) {
             val searchItem = menu.findItem(R.id.action_search)
             searchItem?.isVisible = false
         }
-        setupSearchTBMenu(menu)
-        return create
-    }
-
-    override fun onPreparePanel(featureId: Int, view: View?, menu: Menu): Boolean {
-        val prepare = super.onPreparePanel(featureId, view, menu)
         setupSearchTBMenu(menu)
         return prepare
     }
@@ -885,42 +867,11 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         val newMenuIds = menu?.children?.toList()?.map { it.itemId }.orEmpty()
         menu?.children?.toList()?.let { menuItems ->
             val searchActive = toolbar.isSearchExpanded
-            menuItems.forEach { oldMenuItem ->
-                if (oldMenuItem.itemId == R.id.action_search) {
-                    return@forEach
-                }
-                val isVisible = oldMenuItem.isVisible && currentToolbar == toolbar && (!searchActive || showAnyway)
-                if (currentItemsId.contains(oldMenuItem.itemId)) {
-                    val newItem = toolbar.menu.findItem(oldMenuItem.itemId) ?: return@forEach
-                    if (newItem.icon != oldMenuItem.icon) {
-                        newItem.icon = oldMenuItem.icon
-                    }
-                    if (newItem.isVisible != isVisible) {
-                        newItem.isVisible = isVisible
-                    }
-                    updateSubMenu(oldMenuItem, newItem)
-                    return@forEach
-                }
-                val menuItem = if (oldMenuItem.hasSubMenu()) {
-                    toolbar.menu.addSubMenu(
-                        oldMenuItem.groupId,
-                        oldMenuItem.itemId,
-                        oldMenuItem.order,
-                        oldMenuItem.title
-                    ).item
-                } else {
-                    toolbar.menu.add(
-                        oldMenuItem.groupId,
-                        oldMenuItem.itemId,
-                        oldMenuItem.order,
-                        oldMenuItem.title
-                    )
-                }
-                menuItem.isVisible = isVisible
-                menuItem.actionView = oldMenuItem.actionView
-                menuItem.icon = oldMenuItem.icon
-                updateSubMenu(oldMenuItem, menuItem)
-                menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
+            menuItems.forEachIndexed { index, oldMenuItem ->
+                if (oldMenuItem.itemId == R.id.action_search) return@forEachIndexed
+                val isVisible = oldMenuItem.isVisible &&
+                    (currentToolbar == toolbar || !binding.appBar.useLargeToolbar) && (!searchActive || showAnyway)
+                addOrUpdateMenuItem(oldMenuItem, toolbar.menu, isVisible, currentItemsId, index)
             }
         }
         toolbar.menu.children.toList().forEach {
@@ -949,34 +900,65 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         }
     }
 
+    private fun addOrUpdateMenuItem(oldMenuItem: MenuItem, menu: Menu, isVisible: Boolean, currentItemsId: List<Int>, index: Int) {
+        if (currentItemsId.contains(oldMenuItem.itemId)) {
+            val newItem = menu.findItem(oldMenuItem.itemId) ?: return
+            if (newItem.icon != oldMenuItem.icon) {
+                newItem.icon = oldMenuItem.icon
+            }
+            if (newItem.isVisible != isVisible) {
+                newItem.isVisible = isVisible
+            }
+            updateSubMenu(oldMenuItem, newItem)
+            return
+        }
+        val menuItem = if (oldMenuItem.hasSubMenu()) {
+            menu.addSubMenu(
+                oldMenuItem.groupId,
+                oldMenuItem.itemId,
+                index,
+                oldMenuItem.title
+            ).item
+        } else {
+            menu.add(
+                oldMenuItem.groupId,
+                oldMenuItem.itemId,
+                index,
+                oldMenuItem.title
+            )
+        }
+        menuItem.isVisible = isVisible
+        menuItem.actionView = oldMenuItem.actionView
+        menuItem.icon = oldMenuItem.icon
+        menuItem.isChecked = oldMenuItem.isChecked
+        updateSubMenu(oldMenuItem, menuItem)
+        menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
+    }
+
     @SuppressLint("RestrictedApi")
     private fun updateSubMenu(oldMenuItem: MenuItem, menuItem: MenuItem) {
         if (oldMenuItem.hasSubMenu()) {
-            menuItem.subMenu.clear()
             val oldSubMenu = oldMenuItem.subMenu
+            val newMenuIds = oldSubMenu.children.toList().map { it.itemId }
+            val currentItemsId = menuItem.subMenu.children.toList().map { it.itemId }
             var isExclusiveCheckable = false
             var isCheckable = false
-            oldSubMenu.children.toList().forEach { oldSubMenuItem ->
+            oldSubMenu.children.toList().forEachIndexed { index, oldSubMenuItem ->
                 val isSubVisible = oldSubMenuItem.isVisible
-                val subMenuItem = menuItem.subMenu.add(
-                    oldSubMenuItem.groupId,
-                    oldSubMenuItem.itemId,
-                    oldSubMenuItem.order,
-                    oldSubMenuItem.title
-                )
-                subMenuItem.isVisible = isSubVisible
-                subMenuItem.actionView = oldSubMenuItem.actionView
-                subMenuItem.icon = oldSubMenuItem.icon
-                subMenuItem.isChecked = oldSubMenuItem.isChecked
+                addOrUpdateMenuItem(oldSubMenuItem, menuItem.subMenu, isSubVisible, currentItemsId, index)
                 if (!isExclusiveCheckable) {
                     isExclusiveCheckable = (oldSubMenuItem as? MenuItemImpl)?.isExclusiveCheckable ?: false
                 }
                 if (!isCheckable) {
                     isCheckable = oldSubMenuItem.isCheckable
                 }
-                subMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
             }
             menuItem.subMenu.setGroupCheckable(oldSubMenu.children.first().groupId, isCheckable, isExclusiveCheckable)
+            menuItem.subMenu.children.toList().forEach {
+                if (!newMenuIds.contains(it.itemId)) {
+                    menuItem.subMenu.removeItem(it.itemId)
+                }
+            }
         }
     }
 
@@ -1147,7 +1129,7 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
                 try {
                     val intent = Intent(
                         Intent.ACTION_VIEW,
-                        "https://github.com/jays2kings/tachiyomiJ2K/releases/tag/v${BuildConfig.VERSION_NAME}".toUri()
+                        RELEASE_TAG.toUri()
                     )
                     startActivity(intent)
                 } catch (e: Throwable) {
