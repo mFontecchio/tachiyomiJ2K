@@ -14,6 +14,7 @@ import eu.kanade.tachiyomi.data.download.DownloadService
 import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.databinding.DownloadBottomSheetBinding
 import eu.kanade.tachiyomi.ui.extension.ExtensionDividerItemDecoration
+import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.recents.RecentsController
 import eu.kanade.tachiyomi.util.view.collapse
 import eu.kanade.tachiyomi.util.view.doOnApplyWindowInsetsCompat
@@ -68,10 +69,7 @@ class DownloadBottomSheet @JvmOverloads constructor(
         this.controller = controller
         updateDLTitle()
 
-        val attrsArray = intArrayOf(android.R.attr.actionBarSize)
-        val array = context.obtainStyledAttributes(attrsArray)
-        val headerHeight = array.getDimensionPixelSize(0, 0)
-        array.recycle()
+        val headerHeight = (activity as? MainActivity)?.toolbarHeight ?: 0
         binding.recyclerLayout.doOnApplyWindowInsetsCompat { v, windowInsets, _ ->
             v.updateLayoutParams<MarginLayoutParams> {
                 topMargin = windowInsets.getInsets(systemBars()).top +

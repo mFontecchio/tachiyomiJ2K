@@ -89,6 +89,14 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
             return -preLayoutHeight + (mainToolbar?.height ?: 0) + tabHeight
         }
 
+    val attrToolbarHeight: Int = let {
+        val attrsArray = intArrayOf(R.attr.mainActionBarSize)
+        val array = it.context.obtainStyledAttributes(attrsArray)
+        val height = array.getDimensionPixelSize(0, 0)
+        array.recycle()
+        height
+    }
+
     val preLayoutHeight: Int
         get() = getEstimatedLayout(
             cardFrame?.isVisible == true && toolbarMode == ToolbarState.EXPANDED,
@@ -102,11 +110,7 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
             val appBarHeight = if (mainToolbar?.height ?: 0 > 0) {
                 mainToolbar?.height ?: 0
             } else {
-                val attrsArray = intArrayOf(R.attr.mainActionBarSize)
-                val array = context.obtainStyledAttributes(attrsArray)
-                val height = array.getDimensionPixelSize(0, 0)
-                array.recycle()
-                height
+                attrToolbarHeight
             }
             return (appBarHeight + paddingTop).toFloat()
         }
@@ -188,18 +192,12 @@ class ExpandedAppBarLayout@JvmOverloads constructor(context: Context, attrs: Att
 
     fun getEstimatedLayout(includeSearchToolbar: Boolean, includeTabs: Boolean, includeLargeToolbar: Boolean): Int {
         val hasLargeToolbar = includeLargeToolbar && useLargeToolbar
-        val attrsArray = intArrayOf(R.attr.mainActionBarSize)
-        val array = context.obtainStyledAttributes(attrsArray)
-        val appBarHeight = (
-            array.getDimensionPixelSize(0, 0) *
-                (if (includeSearchToolbar && hasLargeToolbar) 2 else 1)
-            )
+        val appBarHeight = attrToolbarHeight * (if (includeSearchToolbar && hasLargeToolbar) 2 else 1)
         val widthMeasureSpec = MeasureSpec.makeMeasureSpec(resources.displayMetrics.widthPixels, MeasureSpec.AT_MOST)
         val heightMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
         bigTitleView?.measure(widthMeasureSpec, heightMeasureSpec)
         val textHeight = max(bigTitleView?.height ?: 0, bigTitleView?.measuredHeight ?: 0) +
             (bigTitleView?.marginTop?.plus(bigView?.paddingBottom ?: 0) ?: 0)
-        array.recycle()
         return appBarHeight + (if (hasLargeToolbar) textHeight else 0) +
             if (includeTabs) 48.dpToPx else 0
     }

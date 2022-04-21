@@ -113,13 +113,10 @@ fun Controller.removeQueryListener() {
 
 fun Controller.liftAppbarWith(recycler: RecyclerView, padView: Boolean = false) {
     if (padView) {
-        val attrsArray = intArrayOf(R.attr.mainActionBarSize)
-        val array = recycler.context.obtainStyledAttributes(attrsArray)
         var appBarHeight = (
             if (fullAppBarHeight ?: 0 > 0) fullAppBarHeight!!
-            else array.getDimensionPixelSize(0, 0)
+            else activityBinding?.appBar?.attrToolbarHeight ?: 0
             )
-        array.recycle()
         activityBinding!!.toolbar.post {
             if (fullAppBarHeight!! > 0) {
                 appBarHeight = fullAppBarHeight!!
@@ -144,7 +141,7 @@ fun Controller.liftAppbarWith(recycler: RecyclerView, padView: Boolean = false) 
             }
         }
     } else {
-        view?.applyWindowInsetsForController()
+        view?.applyWindowInsetsForController(activityBinding?.appBar?.attrToolbarHeight ?: 0)
         recycler.setOnApplyWindowInsetsListener(RecyclerWindowInsetsListener)
     }
 
@@ -217,13 +214,10 @@ fun Controller.scrollViewWith(
     val includeTabView = this is TabbedInterface
     activityBinding?.appBar?.useTabsInPreLayout = includeTabView
     activityBinding?.appBar?.setToolbarModeBy(this@scrollViewWith)
-    val attrsArray = intArrayOf(R.attr.mainActionBarSize)
-    val array = recycler.context.obtainStyledAttributes(attrsArray)
     var appBarHeight = (
         if (fullAppBarHeight ?: 0 > 0) fullAppBarHeight!!
-        else activityBinding?.appBar?.preLayoutHeight ?: array.getDimensionPixelSize(0, 0)
+        else activityBinding?.appBar?.preLayoutHeight ?: 0
         )
-    array.recycle()
     swipeRefreshLayout?.setDistanceToTriggerSync(150.dpToPx)
     val swipeCircle = swipeRefreshLayout?.findChild<ImageView>()
     activityBinding!!.appBar.doOnLayout {

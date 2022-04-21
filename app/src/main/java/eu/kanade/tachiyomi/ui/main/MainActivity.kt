@@ -22,6 +22,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.annotation.IdRes
+import androidx.appcompat.view.menu.ActionMenuItemView
 import androidx.appcompat.view.menu.MenuItemImpl
 import androidx.appcompat.widget.ActionMenuView
 import androidx.appcompat.widget.Toolbar
@@ -139,6 +140,15 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
     private var overflowDialog: Dialog? = null
     var currentToolbar: Toolbar? = null
     var ogWidth: Int = Int.MAX_VALUE
+
+    private val actionButtonSize: Pair<Int, Int> by lazy {
+        val attrs = intArrayOf(android.R.attr.minWidth, android.R.attr.minHeight)
+        val ta = obtainStyledAttributes(androidx.appcompat.R.style.Widget_AppCompat_ActionButton, attrs)
+        val dimenW = ta.getDimensionPixelSize(0, 0.dpToPx)
+        val dimenH = ta.getDimensionPixelSize(1, 0.dpToPx)
+        ta.recycle()
+        dimenW to dimenH
+    }
 
     fun setUndoSnackBar(snackBar: Snackbar?, extraViewToCheck: View? = null) {
         this.snackBar = snackBar
@@ -886,13 +896,14 @@ open class MainActivity : BaseActivity<MainActivityBinding>(), DownloadServiceLi
         if (binding.appBar.isVisible && toolbar.isVisible &&
             toolbar.width > 0 && actionMenuView?.children?.any { it.width == 0 } == true
         ) {
-            toolbar.menu.children.toList().forEach {
-                if (it.itemId != R.id.action_search) {
-                    val isVis = it.isVisible
-                    it.isVisible = false
-                    it.isVisible = isVis
+            actionMenuView.children.forEach {
+                if (it !is ActionMenuItemView) return@forEach
+                it.updateLayoutParams<ViewGroup.LayoutParams> {
+                    width = actionButtonSize.first
+                    height = actionButtonSize.second
                 }
             }
+            actionMenuView.requestLayout()
         }
 
         val controller = if (this::router.isInitialized) router.backstack.lastOrNull()?.controller else null
