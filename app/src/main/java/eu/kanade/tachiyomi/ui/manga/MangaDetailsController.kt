@@ -370,10 +370,7 @@ class MangaDetailsController :
             MangaDetailsDivider(view.context)
         )
         binding.recycler.setHasFixedSize(true)
-        val attrsArray = intArrayOf(R.attr.mainActionBarSize)
-        val array = view.context.obtainStyledAttributes(attrsArray)
-        val appbarHeight = array.getDimensionPixelSize(0, 0)
-        array.recycle()
+        val appbarHeight = activityBinding?.appBar?.attrToolbarHeight ?: 0
         val offset = 10.dpToPx
         binding.swipeRefresh.setDistanceToTriggerSync(70.dpToPx)
 

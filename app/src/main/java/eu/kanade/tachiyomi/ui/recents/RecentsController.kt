@@ -169,15 +169,12 @@ class RecentsController(bundle: Bundle? = null) :
         adapter.itemTouchHelperCallback.setSwipeFlags(
             if (view.resources.isLTR) ItemTouchHelper.LEFT else ItemTouchHelper.RIGHT
         )
-        val attrsArray = intArrayOf(R.attr.mainActionBarSize)
-        val array = view.context.obtainStyledAttributes(attrsArray)
-        val appBarHeight = array.getDimensionPixelSize(0, 0)
-        array.recycle()
         binding.swipeRefresh.setStyle()
         scrollViewWith(
             binding.recycler,
             swipeRefreshLayout = binding.swipeRefresh,
             afterInsets = {
+                val appBarHeight = activityBinding?.appBar?.attrToolbarHeight ?: 0
                 headerHeight = it.getInsets(systemBars()).top + appBarHeight + 48.dpToPx
                 binding.recycler.updatePaddingRelative(
                     bottom = activityBinding?.bottomNav?.height ?: it.getInsets(systemBars()).bottom

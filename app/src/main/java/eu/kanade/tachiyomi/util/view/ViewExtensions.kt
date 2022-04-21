@@ -197,13 +197,10 @@ fun View.applyBottomAnimatedInsets(
     )
 }
 
-object ControllerViewWindowInsetsListener : OnApplyWindowInsetsListener {
+class ControllerViewWindowInsetsListener(private val topHeight: Int) : OnApplyWindowInsetsListener {
     override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
         v.updateLayoutParams<FrameLayout.LayoutParams> {
-            val attrsArray = intArrayOf(R.attr.mainActionBarSize)
-            val array = v.context.obtainStyledAttributes(attrsArray)
-            topMargin = insets.getInsets(systemBars()).top + array.getDimensionPixelSize(0, 0)
-            array.recycle()
+            topMargin = insets.getInsets(systemBars()).top + topHeight
         }
         return insets
     }
@@ -229,8 +226,8 @@ fun View.doOnApplyWindowInsetsCompat(f: (View, WindowInsetsCompat, ViewPaddingSt
     requestApplyInsetsWhenAttached()
 }
 
-fun View.applyWindowInsetsForController() {
-    ViewCompat.setOnApplyWindowInsetsListener(this, ControllerViewWindowInsetsListener)
+fun View.applyWindowInsetsForController(topHeight: Int) {
+    ViewCompat.setOnApplyWindowInsetsListener(this, ControllerViewWindowInsetsListener(topHeight))
     requestApplyInsetsWhenAttached()
 }
 
