@@ -205,11 +205,12 @@ class RecentsController(bundle: Bundle? = null) :
             }
         )
 
+        if (!isReturning && adapter.itemCount == 0) {
+            activityBinding?.appBar?.y = 0f
+            activityBinding?.appBar?.updateAppBarAfterY(binding.recycler)
+            activityBinding?.appBar?.lockYPos = true
+        }
         viewScope.launchUI {
-            if (!isReturning && adapter.itemCount == 0) {
-                activityBinding?.appBar?.y = 0f
-                activityBinding?.appBar?.lockYPos = true
-            }
             val height =
                 activityBinding?.bottomNav?.height ?: view.rootWindowInsetsCompat?.getInsets(
                     systemBars()
@@ -477,7 +478,7 @@ class RecentsController(bundle: Bundle? = null) :
 
         if (BuildConfig.DEBUG && query.isBlank() && isControllerVisible) {
             val searchItem =
-                (activity as? MainActivity)?.binding?.cardToolbar?.menu?.findItem(R.id.action_search)
+                (activity as? MainActivity)?.binding?.searchToolbar?.menu?.findItem(R.id.action_search)
             val searchView = searchItem?.actionView as? SearchView ?: return
             if (!isControllerVisible) return
             setOnQueryTextChangeListener(searchView) {
@@ -541,7 +542,7 @@ class RecentsController(bundle: Bundle? = null) :
         } else {
             binding.recentsEmptyView.hide()
         }
-        val isSearchExpanded = activityBinding?.cardToolbar?.isSearchExpanded == true
+        val isSearchExpanded = activityBinding?.searchToolbar?.isSearchExpanded == true
         if (shouldMoveToTop) {
             if (isSearchExpanded) {
                 moveRecyclerViewUp(scrollUpAnyway = true)
@@ -707,15 +708,15 @@ class RecentsController(bundle: Bundle? = null) :
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.recents, menu)
 
-        val searchItem = activityBinding?.cardToolbar?.searchItem
-        val searchView = activityBinding?.cardToolbar?.searchView
-        activityBinding?.cardToolbar?.setQueryHint(view?.context?.getString(R.string.search_recents), !isSearching())
+        val searchItem = activityBinding?.searchToolbar?.searchItem
+        val searchView = activityBinding?.searchToolbar?.searchView
+        activityBinding?.searchToolbar?.setQueryHint(view?.context?.getString(R.string.search_recents), !isSearching())
         if (isSearching()) {
             searchItem?.expandActionView()
             searchView?.setQuery(query, true)
             searchView?.clearFocus()
         }
-        setOnQueryTextChangeListener(activityBinding?.cardToolbar?.searchView) {
+        setOnQueryTextChangeListener(activityBinding?.searchToolbar?.searchView) {
             if (query != it) {
                 query = it ?: return@setOnQueryTextChangeListener false
                 // loadNoMore()
@@ -807,7 +808,7 @@ class RecentsController(bundle: Bundle? = null) :
         if (showingDownloads) {
             binding.downloadBottomSheet.dlBottomSheet.dismiss()
         } else {
-            activityBinding?.cardToolbar?.menu?.findItem(R.id.action_search)?.expandActionView()
+            activityBinding?.searchToolbar?.menu?.findItem(R.id.action_search)?.expandActionView()
         }
     }
 

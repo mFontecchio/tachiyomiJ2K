@@ -31,6 +31,7 @@ val supportedAbis = setOf("armeabi-v7a", "arm64-v8a", "x86")
 
 android {
     compileSdk = AndroidVersions.compileSdk
+    ndkVersion = AndroidVersions.ndk
 
     defaultConfig {
         minSdk = AndroidVersions.minSdk
@@ -161,7 +162,7 @@ dependencies {
     implementation(kotlin("reflect", version = Versions.kotlin))
 
     // JSON
-    val kotlinSerialization =  "1.3.0"
+    val kotlinSerialization =  "1.3.2"
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${kotlinSerialization}")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:${kotlinSerialization}")
     implementation("com.google.code.gson:gson:2.8.7")
@@ -281,11 +282,11 @@ tasks {
         kotlinOptions.freeCompilerArgs += listOf(
             "-Xopt-in=kotlin.Experimental",
             "-Xopt-in=kotlin.RequiresOptIn",
-            "-Xuse-experimental=kotlin.ExperimentalStdlibApi",
-            "-Xuse-experimental=kotlinx.coroutines.FlowPreview",
-            "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
-            "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi",
-            "-Xuse-experimental=kotlinx.serialization.ExperimentalSerializationApi"
+            "-Xopt-in=kotlin.ExperimentalStdlibApi",
+            "-Xopt-in=kotlinx.coroutines.FlowPreview",
+            "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+            "-Xopt-in=kotlinx.coroutines.InternalCoroutinesApi",
+            "-Xopt-in=kotlinx.serialization.ExperimentalSerializationApi"
         )
     }
 

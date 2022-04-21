@@ -99,7 +99,7 @@ fun Controller.setOnQueryTextChangeListener(
 }
 
 fun Controller.removeQueryListener() {
-    val searchView = activityBinding?.cardToolbar?.menu?.findItem(R.id.action_search)?.actionView as? SearchView
+    val searchView = activityBinding?.searchToolbar?.menu?.findItem(R.id.action_search)?.actionView as? SearchView
     val searchView2 = activityBinding?.toolbar?.menu?.findItem(R.id.action_search)?.actionView as? SearchView
     searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
         override fun onQueryTextSubmit(query: String?) = true
@@ -148,7 +148,6 @@ fun Controller.liftAppbarWith(recycler: RecyclerView, padView: Boolean = false) 
     var toolbarColorAnim: ValueAnimator? = null
     var isToolbarColored = false
 
-    val preferences: PreferencesHelper by injectLazy()
     val colorToolbar: (Boolean) -> Unit = f@{ isColored ->
         isToolbarColored = isColored
         toolbarColorAnim?.cancel()
@@ -604,7 +603,9 @@ fun Controller.setAppBarBG(value: Float, includeTabView: Boolean = false) {
     if (!isControllerVisible) return
     if (floatingBar) {
         (activityBinding?.cardView as? CardView)?.setCardBackgroundColor(context.getResourceColor(R.attr.colorPrimaryVariant))
-        if (this !is SmallToolbarInterface && activityBinding?.appBar?.useLargeToolbar == true) {
+        if (this !is SmallToolbarInterface && activityBinding?.appBar?.useLargeToolbar == true &&
+            activityBinding?.appBar?.compactSearchMode != true
+        ) {
             val colorSurface = context.getResourceColor(R.attr.colorSurface)
             val color = ColorUtils.blendARGB(
                 colorSurface,

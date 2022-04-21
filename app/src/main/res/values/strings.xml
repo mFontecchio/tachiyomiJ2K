@@ -58,6 +58,8 @@
     <string name="removed_bookmark">Removed bookmark</string>
     <string name="chapters_removed">Chapters removed.</string>
     <string name="chapter_not_found">Chapter not found</string>
+    <string name="local_invalid_format">Invalid chapter format</string>
+    <string name="order_by">Order by</string>
     <string name="no_chapters_error">No chapters found</string>
     <string name="no_pages_found">No pages found</string>
     <string name="remove_all_downloads">Remove all downloads?</string>
@@ -733,6 +735,7 @@
     <string name="file_is_missing_data">File is missing data.</string>
     <string name="backup_has_no_manga">Backup does not contain any manga.</string>
     <string name="backup_failed">Backup failed</string>
+    <string name="empty_backup_error">No library entries to back up</string>
     <string name="backup_created">Backup created</string>
     <string name="restore_completed">Restore completed</string>
     <string name="restore_error">Failed to restore backup</string>
@@ -962,6 +965,7 @@
     <string name="common">Common</string>
     <string name="cover_of_image">Cover of manga</string>
     <string name="create">Create</string>
+    <string name="date">Date</string>
     <string name="default_value">Default</string>
     <string name="delete">Delete</string>
     <string name="deleted_">Deleted: %1$s</string>

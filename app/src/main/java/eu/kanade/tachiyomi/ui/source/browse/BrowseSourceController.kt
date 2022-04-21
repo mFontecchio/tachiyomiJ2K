@@ -187,7 +187,7 @@ open class BrowseSourceController(bundle: Bundle) :
             binding.catalogueView.removeView(oldRecycler)
         }
 
-        val recycler = if (presenter.isListMode) {
+        val recycler = if (presenter.prefs.browseAsList().get()) {
             RecyclerView(view.context).apply {
                 id = R.id.recycler
                 layoutManager = LinearLayoutManagerAccurateOffset(context)
@@ -248,7 +248,7 @@ open class BrowseSourceController(bundle: Bundle) :
 
         if (oldPosition != RecyclerView.NO_POSITION) {
             (recycler.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(oldPosition, oldOffset.roundToInt())
-            if (oldPosition > 0 && (activity as? MainActivity)?.currentToolbar != activityBinding?.cardToolbar) {
+            if (oldPosition > 0 && (activity as? MainActivity)?.currentToolbar != activityBinding?.searchToolbar) {
                 activityBinding?.appBar?.useSearchToolbarForMenu(true)
             }
         }
@@ -259,16 +259,16 @@ open class BrowseSourceController(bundle: Bundle) :
         inflater.inflate(R.menu.browse_source, menu)
 
         // Initialize search menu
-        val searchItem = activityBinding?.cardToolbar?.searchItem
-        val searchView = activityBinding?.cardToolbar?.searchView
+        val searchItem = activityBinding?.searchToolbar?.searchItem
+        val searchView = activityBinding?.searchToolbar?.searchView
 
-        activityBinding?.cardToolbar?.setQueryHint("", !isBehindGlobalSearch && presenter.query.isBlank())
+        activityBinding?.searchToolbar?.setQueryHint("", !isBehindGlobalSearch && presenter.query.isBlank())
         val query = presenter.query
         if (query.isNotBlank()) {
             searchItem?.expandActionView()
             searchView?.setQuery(query, true)
             searchView?.clearFocus()
-        } else if (activityBinding?.cardToolbar?.isSearchExpanded == true) {
+        } else if (activityBinding?.searchToolbar?.isSearchExpanded == true) {
             searchItem?.collapseActionView()
             searchView?.setQuery("", true)
         }
@@ -283,7 +283,7 @@ open class BrowseSourceController(bundle: Bundle) :
 
     private fun updateDisplayMenuItem(menu: Menu?, isListMode: Boolean? = null) {
         menu?.findItem(R.id.action_display_mode)?.apply {
-            val icon = if (isListMode ?: presenter.isListMode) {
+            val icon = if (isListMode ?: presenter.prefs.browseAsList().get()) {
                 R.drawable.ic_view_module_24dp
             } else {
                 R.drawable.ic_view_list_24dp
@@ -405,6 +405,7 @@ open class BrowseSourceController(bundle: Bundle) :
                         when (filter) {
                             is Filter.TriState -> filter.state = 1
                             is Filter.CheckBox -> filter.state = true
+                            else -> break
                         }
                         filterList = presenter.sourceFilters
                         break@filter
@@ -498,7 +499,7 @@ open class BrowseSourceController(bundle: Bundle) :
         super.onActivityResumed(activity)
 
         if (BuildConfig.DEBUG && isControllerVisible) {
-            val searchView = activityBinding?.cardToolbar?.searchView
+            val searchView = activityBinding?.searchToolbar?.searchView
             setOnQueryTextChangeListener(searchView, onlyOnSubmit = true, hideKbOnSubmit = true) {
                 searchWithQuery(it ?: "")
                 true
@@ -615,13 +616,14 @@ open class BrowseSourceController(bundle: Bundle) :
         val view = view ?: return
         val adapter = adapter ?: return
 
-        presenter.swapDisplayMode()
-        val isListMode = presenter.isListMode
-        updateDisplayMenuItem(activityBinding?.toolbar?.menu, isListMode)
-        updateDisplayMenuItem(activityBinding?.cardToolbar?.menu, isListMode)
+        val isListMode = !presenter.prefs.browseAsList().get()
+        presenter.prefs.browseAsList().set(isListMode)
+        listOf(activityBinding?.toolbar?.menu, activityBinding?.searchToolbar?.menu).forEach {
+            updateDisplayMenuItem(it, isListMode)
+        }
         setupRecycler(view)
-        if (!isListMode || !view.context.connectivityManager.isActiveNetworkMetered) {
-            // Initialize mangas if going to grid view or if over wifi when going to list view
+        // Initialize mangas if not on a metered connection
+        if (!view.context.connectivityManager.isActiveNetworkMetered) {
             val mangas = (0 until adapter.itemCount).mapNotNull {
                 (adapter.getItem(it) as? BrowseSourceItem)?.manga
             }
