@@ -1063,9 +1063,10 @@ class LibraryController(
                 }
             }
 
-            if (binding.libraryGridRecycler.recycler.manager is StaggeredGridLayoutManager) {
+            if (binding.libraryGridRecycler.recycler.manager is StaggeredGridLayoutManager && isControllerVisible) {
                 staggeredObserver = ViewTreeObserver.OnGlobalLayoutListener {
                     binding.libraryGridRecycler.recycler.postOnAnimation {
+                        if (!isControllerVisible) return@postOnAnimation
                         scrollToHeader(activeC, false)
                         activityBinding?.appBar?.y = 0f
                         activityBinding?.appBar?.updateAppBarAfterY(binding.libraryGridRecycler.recycler)
@@ -1078,6 +1079,7 @@ class LibraryController(
                 viewScope.launchUI {
                     delay(500)
                     removeStaggeredObserver()
+                    if (!isControllerVisible) return@launchUI
                     if (activeC > 0) {
                         activityBinding?.appBar?.useSearchToolbarForMenu(true)
                     }
