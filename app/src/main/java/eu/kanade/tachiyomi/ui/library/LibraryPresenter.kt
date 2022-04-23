@@ -58,14 +58,13 @@ import kotlin.random.Random
  * Presenter of [LibraryController].
  */
 class LibraryPresenter(
-    private val view: LibraryController,
     val db: DatabaseHelper = Injekt.get(),
     private val preferences: PreferencesHelper = Injekt.get(),
     private val coverCache: CoverCache = Injekt.get(),
     val sourceManager: SourceManager = Injekt.get(),
     private val downloadManager: DownloadManager = Injekt.get(),
     private val chapterFilter: ChapterFilter = Injekt.get()
-) : BaseCoroutinePresenter() {
+) : BaseCoroutinePresenter<LibraryController>() {
 
     private val context = preferences.context
 
@@ -135,7 +134,7 @@ class LibraryPresenter(
             // Doing this instead of a job in case the app isn't used often
             presenterScope.launchIO {
                 setSearchSuggestion(preferences, db, sourceManager)
-                withUIContext { view.setTitle() }
+                withUIContext { controller?.setTitle() }
             }
         }
     }
@@ -186,7 +185,7 @@ class LibraryPresenter(
         preferences.lastUsedCategory().set(order)
         val category = categories.find { it.order == order }?.id ?: return
         currentCategory = category
-        view.onNextLibraryUpdate(
+        controller?.onNextLibraryUpdate(
             sectionedLibraryItems[currentCategory] ?: blankItem()
         )
     }
@@ -207,7 +206,7 @@ class LibraryPresenter(
         if (!show && currentCategory == -1) currentCategory = categories.find {
             it.order == preferences.lastUsedCategory().get()
         }?.id ?: 0
-        view.onNextLibraryUpdate(
+        controller?.onNextLibraryUpdate(
             if (!show) sectionedLibraryItems[currentCategory]
                 ?: sectionedLibraryItems[categories.first().id] ?: blankItem()
             else libraryItems,
@@ -229,7 +228,7 @@ class LibraryPresenter(
             it.order == preferences.lastUsedCategory().get()
         }?.id ?: 0
         withUIContext {
-            view.onNextLibraryUpdate(
+            controller?.onNextLibraryUpdate(
                 if (!showAll) sectionedLibraryItems[currentCategory]
                     ?: sectionedLibraryItems[categories.first().id] ?: blankItem()
                 else libraryItems,
@@ -765,7 +764,7 @@ class LibraryPresenter(
 
     /** Create a default category with the sort set */
     private fun createDefaultCategory(): Category {
-        val default = Category.createDefault(view.applicationContext ?: context)
+        val default = Category.createDefault(controller?.applicationContext ?: context)
         default.order = -1
         val defOrder = preferences.defaultMangaOrder().get()
         if (defOrder.firstOrNull()?.isLetter() == true) default.mangaSort = defOrder.first()

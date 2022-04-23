@@ -59,7 +59,7 @@ import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.ui.base.MaterialMenuSheet
 import eu.kanade.tachiyomi.ui.base.SmallToolbarInterface
-import eu.kanade.tachiyomi.ui.base.controller.BaseController
+import eu.kanade.tachiyomi.ui.base.controller.BaseCoroutineController
 import eu.kanade.tachiyomi.ui.base.controller.DialogController
 import eu.kanade.tachiyomi.ui.base.holder.BaseFlexibleViewHolder
 import eu.kanade.tachiyomi.ui.library.LibraryController
@@ -118,7 +118,7 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 
 class MangaDetailsController :
-    BaseController<MangaDetailsControllerBinding>,
+    BaseCoroutineController<MangaDetailsControllerBinding, MangaDetailsPresenter>,
     FlexibleAdapter.OnItemClickListener,
     FlexibleAdapter.OnItemLongClickListener,
     ActionMode.Callback,
@@ -130,7 +130,8 @@ class MangaDetailsController :
         manga: Manga?,
         fromCatalogue: Boolean = false,
         smartSearchConfig: BrowseController.SmartSearchConfig? = null,
-        update: Boolean = false
+        update: Boolean = false,
+        shouldLockIfNeeded: Boolean = false,
     ) : super(
         Bundle().apply {
             putLong(MANGA_EXTRA, manga?.id ?: 0)
@@ -143,7 +144,8 @@ class MangaDetailsController :
         if (manga != null) {
             source = Injekt.get<SourceManager>().getOrStub(manga.source)
         }
-        presenter = MangaDetailsPresenter(this, manga!!, source!!)
+        this.shouldLockIfNeeded = shouldLockIfNeeded
+        presenter = MangaDetailsPresenter(manga!!, source!!)
     }
 
     constructor(mangaId: Long) : this(
@@ -163,12 +165,13 @@ class MangaDetailsController :
     private var manga: Manga? = null
     private var source: Source? = null
     private var colorAnimator: ValueAnimator? = null
-    val presenter: MangaDetailsPresenter
+    override val presenter: MangaDetailsPresenter
     private var coverColor: Int? = null
     private var accentColor: Int? = null
     private var headerColor: Int? = null
     private var toolbarIsColored = false
     private var snack: Snackbar? = null
+    val shouldLockIfNeeded: Boolean
     val fromCatalogue = args.getBoolean(FROM_CATALOGUE_EXTRA, false)
     private var trackingBottomSheet: TrackingBottomSheet? = null
     private var startingRangeChapterPos: Int? = null
@@ -211,7 +214,7 @@ class MangaDetailsController :
             activityBinding?.appBar?.y = 0f
         }
 
-        presenter.onCreate()
+        presenter.onFirstLoad()
         binding.swipeRefresh.isRefreshing = presenter.isLoading
         binding.swipeRefresh.setOnRefreshListener { presenter.refreshAll() }
         updateToolbarTitleAlpha()
@@ -353,7 +356,6 @@ class MangaDetailsController :
 
     override fun onDestroyView(view: View) {
         snack?.dismiss()
-        presenter.onDestroy()
         adapter = null
         trackingBottomSheet = null
         super.onDestroyView(view)
@@ -536,7 +538,7 @@ class MangaDetailsController :
     //region Lifecycle methods
     override fun onActivityResumed(activity: Activity) {
         super.onActivityResumed(activity)
-        presenter.isLockedFromSearch = SecureActivityDelegate.shouldBeLocked()
+        presenter.isLockedFromSearch = shouldLockIfNeeded && SecureActivityDelegate.shouldBeLocked()
         presenter.headerItem.isLocked = presenter.isLockedFromSearch
         manga!!.thumbnail_url = presenter.refreshMangaFromDb().thumbnail_url
         presenter.fetchChapters(refreshTracker == null)
@@ -564,9 +566,6 @@ class MangaDetailsController :
         } else {
             if (router.backstack.lastOrNull()?.controller is DialogController) {
                 return
-            }
-            if (type == ControllerChangeType.POP_EXIT) {
-                presenter.cancelScope()
             }
             colorAnimator?.cancel()
 
@@ -624,6 +623,7 @@ class MangaDetailsController :
             }
             1 -> return
             else -> {
+                val chapterNames = deletedChapters.map { it.name }
                 context.materialAlertDialog()
                     .setCustomTitleAndMessage(
                         R.string.chapters_removed,
@@ -631,7 +631,14 @@ class MangaDetailsController :
                             R.plurals.deleted_chapters,
                             deletedChapters.size,
                             deletedChapters.size,
-                            deletedChapters.joinToString("\n") { it.name }
+                            if (deletedChapters.size > 5) {
+                                "${chapterNames.take(5 - 1).joinToString(", ")}, " +
+                                    context.resources.getQuantityString(
+                                        R.plurals.notification_and_n_more,
+                                        (chapterNames.size - (4 - 1)),
+                                        (chapterNames.size - (4 - 1))
+                                    )
+                            } else chapterNames.joinToString(", ")
                         )
                     )
                     .setPositiveButton(R.string.delete) { dialog, _ ->
@@ -1363,6 +1370,8 @@ class MangaDetailsController :
             presenter.preferences,
             view,
             activity,
+            presenter.sourceManager,
+            this,
             onMangaAdded = {
                 updateHeader()
                 showAddedSnack()

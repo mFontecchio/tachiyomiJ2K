@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.ui.reader.settings.PageLayout
 import eu.kanade.tachiyomi.ui.reader.viewer.ViewerConfig
 import eu.kanade.tachiyomi.ui.reader.viewer.ViewerNavigation
+import eu.kanade.tachiyomi.ui.reader.viewer.navigation.DisabledNavigation
 import eu.kanade.tachiyomi.ui.reader.viewer.navigation.EdgeNavigation
 import eu.kanade.tachiyomi.ui.reader.viewer.navigation.KindlishNavigation
 import eu.kanade.tachiyomi.ui.reader.viewer.navigation.LNavigation
@@ -36,6 +37,12 @@ class PagerConfig(
         private set
 
     var imageCropBorders = false
+        private set
+
+    var navigateToPan = false
+        private set
+
+    var landscapeZoom = false
         private set
 
     var readerTheme = 0
@@ -98,6 +105,12 @@ class PagerConfig(
 
         preferences.cropBorders()
             .register({ imageCropBorders = it }, { imagePropertyChangedListener?.invoke() })
+
+        preferences.navigateToPan()
+            .register({ navigateToPan = it })
+
+        preferences.landscapeZoom()
+            .register({ landscapeZoom = it }, { imagePropertyChangedListener?.invoke() })
 
         preferences.readerTheme()
             .register({ readerTheme = it }, { imagePropertyChangedListener?.invoke() })
@@ -179,6 +192,7 @@ class PagerConfig(
             2 -> KindlishNavigation()
             3 -> EdgeNavigation()
             4 -> RightAndLeftNavigation()
+            5 -> DisabledNavigation()
             else -> defaultNavigation()
         }
         navigationModeChangedListener?.invoke()

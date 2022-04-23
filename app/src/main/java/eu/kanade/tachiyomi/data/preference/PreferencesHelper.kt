@@ -5,9 +5,9 @@ import android.net.Uri
 import android.os.Environment
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.PreferenceManager
+import com.fredporciuncula.flow.preferences.FlowSharedPreferences
+import com.fredporciuncula.flow.preferences.Preference
 import com.google.android.material.color.DynamicColors
-import com.tfcporciuncula.flow.FlowSharedPreferences
-import com.tfcporciuncula.flow.Preference
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.track.TrackService
@@ -144,11 +144,17 @@ class PreferencesHelper(val context: Context) {
 
     fun cropBordersWebtoon() = flowPrefs.getBoolean(Keys.cropBordersWebtoon, false)
 
+    fun navigateToPan() = flowPrefs.getBoolean("navigate_pan", true)
+
+    fun landscapeZoom() = flowPrefs.getBoolean("landscape_zoom", false)
+
+    fun grayscale() = flowPrefs.getBoolean("pref_grayscale", false)
+
+    fun invertedColors() = flowPrefs.getBoolean("pref_inverted_colors", false)
+
     fun webtoonSidePadding() = flowPrefs.getInt(Keys.webtoonSidePadding, 0)
 
     fun webtoonEnableZoomOut() = flowPrefs.getBoolean(Keys.webtoonEnableZoomOut, false)
-
-    fun readWithTapping() = flowPrefs.getBoolean(Keys.readWithTapping, true)
 
     fun readWithLongTap() = flowPrefs.getBoolean(Keys.readWithLongTap, true)
 
@@ -400,6 +406,8 @@ class PreferencesHelper(val context: Context) {
     fun shownLongPressCategoryTutorial() = flowPrefs.getBoolean("shown_long_press_category", false)
 
     fun shownHopperSwipeTutorial() = flowPrefs.getBoolean("shown_hopper_swipe", false)
+
+    fun shownDownloadSwipeTutorial() = flowPrefs.getBoolean("shown_download_tutorial", false)
 
     fun hideBottomNavOnScroll() = flowPrefs.getBoolean(Keys.hideBottomNavOnScroll, true)
 

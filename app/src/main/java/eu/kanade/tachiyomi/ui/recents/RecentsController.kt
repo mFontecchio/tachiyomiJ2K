@@ -111,7 +111,7 @@ class RecentsController(bundle: Bundle? = null) :
     var displaySheet: TabbedRecentsOptionsSheet? = null
 
     private var progressItem: ProgressItem? = null
-    override var presenter = RecentsPresenter(this)
+    override var presenter = RecentsPresenter()
     private var snack: Snackbar? = null
     private var lastChapterId: Long? = null
     private var showingDownloads = false
@@ -474,7 +474,7 @@ class RecentsController(bundle: Bundle? = null) :
             refresh()
         }
         setBottomPadding()
-        binding.downloadBottomSheet.dlBottomSheet.update()
+        binding.downloadBottomSheet.dlBottomSheet.update(!presenter.downloadManager.isPaused())
 
         if (BuildConfig.DEBUG && query.isBlank() && isControllerVisible) {
             val searchItem =
@@ -500,6 +500,7 @@ class RecentsController(bundle: Bundle? = null) :
 
     override fun onDestroyView(view: View) {
         super.onDestroyView(view)
+        binding.downloadBottomSheet.root.onDestroy()
         displaySheet?.dismiss()
         displaySheet = null
     }
@@ -560,7 +561,7 @@ class RecentsController(bundle: Bundle? = null) :
     fun updateChapterDownload(download: Download, updateDLSheet: Boolean = true) {
         if (view == null) return
         if (updateDLSheet) {
-            binding.downloadBottomSheet.dlBottomSheet.update()
+            binding.downloadBottomSheet.dlBottomSheet.update(!presenter.downloadManager.isPaused())
             binding.downloadBottomSheet.dlBottomSheet.onUpdateProgress(download)
             binding.downloadBottomSheet.dlBottomSheet.onUpdateDownloadedPages(download)
         }
@@ -569,8 +570,8 @@ class RecentsController(bundle: Bundle? = null) :
         holder.notifyStatus(download.status, download.progress, download.chapter.read, true)
     }
 
-    fun updateDownloadStatus() {
-        binding.downloadBottomSheet.dlBottomSheet.update()
+    fun updateDownloadStatus(isRunning: Boolean) {
+        binding.downloadBottomSheet.dlBottomSheet.update(isRunning)
     }
 
     private fun refreshItem(chapterId: Long) {

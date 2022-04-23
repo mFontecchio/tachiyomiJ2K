@@ -43,10 +43,10 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.bluelinelabs.conductor.ControllerChangeHandler
 import com.bluelinelabs.conductor.ControllerChangeType
+import com.fredporciuncula.flow.preferences.Preference
 import com.github.florent37.viewtooltip.ViewTooltip
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
-import com.tfcporciuncula.flow.Preference
 import eu.davidea.flexibleadapter.FlexibleAdapter
 import eu.davidea.flexibleadapter.SelectableAdapter
 import eu.davidea.flexibleadapter.items.IFlexible
@@ -178,7 +178,7 @@ class LibraryController(
     private var lastItemPosition: Int? = null
     private var lastItem: IFlexible<*>? = null
 
-    override var presenter = LibraryPresenter(this)
+    override var presenter = LibraryPresenter()
 
     private var observeLater: Boolean = false
     var searchItem = SearchGlobalItem()
@@ -1224,8 +1224,10 @@ class LibraryController(
             activeCategory = pos
             preferences.lastUsedCategory().set(pos)
             binding.libraryGridRecycler.recycler.post {
-                activityBinding.appBar.y = 0f
-                activityBinding.appBar.updateAppBarAfterY(binding.libraryGridRecycler.recycler)
+                if (isControllerVisible) {
+                    activityBinding.appBar.y = 0f
+                    activityBinding.appBar.updateAppBarAfterY(binding.libraryGridRecycler.recycler)
+                }
             }
         }
     }

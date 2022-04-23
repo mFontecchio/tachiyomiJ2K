@@ -38,12 +38,11 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
 class RecentsPresenter(
-    val controller: RecentsController?,
     val preferences: PreferencesHelper = Injekt.get(),
     val downloadManager: DownloadManager = Injekt.get(),
     private val db: DatabaseHelper = Injekt.get(),
     private val chapterFilter: ChapterFilter = Injekt.get()
-) : BaseCoroutinePresenter(), DownloadQueue.DownloadListener, LibraryServiceListener, DownloadServiceListener {
+) : BaseCoroutinePresenter<RecentsController>(), DownloadQueue.DownloadListener, LibraryServiceListener, DownloadServiceListener {
 
     private var recentsJob: Job? = null
     var recentItems = listOf<RecentMangaItem>()
@@ -378,7 +377,7 @@ class RecentsPresenter(
             setDownloadedChapters(recentItems)
             withContext(Dispatchers.Main) {
                 controller?.showLists(recentItems, true)
-                controller?.updateDownloadStatus()
+                controller?.updateDownloadStatus(!downloadManager.isPaused())
             }
         }
     }
@@ -386,7 +385,7 @@ class RecentsPresenter(
     override fun downloadStatusChanged(downloading: Boolean) {
         presenterScope.launch {
             withContext(Dispatchers.Main) {
-                controller?.updateDownloadStatus()
+                controller?.updateDownloadStatus(downloading)
             }
         }
     }
@@ -518,7 +517,7 @@ class RecentsPresenter(
             private set
 
         suspend fun getRecentManga(includeRead: Boolean = false): List<Pair<Manga, Long>> {
-            val presenter = RecentsPresenter(null)
+            val presenter = RecentsPresenter()
             presenter.viewType = 1
             SHORT_LIMIT = if (includeRead) 50 else 25
             presenter.runRecents(limit = true, includeReadAnyway = includeRead)

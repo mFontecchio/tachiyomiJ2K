@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.ui.base
 import android.content.Context
 import android.util.AttributeSet
 import android.view.MotionEvent
-import androidx.core.view.ViewCompat
 import androidx.core.view.marginTop
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -19,7 +18,7 @@ class MaterialFastScroll @JvmOverloads constructor(context: Context, attrs: Attr
     FastScroller(context, attrs) {
 
     var canScroll = false
-    var startY = 0f
+    var startY = -1f
     var scrollOffset = 0
     init {
         setViewsToUse(
@@ -38,16 +37,21 @@ class MaterialFastScroll @JvmOverloads constructor(context: Context, attrs: Attr
     // Overriding to force a distance moved before scrolling
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (recyclerView.computeVerticalScrollRange() <= recyclerView.computeVerticalScrollExtent()) {
-            return super.onTouchEvent(event)
+            return if (startY > -1f) {
+                dispatchTouchToRecycler(event)
+                false
+            } else {
+                super.onTouchEvent(event)
+            }
         }
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 if (
                     if (context.resources.isLTR) {
-                        event.x < handle.x - ViewCompat.getPaddingStart(handle)
+                        event.x < handle.x - handle.paddingStart
                     } else {
-                        event.x > handle.width + ViewCompat.getPaddingStart(handle)
+                        event.x > handle.width + handle.paddingStart
                     }
                 ) return false
                 val y = event.y
@@ -59,7 +63,9 @@ class MaterialFastScroll @JvmOverloads constructor(context: Context, attrs: Attr
                     showScrollbar()
                     setBubbleAndHandlePosition(y)
                     setRecyclerViewPosition(y)
+                    return true
                 }
+                dispatchTouchToRecycler(event)
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
@@ -70,6 +76,7 @@ class MaterialFastScroll @JvmOverloads constructor(context: Context, attrs: Attr
                     notifyScrollStateChange(true)
                     showBubble()
                     showScrollbar()
+                    dispatchTouchToRecycler(event) { action = MotionEvent.ACTION_CANCEL }
                 }
                 if (canScroll) {
                     setBubbleAndHandlePosition(y)
@@ -78,11 +85,22 @@ class MaterialFastScroll @JvmOverloads constructor(context: Context, attrs: Attr
                 return true
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                startY = 0f
+                startY = -1f
+                if (!canScroll) {
+                    dispatchTouchToRecycler(event)
+                }
                 canScroll = false
             }
         }
         return super.onTouchEvent(event)
+    }
+
+    private fun dispatchTouchToRecycler(event: MotionEvent, block: (MotionEvent.() -> Unit)? = null) {
+        val ev2 = MotionEvent.obtain(event)
+        ev2.offsetLocation(this.x, this.y)
+        block?.invoke(ev2)
+        recyclerView.dispatchTouchEvent(ev2)
+        ev2.recycle()
     }
 
     override fun setBubbleAndHandlePosition(y: Float) {

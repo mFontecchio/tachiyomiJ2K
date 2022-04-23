@@ -104,7 +104,10 @@ open class GlobalSearchController(
      */
     override fun onMangaClick(manga: Manga) {
         // Open MangaController.
-        router.pushController(MangaDetailsController(manga, true).withFadeTransaction())
+        router.pushController(
+            MangaDetailsController(manga, true, shouldLockIfNeeded = activity is SearchActivity)
+                .withFadeTransaction()
+        )
     }
 
     /**
@@ -123,7 +126,21 @@ open class GlobalSearchController(
             preferences,
             view,
             activity,
-            onMangaAdded = {
+            presenter.sourceManager,
+            this,
+            onMangaAdded = { migrationInfo ->
+                migrationInfo?.let { (source, stillFaved) ->
+                    val index = this.adapter
+                        ?.currentItems?.indexOfFirst { it.source.id == source } ?: return@let
+                    val item = this.adapter?.getItem(index) ?: return@let
+                    val oldMangaIndex = item.results?.indexOfFirst {
+                        it.manga.title.lowercase() == manga.title.lowercase()
+                    } ?: return@let
+                    val oldMangaItem = item.results.getOrNull(oldMangaIndex)
+                    oldMangaItem?.manga?.favorite = stillFaved
+                    val holder = binding.recycler.findViewHolderForAdapterPosition(index) as? GlobalSearchHolder
+                    holder?.updateManga(oldMangaIndex)
+                }
                 adapter.notifyItemChanged(position)
                 snack = view.snack(R.string.added_to_library)
             },
@@ -255,7 +272,7 @@ open class GlobalSearchController(
             if (results != null && searchResult.size == 1 && results.size == 1) {
                 val manga = results.first().manga
                 router.replaceTopController(
-                    MangaDetailsController(manga, true)
+                    MangaDetailsController(manga, true, shouldLockIfNeeded = true)
                         .withFadeTransaction()
                 )
                 return
