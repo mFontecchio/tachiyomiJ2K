@@ -7,6 +7,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.webkit.WebStorage
+import android.webkit.WebView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -38,6 +40,7 @@ import eu.kanade.tachiyomi.util.system.isPackageInstalled
 import eu.kanade.tachiyomi.util.system.launchIO
 import eu.kanade.tachiyomi.util.system.launchUI
 import eu.kanade.tachiyomi.util.system.materialAlertDialog
+import eu.kanade.tachiyomi.util.system.setDefaultSettings
 import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.tachiyomi.util.view.openInBrowser
 import eu.kanade.tachiyomi.util.view.withFadeTransaction
@@ -49,6 +52,7 @@ import kotlinx.coroutines.launch
 import rx.Observable
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
+import timber.log.Timber
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -211,6 +215,12 @@ class SettingsAdvancedController : SettingsController() {
                     ctrl.targetController = this@SettingsAdvancedController
                     ctrl.showDialog(router)
                 }
+            }
+            preference {
+                key = "pref_clear_webview_data"
+                titleRes = R.string.pref_clear_webview_data
+
+                onClick { clearWebViewData() }
             }
             preference {
                 key = "clear_database"
@@ -405,6 +415,23 @@ class SettingsAdvancedController : SettingsController() {
                         resources?.getString(R.string.used_, chapterCache.readableSize)
                 }
             )
+    }
+
+    private fun clearWebViewData() {
+        if (activity == null) return
+        try {
+            val webview = WebView(activity!!)
+            webview.setDefaultSettings()
+            webview.clearCache(true)
+            webview.clearFormData()
+            webview.clearHistory()
+            webview.clearSslPreferences()
+            WebStorage.getInstance().deleteAllData()
+            activity?.toast(R.string.webview_data_deleted)
+        } catch (e: Throwable) {
+            Timber.e(e)
+            activity?.toast(R.string.cache_delete_error)
+        }
     }
 
     private companion object {

@@ -23,6 +23,7 @@ import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.manga.MangaDetailsController
 import eu.kanade.tachiyomi.ui.reader.ReaderActivity
 import eu.kanade.tachiyomi.ui.setting.AboutController
+import eu.kanade.tachiyomi.util.chapter.updateTrackChapterMarkedAsRead
 import eu.kanade.tachiyomi.util.storage.DiskUtil
 import eu.kanade.tachiyomi.util.storage.getUriCompat
 import eu.kanade.tachiyomi.util.system.notificationManager
@@ -192,18 +193,21 @@ class NotificationReceiver : BroadcastReceiver() {
      */
     private fun markAsRead(chapterUrls: Array<String>, mangaId: Long) {
         val db: DatabaseHelper = Injekt.get()
-        chapterUrls.forEach {
+        val preferences: PreferencesHelper = Injekt.get()
+        val chapters = chapterUrls.map {
             val chapter = db.getChapter(it, mangaId).executeAsBlocking() ?: return
             chapter.read = true
             db.updateChapterProgress(chapter).executeAsBlocking()
-            val preferences: PreferencesHelper = Injekt.get()
             if (preferences.removeAfterMarkedAsRead()) {
                 val manga = db.getManga(mangaId).executeAsBlocking() ?: return
                 val sourceManager: SourceManager = Injekt.get()
                 val source = sourceManager.get(manga.source) ?: return
                 downloadManager.deleteChapters(listOf(chapter), manga, source)
             }
+            return@map chapter
         }
+        val newLastChapter = chapters.maxByOrNull { it.chapter_number.toInt() }
+        updateTrackChapterMarkedAsRead(db, preferences, newLastChapter, mangaId, 0)
     }
 
     /** Method called when user wants to stop a restore
@@ -469,13 +473,13 @@ class NotificationReceiver : BroadcastReceiver() {
         }
 
         /**
-         * Returns [PendingIntent] that opens the error log file in an external viewer
+         * Returns [PendingIntent] that opens the error or skipped log file in an external viewer
          *
          * @param context context of application
-         * @param uri uri of error log file
+         * @param uri uri of error or skipped log file
          * @return [PendingIntent]
          */
-        internal fun openErrorLogPendingActivity(context: Context, uri: Uri): PendingIntent {
+        internal fun openErrorOrSkippedLogPendingActivity(context: Context, uri: Uri): PendingIntent {
             val intent = Intent().apply {
                 action = Intent.ACTION_VIEW
                 setDataAndType(uri, "text/plain")
