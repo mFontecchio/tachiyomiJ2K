@@ -253,8 +253,6 @@ object PreferenceKeys {
 
     const val defaultChapterSortByAscendingOrDescending = "default_chapter_sort_by_ascending_or_descending"
 
-    const val useStaggeredGrid = "use_staggered_grid"
-
     const val coverRatios = "cover_ratio"
 
     const val coverColors = "cover_colors"
