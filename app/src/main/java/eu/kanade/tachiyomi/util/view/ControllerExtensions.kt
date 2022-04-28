@@ -730,5 +730,12 @@ val Controller.fullAppBarHeight: Int?
         this !is SmallToolbarInterface
     )
 
+val Controller.fullAppBarHeightAndPadding: Int?
+    get() = (activity as? MainActivity)?.bigToolbarHeight(
+        (this as? FloatingSearchInterface)?.showFloatingBar() == true,
+        this is TabbedInterface,
+        this !is SmallToolbarInterface
+    )?.plus(activityBinding?.appBar?.paddingTop ?: 0)
+
 val Controller.isControllerVisible: Boolean
     get() = router.backstack.lastOrNull()?.controller == this
