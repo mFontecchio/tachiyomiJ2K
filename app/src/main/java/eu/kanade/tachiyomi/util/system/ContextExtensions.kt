@@ -158,6 +158,9 @@ val Int.spToPx: Int
 val Float.dpToPx: Float
     get() = (this * Resources.getSystem().displayMetrics.density)
 
+val Float.pxToDp: Float
+    get() = (this / Resources.getSystem().displayMetrics.density)
+
 /** Converts to px and takes into account LTR/RTL layout */
 val Float.dpToPxEnd: Float
     get() = (
